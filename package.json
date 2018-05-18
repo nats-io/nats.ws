@@ -1,0 +1,46 @@
+{
+  "name": "ws-nats",
+  "version": "1.0.0",
+  "description": "WebSocket NATS client",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "test": "tsc && ava --verbose -T 5000",
+    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 5000 -m 'good publish'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com//aricart/ws-nats"
+  },
+  "keywords": [
+    "NATS",
+    "websockets"
+  ],
+  "author": "Alberto Ricart",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^10.0.9",
+    "@types/ws": "^5.1.1",
+    "ava": "1.0.0-beta.4",
+    "browser-env": "^3.2.5",
+    "jsdom": "^11.10.0",
+    "ts-loader": "^4.3.0",
+    "typescript": "^2.8.3"
+  },
+  "ava": {
+    "require": [
+      "./lib/test/helpers/setup-browser-env.js"
+    ],
+    "files": [
+      "./lib/test/**/*.js",
+      "!./lib/test/helpers/**/*.js"
+    ],
+    "sources": [
+      "**/*.js"
+    ]
+  },
+  "dependencies": {
+    "ws": "latest"
+  }
+}
