@@ -5,6 +5,7 @@ export interface Transport {
     write(data: any) : void;
     destroy(): void;
     close(): void;
+    isSecure(): boolean;
 }
 
 export interface CloseHandler {
@@ -88,14 +89,23 @@ export class WSTransport {
                 transport.trace('ws open');
                 // FIXME: we cannot resolve immediately!
                 // we connected to a proxy which is establishing a
-                // connection to NATS, that can fail.
-                connected = true;
-                resolve(transport);
+                // connection to NATS, that can fail - wait
+                // for data to arrive.
             };
 
             transport.stream.onmessage = function(me: MessageEvent) {
+                // transport will resolve as soon as we get data as the
+                // proxy has connected to a server
                 transport.trace('>', [me.data]);
-                transport.handlers.messageHandler(me);
+                if(connected) {
+                    transport.handlers.messageHandler(me);
+                } else {
+                    connected = true;
+                    resolve(transport);
+                    setTimeout(function() {
+                        transport.handlers.messageHandler(me);
+                    },0);
+                }
             };
         });
     };
@@ -126,7 +136,9 @@ export class WSTransport {
             this.stream.onopen = null;
             this.stream.onmessage = null;
         }
-        this.stream.close();
+        if(this.stream.readyState !== WebSocket.CLOSED && this.stream.readyState !== WebSocket.CLOSING) {
+            this.stream.close();
+        }
         this.stream = null;
     }
 
@@ -134,6 +146,7 @@ export class WSTransport {
         this.closed = true;
         if(this.stream && this.stream.bufferedAmount > 0) {
             setTimeout(this.close.bind(this), 100);
+            return;
         }
         this.destroy();
     }
@@ -142,5 +155,13 @@ export class WSTransport {
         if(this.debug) {
             console.log(args);
         }
+    }
+
+    isSecure() : boolean {
+        if(this.stream) {
+            let protocol = new URL(this.stream.url).protocol;
+            return protocol.toLowerCase() === "wss";
+        }
+        return false;
     }
 }

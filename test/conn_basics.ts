@@ -77,30 +77,31 @@ test.cb('bad publish', (t)=> {
         });
 });
 
-test.cb('good publish', (t)=> {
+test('subhello', (t)=> {
     t.plan(4);
-    NatsConnection.connect({url: "ws://localhost:30000"})
-        .then((c: NatsConnection) => {
-            t.pass();
-            c.addEventListener('error', (err)=>{
-                t.fail();
-                t.end();
-            });
-            c.subscribe("hello", (msg: Msg) => {
+    return new Promise((resolve, reject) => {
+        NatsConnection.connect({url: "ws://localhost:30000"})
+            .then((c: NatsConnection) => {
                 t.pass();
-                if(msg.data === "world") {
+                c.addEventListener('error', (err)=>{
+                    reject();
+                });
+                c.subscribe("hello", (msg: Msg) => {
                     t.pass();
-                }
-                c.close();
-                t.end();
-            }).then((sub) => {
-                c.publish("hello", "world");
-                t.pass();
-                c.flush();
+                    if(msg.data === "world") {
+                        t.pass();
+                    }
+                    c.close();
+                    resolve();
+                }).then((sub) => {
+                    c.publish("hello", "world");
+                    t.pass();
+                    c.flush();
+                });
+            })
+            .catch((err: Error) => {
+                reject(err);
             });
-        })
-        .catch((err: Error) => {
-            let m = err ? err.message : "";
-            t.fail(m);
-        });
+    });
+
 });

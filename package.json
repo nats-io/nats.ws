@@ -7,7 +7,7 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "test": "tsc && ava --verbose -T 5000",
-    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 5000 -m 'good publish'"
+    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 10000 -m 'subhello'"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,7 @@
 import {NatsConnectionOptions} from "./nats";
 import {TransportHandlers, WSTransport, Transport} from "./transport";
+import {NatsError} from "./error";
+import {extend} from "./util";
 
 const FLUSH_THRESHOLD = 65536;
 
@@ -35,6 +37,11 @@ export class Connect {
     pass?: string;
     auth_token?: string;
     name?: string;
+
+    constructor(opts?: NatsConnectionOptions) {
+        opts = opts || {} as NatsConnectionOptions;
+        extend(this, opts);
+    }
 }
 
 export interface Callback {
@@ -60,10 +67,14 @@ export interface Sub {
     subject: string;
     callback: MsgCallback;
     received: number;
-    qgroup?: string | null;
+    queueGroup?: string | null;
     timeout?: number | null;
     max?: number | null;
     expected?: number;
+}
+
+export function defaultSub(): Sub {
+    return {sid: 0, subject: "", received: 0} as Sub;
 }
 
 export class Subscription {
@@ -75,37 +86,55 @@ export class Subscription {
         this.protocol = protocol;
     }
 
-    unsubscribe() : void {
-        this.protocol.unsubscribe(this.sid);
+    unsubscribe(max?: number) : void {
+        this.protocol.unsubscribe(this.sid, max);
     }
 }
 
 
 export class Subscriptions {
     subs: {[key: number]: Sub} = {};
+    sidCounter: number = 0;
     length: number = 0;
 
-    addSubscription(s: Sub) : Sub {
+    add(s: Sub) : Sub {
+        this.sidCounter++;
         this.length++;
-        s.sid = this.length;
+        s.sid = this.sidCounter;
         this.subs[s.sid] = s;
         return s;
     }
 
-    getSubscription(sid: number) : (Sub | null) {
-        if(this.length) {
+    get(sid: number) : (Sub | null) {
+        if(sid in this.subs) {
             return this.subs[sid];
         }
         return null;
     }
 
-    getSubscriptions() : Sub[] {
+    all() : Sub[] {
         let buf = [];
         for(let sid in this.subs) {
             let sub = this.subs[sid];
             buf.push(sub);
         }
         return buf;
+    }
+
+    isMuxSubject(s: string) {
+        // fixme handle MUX
+        return false;
+    }
+
+    cancel(s: Sub): void {
+        if(s && s.timeout) {
+            clearTimeout(s.timeout);
+            s.timeout = null;
+        }
+        if(s.sid in this.subs) {
+            delete this.subs[s.sid];
+            this.length--;
+        }
     }
 }
 
@@ -197,19 +226,35 @@ export class ProtocolHandler implements TransportHandlers {
     transport!: Transport;
 
 
+
     constructor(options: NatsConnectionOptions, handlers: ClientHandlers) {
         this.options = options;
         this.clientHandlers = handlers;
         this.subscriptions = new Subscriptions();
     }
 
+    // @ts-ignore
+    firstPongHandler(resolver, rejector: Function):void {
+        let that = this;
+        let to = setTimeout(()=> {
+            rejector(new Error('timeout receiving pong'));
+        }, 1000);
+        let f = function() {
+            clearTimeout(to);
+            resolver(that);
+        };
+        this.pongs.push(f);
+    }
+
     public static connect(options: NatsConnectionOptions, handlers: ClientHandlers) : Promise<ProtocolHandler> {
         return new Promise<ProtocolHandler>((resolve, reject) => {
             let ph = new ProtocolHandler(options, handlers);
-            WSTransport.connect(new URL(options.url), ph, true)
+            ph.firstPongHandler(resolve, reject);
+            // we schedule the handler for the first PONG to be
+            // the one that resolves the promise.
+            WSTransport.connect(new URL(options.url), ph)
                 .then((transport) => {
                     ph.transport = transport;
-                    resolve(ph);
                 })
                 .catch((err) => {
                     reject(err);
@@ -242,14 +287,18 @@ export class ProtocolHandler implements TransportHandlers {
                     } else if ((m = INFO.exec(buf))) {
                         if (!this.infoReceived) {
                             // send connect
-                            let cs = JSON.stringify(new Connect());
+                            let info = JSON.parse(m[1]);
+                            if(info.tls_required && !this.transport.isSecure()) {
+                                // fixme: normalize error format
+                                this.handleError(new NatsError('wss required','wss required'));
+                                return;
+                            }
+                            let cs = JSON.stringify(new Connect(this.options));
                             this.transport.write(`${CONNECT} ${cs}${CR_LF}`);
                             this.sendSubscriptions();
-                            this.pongs.push();
                             this.transport.write(PING_REQUEST);
                             this.infoReceived = true;
                             this.flushPending();
-
                         }
                     } else {
                         return;
@@ -259,12 +308,10 @@ export class ProtocolHandler implements TransportHandlers {
                     if(!this.payload) {
                         break;
                     }
-
                     if(this.inbound.length < this.payload.length) {
                         this.payload.push(this.inbound.drain());
                         return;
                     }
-
                     if(this.payload.hasChunks()) {
                         this.payload.push(this.inbound.read(this.payload.length));
                     } else {
@@ -287,13 +334,13 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     processMsg() {
-        if(!this.payload || !this.subscriptions.length) {
+        if(!this.payload || !this.subscriptions.sidCounter) {
             return;
         }
 
         let m = this.payload;
 
-        let sub = this.subscriptions.getSubscription(m.msg.sid);
+        let sub = this.subscriptions.get(m.msg.sid);
         if(!sub) {
             return;
         }
@@ -303,7 +350,7 @@ export class ProtocolHandler implements TransportHandlers {
         }
     }
 
-    flushPending() {
+    private flushPending() {
         if(!this.infoReceived) {
             return;
         }
@@ -327,17 +374,35 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     subscribe(s: Sub) : Subscription {
-        let sub = this.subscriptions.addSubscription(s);
-        if(sub.qgroup) {
-            this.sendCommand(`SUB ${sub.subject} ${sub.qgroup} ${sub.sid}\r\n`);
+        let sub = this.subscriptions.add(s);
+        if(sub.queueGroup) {
+            this.sendCommand(`SUB ${sub.subject} ${sub.queueGroup} ${sub.sid}\r\n`);
         } else {
             this.sendCommand(`SUB ${sub.subject} ${sub.sid}\r\n`);
         }
         return new Subscription(sub, this);
     }
 
-    unsubscribe(sid: number) {
-        
+    unsubscribe(sid: number, max?: number) {
+        if(!sid || this.isClosed()) {
+            return;
+        }
+
+        let s = this.subscriptions.get(sid);
+        if(s) {
+            if(! this.subscriptions.isMuxSubject(s.subject)) {
+                if(max) {
+                    this.sendCommand(`UNSUB ${sid} ${max}\r\n`);
+                } else {
+                    this.sendCommand(`UNSUB ${sid}\r\n`);
+                }
+            }
+            s.max = max;
+            if(s.max === undefined || s.received >= s.max) {
+                this.subscriptions.cancel(s);
+            }
+        }
+
     }
 
     flush(f?: Function) : void {
@@ -351,9 +416,9 @@ export class ProtocolHandler implements TransportHandlers {
 
     sendSubscriptions() {
         let cmds : string[] = [];
-        this.subscriptions.getSubscriptions().forEach((s) => {
-            if(s.qgroup) {
-                cmds.push(`${SUB} ${s.subject} ${s.qgroup} ${s.sid} ${CR_LF}`);
+        this.subscriptions.all().forEach((s) => {
+            if(s.queueGroup) {
+                cmds.push(`${SUB} ${s.subject} ${s.queueGroup} ${s.sid} ${CR_LF}`);
             } else {
                 cmds.push(`${SUB} ${s.subject} ${s.sid} ${CR_LF}`);
             }
@@ -369,13 +434,17 @@ export class ProtocolHandler implements TransportHandlers {
         this.clientHandlers.closeHandler();
     }
 
-    errorHandler(evt : Event) : void {
+    private handleError(err: Error) {
         this.close();
+        this.clientHandlers.errorHandler(err);
+    }
+
+    errorHandler(evt : Event) : void {
         let err;
         if(evt) {
             err = (evt as ErrorEvent).error;
         }
-        this.clientHandlers.errorHandler(err);
+        this.handleError(err);
     }
 
     messageHandler(evt: MessageEvent) : void {
@@ -384,6 +453,7 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     close() : void {
+        this.transport.close();
         this.state = ParserState.CLOSED;
     }
 

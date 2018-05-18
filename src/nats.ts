@@ -1,7 +1,7 @@
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {extend} from "./util";
 import {ClientEventMap} from "./nats";
-import {ClientHandlers, ProtocolHandler, Sub, MsgCallback, Subscription} from "./protocol";
+import {ClientHandlers, ProtocolHandler, Sub, MsgCallback, Subscription, defaultSub} from "./protocol";
 import {NatsError} from "./error";
 import * as util from "util";
 
@@ -9,7 +9,8 @@ export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 
 
 export interface NatsConnectionOptions {
-    url: string
+    url: string;
+    name?:string;
 }
 
 export interface Callback {
@@ -27,14 +28,13 @@ export interface ClientEventMap {
 }
 
 export interface SubscribeOptions {
-    queue?: string;
+    queueGroup?: string;
     max?: number;
 }
 
 
 export class NatsConnection implements ClientHandlers {
     options: NatsConnectionOptions;
-    transport!: Transport;
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];
     errorListeners: ErrorCallback[] = [];
@@ -50,7 +50,6 @@ export class NatsConnection implements ClientHandlers {
             ProtocolHandler.connect(opts, nc)
                 .then((ph) => {
                     nc.protocol = ph;
-                    nc.transport = ph.transport;
                     resolve(nc);
                 })
                 .catch((err) => {
@@ -63,7 +62,7 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: string) {
+    publish(subject: string, data?: string) {
         subject = subject || "";
         if(subject.length === 0) {
             this.errorHandler(new Error("subject required"));
@@ -82,7 +81,7 @@ export class NatsConnection implements ClientHandlers {
                 reject(new NatsError("closed", "closed" ));
             }
 
-            let s = {} as Sub;
+            let s = defaultSub();
             extend(s, opts);
             s.subject = subject;
             s.callback = cb;
@@ -118,7 +117,7 @@ export class NatsConnection implements ClientHandlers {
     }
 
     isClosed() : boolean {
-        return this.transport.isClosed();
+        return this.protocol.isClosed();
     }
 
 }
