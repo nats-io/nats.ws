@@ -32,52 +32,57 @@ test.after((t) => {
     }
 });
 
-test.cb('client connect fails on bad port', (t)=> {
-    t.plan(1);
-    NatsConnection.connect({url: "ws://localhost:30001"})
-        .then((c: NatsConnection) => {
-            t.fail('should have not been able to connect');
-            c.close();
-            t.end();
-        })
-        .catch((err: Error) => {
-            t.pass();
-            t.end();
-        });
-});
-
-test.cb('client connect', (t)=> {
-    t.plan(1);
-    NatsConnection.connect({url: "ws://localhost:30000"})
-        .then((c: NatsConnection) => {
-            t.pass();
-            t.end();
-        })
-        .catch((err: Error) => {
-            t.fail('should have connected');
-            t.end();
-        });
-});
-
-test.cb('bad publish', (t)=> {
-    t.plan(2);
-    NatsConnection.connect({url: "ws://localhost:30000"})
-        .then((c: NatsConnection) => {
-            t.pass();
-            c.addEventListener('error', (err)=>{
+test('client connect fails on bad port', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: "ws://localhost:30001"})
+            .then((c: NatsConnection) => {
+                c.close();
+                reject('should have not been able to connect');
+            })
+            .catch((err: Error) => {
                 t.pass();
-                t.end();
+                resolve();
             });
-            c.publish("", "");
-            t.end();
-        })
-        .catch((err: Error) => {
-            let m = err ? err.message : "";
-            t.fail(m);
-        });
+    });
 });
 
-test('subhello', (t)=> {
+test('client connect', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: "ws://localhost:30000"})
+            .then((c: NatsConnection) => {
+                t.pass();
+                c.close();
+                resolve();
+            })
+            .catch((err: Error) => {
+                reject(err);
+            });
+    });
+
+});
+
+test('bad publish', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(2);
+        NatsConnection.connect({url: "ws://localhost:30000"})
+            .then((c: NatsConnection) => {
+                t.pass();
+                c.addEventListener('error', (err)=>{
+                    t.pass();
+                    c.close();
+                    resolve();
+                });
+                c.publish("", "");
+            })
+            .catch((err: Error) => {
+                reject(err);
+            });
+    });
+});
+
+test('hello', (t)=> {
     t.plan(4);
     return new Promise((resolve, reject) => {
         NatsConnection.connect({url: "ws://localhost:30000"})

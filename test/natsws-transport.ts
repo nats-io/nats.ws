@@ -32,40 +32,35 @@ test.after((t) => {
     }
 });
 
-test.cb('wsnats', (t)=> {
-    t.plan(2);
+test('wsnats', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(2);
 
-    let th = {} as TransportHandlers;
+        let th = {} as TransportHandlers;
 
-    th.closeHandler = () => {}
-    th.errorHandler = (evt: Event) => {
-        let err;
-        if(evt) {
-            err = (evt as ErrorEvent).error;
-            t.fail(err);
-        } else {
-            t.fail();
-        }
-        t.end();
-    };
-    th.messageHandler = (me: MessageEvent) => {
-        if (me.data.match(/^INFO/)) {
-            t.pass();
-            transport.write("PING\r\n");
-        }
-        if (me.data.match(/^PONG/)) {
-            t.pass();
-            t.end();
-        }
-    };
-
-    let transport: Transport;
-    WSTransport.connect(new URL("ws://localhost:40000"), th)
-        .then(nt => {
-            transport = nt;
-        }).catch(err => {
-        t.fail(err.message);
-        t.end();
+        th.closeHandler = () => {};
+        th.errorHandler = (evt: Event) => {
+            let err = evt as ErrorEvent;
+            reject(err ? err.error : "");
+        };
+        th.messageHandler = (me: MessageEvent) => {
+            if (me.data.match(/^INFO/)) {
+                t.pass();
+                transport.write("PING\r\n");
+            }
+            if (me.data.match(/^PONG/)) {
+                t.pass();
+                transport.close();
+                resolve();
+            }
+        };
+        let transport: Transport;
+        WSTransport.connect(new URL("ws://localhost:40000"), th)
+            .then(nt => {
+                transport = nt;
+            }).catch(err => {
+                reject(err);
+            })
     })
 });
 

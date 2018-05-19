@@ -1,9 +1,19 @@
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {extend} from "./util";
 import {ClientEventMap} from "./nats";
-import {ClientHandlers, ProtocolHandler, Sub, MsgCallback, Subscription, defaultSub} from "./protocol";
+import {
+    ClientHandlers,
+    ProtocolHandler,
+    Sub,
+    MsgCallback,
+    Subscription,
+    defaultSub,
+    RequestOptions,
+    defaultReq,
+    Request
+} from "./protocol";
 import {NatsError} from "./error";
-import * as util from "util";
+const nuid = require('nuid');
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 
@@ -62,16 +72,18 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data?: string) {
+    publish(subject: string, data?: string | null, reply?: string) {
         subject = subject || "";
         if(subject.length === 0) {
             this.errorHandler(new Error("subject required"));
             return;
         }
         data = data || "";
-        let m = "PUB " + subject + " " + data.length + "\r\n" + data + "\r\n";
-
-        this.protocol.sendCommand(m);
+        if(reply) {
+            this.protocol.sendCommand(`PUB ${subject} ${reply} ${data.length}\r\n${data}\r\n`);
+        } else {
+            this.protocol.sendCommand(`PUB ${subject} ${data.length}\r\n${data}\r\n`);
+        }
     }
 
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}) : Promise<Subscription> {
@@ -88,6 +100,23 @@ export class NatsConnection implements ClientHandlers {
             resolve(this.protocol.subscribe(s));
         });
     }
+
+    request(subject: string, cb: MsgCallback, data?: string | null, opts?: RequestOptions): Promise<Request> {
+        return new Promise<Request>((resolve, reject) => {
+            if(this.isClosed()) {
+                //FIXME: proper error
+                reject(new NatsError("closed", "closed" ));
+            }
+            let r = defaultReq();
+            opts = opts || {} as RequestOptions;
+            extend(r, opts);
+            r.token = nuid.next();
+            r.callback = cb;
+            resolve(this.protocol.request(r));
+            this.publish(subject, data, `${this.protocol.muxSubscriptions.baseInbox}${r.token}`);
+        });
+    }
+
 
     flush(f?: Function): void {
         this.protocol.flush(f);
@@ -119,7 +148,6 @@ export class NatsConnection implements ClientHandlers {
     isClosed() : boolean {
         return this.protocol.isClosed();
     }
-
 }
 
 

@@ -2,6 +2,7 @@ import {NatsConnectionOptions} from "./nats";
 import {TransportHandlers, WSTransport, Transport} from "./transport";
 import {NatsError} from "./error";
 import {extend} from "./util";
+const nuid = require('nuid');
 
 const FLUSH_THRESHOLD = 65536;
 
@@ -26,6 +27,10 @@ const PONG_RESPONSE = 'PONG' + CR_LF;
 const CONNECT = 'CONNECT';
 const SUB = 'SUB';
 const UNSUB = 'UNSUB';
+
+export function createInbox(): string {
+    return `_INBOX.${nuid.next()}`;
+}
 
 export class Connect {
     lang: string = "javascript";
@@ -62,19 +67,50 @@ export interface MsgCallback {
     (msg: Msg):void;
 }
 
-export interface Sub {
-    sid: number;
+export interface RequestOptions {
+    max?: number;
+    timeout?: number;
+}
+
+export interface Base {
     subject: string;
     callback: MsgCallback;
     received: number;
-    queueGroup?: string | null;
     timeout?: number | null;
     max?: number | null;
-    expected?: number;
+}
+
+export interface Req extends Base {
+    token: string;
+}
+
+export interface Sub extends Base {
+    sid: number;
+    queueGroup?: string | null;
 }
 
 export function defaultSub(): Sub {
     return {sid: 0, subject: "", received: 0} as Sub;
+}
+
+export function defaultReq() : Req {
+    return {token: "", subject: "", received: 0, max: 1} as Req;
+
+}
+
+
+export class Request {
+    token: string;
+    private protocol: ProtocolHandler;
+
+    constructor(req: Req, protocol: ProtocolHandler) {
+        this.token = req.token;
+        this.protocol = protocol;
+    }
+
+    unsubscribe(max?: number) : void {
+        this.protocol.cancelRequest(this.token, max);
+    }
 }
 
 export class Subscription {
@@ -91,8 +127,71 @@ export class Subscription {
     }
 }
 
+export class MuxSubscription {
+    baseInbox!: string;
+    reqs: {[key: string]: Req} = {};
+    length: number = 0;
+
+    init(): string {
+        this.baseInbox = `${createInbox()}.`;
+        return this.baseInbox;
+    }
+
+    add(r: Req) {
+        this.length++;
+        this.reqs[r.token] = r;
+    }
+
+    get(token: string): Req | null {
+        if(token in this.reqs) {
+            return this.reqs[token];
+        }
+        return null;
+    }
+
+    cancel(r: Req) : void {
+        if(r && r.timeout) {
+            clearTimeout(r.timeout);
+            r.timeout = null;
+        }
+        if(r.token in this.reqs) {
+            delete this.reqs[r.token];
+            this.length--;
+        }
+    }
+
+    getToken(m: Msg): string| null {
+        let s = m.subject || "";
+        if(s.indexOf(this.baseInbox) === 0) {
+            return s.substring(this.baseInbox.length);
+        }
+        return null;
+    }
+
+    dispatcher() {
+        let mux = this;
+        return function(m: Msg) {
+            let token = mux.getToken(m);
+            if (token) {
+                let r = mux.get(token);
+                if (r) {
+                    r.received++;
+                    if (r.max === null) {
+                        mux.cancel(r);
+                    }
+                    if (r.max && r.max >= r.received) {
+                        mux.cancel(r);
+                    }
+                    r.callback(m);
+                }
+            }
+        }
+    };
+}
+
 
 export class Subscriptions {
+    mux!: Sub;
     subs: {[key: number]: Sub} = {};
     sidCounter: number = 0;
     length: number = 0;
@@ -105,6 +204,15 @@ export class Subscriptions {
         return s;
     }
 
+    setMux(s: Sub) : Sub {
+        this.mux = s;
+        return s;
+    }
+
+    getMux() : Sub | null {
+        return this.mux;
+    }
+
     get(sid: number) : (Sub | null) {
         if(sid in this.subs) {
             return this.subs[sid];
@@ -112,18 +220,13 @@ export class Subscriptions {
         return null;
     }
 
-    all() : Sub[] {
+    all() : (Sub)[] {
         let buf = [];
         for(let sid in this.subs) {
             let sub = this.subs[sid];
             buf.push(sub);
         }
         return buf;
-    }
-
-    isMuxSubject(s: string) {
-        // fixme handle MUX
-        return false;
     }
 
     cancel(s: Sub): void {
@@ -182,6 +285,10 @@ export class DataBuffer {
     chunks: string[] = [];
     length: number = 0;
 
+    count() : number {
+        return this.chunks.length;
+    }
+
     push(data: string) {
         if(data) {
             this.chunks.push(data);
@@ -215,6 +322,7 @@ export class DataBuffer {
 export class ProtocolHandler implements TransportHandlers {
     infoReceived: boolean = false;
     subscriptions: Subscriptions;
+    muxSubscriptions: MuxSubscription;
     inbound: DataBuffer = new DataBuffer();
     outbound: DataBuffer = new DataBuffer();
     state: ParserState = ParserState.AWAITING_CONTROL;
@@ -231,34 +339,35 @@ export class ProtocolHandler implements TransportHandlers {
         this.options = options;
         this.clientHandlers = handlers;
         this.subscriptions = new Subscriptions();
-    }
-
-    // @ts-ignore
-    firstPongHandler(resolver, rejector: Function):void {
-        let that = this;
-        let to = setTimeout(()=> {
-            rejector(new Error('timeout receiving pong'));
-        }, 1000);
-        let f = function() {
-            clearTimeout(to);
-            resolver(that);
-        };
-        this.pongs.push(f);
+        this.muxSubscriptions = new MuxSubscription();
     }
 
     public static connect(options: NatsConnectionOptions, handlers: ClientHandlers) : Promise<ProtocolHandler> {
         return new Promise<ProtocolHandler>((resolve, reject) => {
             let ph = new ProtocolHandler(options, handlers);
-            ph.firstPongHandler(resolve, reject);
-            // we schedule the handler for the first PONG to be
-            // the one that resolves the promise.
+            let pongPromise = new Promise<boolean>((ok, fail) => {
+                let timer = setTimeout(()=> {
+                    fail(new Error("timeout"));
+                }, 3000);
+                ph.pongs.push(() => {
+                    clearTimeout(timer);
+                    ok(true);
+                });
+            });
+
             WSTransport.connect(new URL(options.url), ph)
                 .then((transport) => {
                     ph.transport = transport;
                 })
                 .catch((err) => {
                     reject(err);
-                })
+                });
+
+            pongPromise.then((ok) => {
+                resolve(ph);
+            }).catch((err) => {
+                reject(err);
+            });
         });
     }
 
@@ -364,7 +473,7 @@ export class ProtocolHandler implements TransportHandlers {
         if(cmd && cmd.length) {
             this.outbound.push(cmd);
         }
-        if(this.outbound.length === 1) {
+        if(this.outbound.count() === 1) {
             setTimeout(()=> {
                 this.flushPending();
             });
@@ -373,8 +482,28 @@ export class ProtocolHandler implements TransportHandlers {
         }
     }
 
+
+    private initMux() : void {
+        let mux = this.subscriptions.getMux();
+        if(!mux) {
+            let inbox = this.muxSubscriptions.init();
+            let sub = defaultSub();
+            // dot is already part of mux
+            sub.subject = `${inbox}*`;
+            sub.callback = this.muxSubscriptions.dispatcher();
+            this.subscriptions.setMux(sub);
+            this.subscribe(sub);
+        }
+    }
+
+    request(r: Req) : Request {
+        this.initMux();
+        this.muxSubscriptions.add(r);
+        return new Request(r, this);
+    }
+
     subscribe(s: Sub) : Subscription {
-        let sub = this.subscriptions.add(s);
+        let sub = this.subscriptions.add(s) as Sub;
         if(sub.queueGroup) {
             this.sendCommand(`SUB ${sub.subject} ${sub.queueGroup} ${sub.sid}\r\n`);
         } else {
@@ -390,19 +519,29 @@ export class ProtocolHandler implements TransportHandlers {
 
         let s = this.subscriptions.get(sid);
         if(s) {
-            if(! this.subscriptions.isMuxSubject(s.subject)) {
-                if(max) {
-                    this.sendCommand(`UNSUB ${sid} ${max}\r\n`);
-                } else {
-                    this.sendCommand(`UNSUB ${sid}\r\n`);
-                }
+            if(max) {
+                this.sendCommand(`UNSUB ${sid} ${max}\r\n`);
+            } else {
+                this.sendCommand(`UNSUB ${sid}\r\n`);
             }
             s.max = max;
             if(s.max === undefined || s.received >= s.max) {
                 this.subscriptions.cancel(s);
             }
         }
+    }
 
+    cancelRequest(token: string, max?: number) : void {
+        if(!token || this.isClosed()) {
+            return;
+        }
+        let r = this.muxSubscriptions.get(token);
+        if(r) {
+            r.max = max;
+            if(r.max === undefined || r.received >= r.max) {
+                this.muxSubscriptions.cancel(r);
+            }
+        }
     }
 
     flush(f?: Function) : void {

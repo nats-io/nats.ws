@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",
-    "test": "tsc && ava --verbose -T 5000",
-    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 10000 -m 'subhello'"
+    "test": "tsc && nyc ava --verbose -T 5000",
+    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 5000 -m 'request fire callbacks'"
   },
   "repository": {
     "type": "git",
@@ -20,11 +20,12 @@
   "author": "Alberto Ricart",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@types/node": "^10.0.9",
+    "@types/node": "^10.1.2",
     "@types/ws": "^5.1.1",
     "ava": "1.0.0-beta.4",
     "browser-env": "^3.2.5",
     "jsdom": "^11.10.0",
+    "nyc": "^11.8.0",
     "ts-loader": "^4.3.0",
     "typescript": "^2.8.3"
   },
@@ -41,6 +42,7 @@
     ]
   },
   "dependencies": {
+    "nuid": "^1.0.0",
     "ws": "latest"
   }
 }
