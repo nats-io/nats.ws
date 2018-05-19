@@ -91,10 +91,9 @@ export class WSTransport {
 
             transport.stream.onopen = function (evt: Event) {
                 transport.trace('ws open');
-                // FIXME: we cannot resolve immediately!
-                // we connected to a proxy which is establishing a
-                // connection to NATS, that can fail - wait
-                // for data to arrive.
+                // we cannot resolve immediately! we connected to
+                // a proxy which is establishing a connection to NATS,
+                // that can fail - wait for data to arrive.
             };
 
             transport.stream.onmessage = function (me: MessageEvent) {
