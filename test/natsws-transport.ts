@@ -28,17 +28,18 @@ test.after((t) => {
     try {
         //@ts-ignore
         t.context.wse.shutdown();
-    } catch(ex) {
+    } catch (ex) {
     }
 });
 
-test('wsnats', (t)=> {
+test('wsnats', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(2);
 
         let th = {} as TransportHandlers;
 
-        th.closeHandler = () => {};
+        th.closeHandler = () => {
+        };
         th.errorHandler = (evt: Event) => {
             let err = evt as ErrorEvent;
             reject(err ? err.error : "");
@@ -59,8 +60,8 @@ test('wsnats', (t)=> {
             .then(nt => {
                 transport = nt;
             }).catch(err => {
-                reject(err);
-            })
+            reject(err);
+        })
     })
 });
 

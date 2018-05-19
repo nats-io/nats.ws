@@ -19,7 +19,7 @@ import * as wsecho from './wsecho'
 console.log(process.argv);
 
 //@ts-ignore
-if(process.argv.length == 3 && !isNaN(process.argv[2])) {
+if (process.argv.length == 3 && !isNaN(process.argv[2])) {
     new wsecho.WSEchoServer(parseInt(process.argv[2], 10));
 } else {
     console.log('usage: ts-node wsecho-cli <port>');

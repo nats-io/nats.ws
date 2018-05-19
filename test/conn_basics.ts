@@ -28,11 +28,11 @@ test.after((t) => {
     try {
         //@ts-ignore
         t.context.wse.shutdown();
-    } catch(ex) {
+    } catch (ex) {
     }
 });
 
-test('client connect fails on bad port', (t)=> {
+test('client connect fails on bad port', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: "ws://localhost:30001"})
@@ -47,7 +47,7 @@ test('client connect fails on bad port', (t)=> {
     });
 });
 
-test('client connect', (t)=> {
+test('client connect', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: "ws://localhost:30000"})
@@ -63,13 +63,13 @@ test('client connect', (t)=> {
 
 });
 
-test('bad publish', (t)=> {
+test('bad publish', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(2);
         NatsConnection.connect({url: "ws://localhost:30000"})
             .then((c: NatsConnection) => {
                 t.pass();
-                c.addEventListener('error', (err)=>{
+                c.addEventListener('error', (err) => {
                     t.pass();
                     c.close();
                     resolve();
@@ -82,18 +82,18 @@ test('bad publish', (t)=> {
     });
 });
 
-test('hello', (t)=> {
+test('hello', (t) => {
     t.plan(4);
     return new Promise((resolve, reject) => {
         NatsConnection.connect({url: "ws://localhost:30000"})
             .then((c: NatsConnection) => {
                 t.pass();
-                c.addEventListener('error', (err)=>{
+                c.addEventListener('error', (err) => {
                     reject();
                 });
                 c.subscribe("hello", (msg: Msg) => {
                     t.pass();
-                    if(msg.data === "world") {
+                    if (msg.data === "world") {
                         t.pass();
                     }
                     c.close();

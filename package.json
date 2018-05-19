@@ -27,7 +27,8 @@
     "jsdom": "^11.10.0",
     "nyc": "^11.8.0",
     "ts-loader": "^4.3.0",
-    "typescript": "^2.8.3"
+    "typescript": "^2.8.3",
+    "ws": "latest"
   },
   "ava": {
     "require": [
@@ -42,7 +43,6 @@
     ]
   },
   "dependencies": {
-    "nuid": "^1.0.0",
-    "ws": "latest"
+    "nuid": "^1.0.0"
   }
 }

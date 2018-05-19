@@ -1,19 +1,23 @@
-
 export interface Transport {
-    isConnected() : boolean;
-    isClosed() : boolean;
-    write(data: any) : void;
+    isConnected(): boolean;
+
+    isClosed(): boolean;
+
+    write(data: any): void;
+
     destroy(): void;
+
     close(): void;
+
     isSecure(): boolean;
 }
 
 export interface CloseHandler {
-    (evt : CloseEvent): void;
+    (evt: CloseEvent): void;
 }
 
 export interface EventHandler {
-    (evt: Event) : void;
+    (evt: Event): void;
 }
 
 export interface MessageHandler {
@@ -23,7 +27,7 @@ export interface MessageHandler {
 
 export interface TransportHandlers {
     openHandler: EventHandler;
-    closeHandler:  CloseHandler;
+    closeHandler: CloseHandler;
     errorHandler: EventHandler;
     messageHandler: MessageHandler;
 }
@@ -52,12 +56,12 @@ export class WSTransport {
             // so they can be removed.
             let connected: boolean;
             let resolveTimeout: number;
-            transport.stream.onclose = function(evt: CloseEvent) {
+            transport.stream.onclose = function (evt: CloseEvent) {
                 transport.trace('ws closed', evt);
-                if(transport.closed) {
+                if (transport.closed) {
                     return;
                 }
-                if(connected) {
+                if (connected) {
                     transport.handlers.closeHandler(evt);
                     transport.close();
                 } else {
@@ -66,26 +70,26 @@ export class WSTransport {
                 }
             };
 
-            transport.stream.onerror = function(evt: Event) {
+            transport.stream.onerror = function (evt: Event) {
                 let err;
-                if(evt) {
+                if (evt) {
                     err = (evt as ErrorEvent).error;
                 }
                 transport.trace('ws error', err)
-                if(transport.closed) {
+                if (transport.closed) {
                     return;
                 }
-                if(transport) {
+                if (transport) {
                     transport.close();
                 }
-                if(connected) {
+                if (connected) {
                     transport.handlers.errorHandler(evt);
                 } else {
                     reject(err);
                 }
             };
 
-            transport.stream.onopen = function(evt: Event) {
+            transport.stream.onopen = function (evt: Event) {
                 transport.trace('ws open');
                 // FIXME: we cannot resolve immediately!
                 // we connected to a proxy which is establishing a
@@ -93,18 +97,18 @@ export class WSTransport {
                 // for data to arrive.
             };
 
-            transport.stream.onmessage = function(me: MessageEvent) {
+            transport.stream.onmessage = function (me: MessageEvent) {
                 // transport will resolve as soon as we get data as the
                 // proxy has connected to a server
                 transport.trace('>', [me.data]);
-                if(connected) {
+                if (connected) {
                     transport.handlers.messageHandler(me);
                 } else {
                     connected = true;
                     resolve(transport);
-                    setTimeout(function() {
+                    setTimeout(function () {
                         transport.handlers.messageHandler(me);
-                    },0);
+                    }, 0);
                 }
             };
         });
@@ -114,7 +118,7 @@ export class WSTransport {
         return this.closed;
     }
 
-    isConnected() : boolean {
+    isConnected(): boolean {
         return this.stream !== null && this.stream.readyState === WebSocket.OPEN;
     }
 
@@ -136,7 +140,7 @@ export class WSTransport {
             this.stream.onopen = null;
             this.stream.onmessage = null;
         }
-        if(this.stream.readyState !== WebSocket.CLOSED && this.stream.readyState !== WebSocket.CLOSING) {
+        if (this.stream.readyState !== WebSocket.CLOSED && this.stream.readyState !== WebSocket.CLOSING) {
             this.stream.close();
         }
         this.stream = null;
@@ -144,21 +148,21 @@ export class WSTransport {
 
     close(): void {
         this.closed = true;
-        if(this.stream && this.stream.bufferedAmount > 0) {
+        if (this.stream && this.stream.bufferedAmount > 0) {
             setTimeout(this.close.bind(this), 100);
             return;
         }
         this.destroy();
     }
 
-    trace(... args: any[]) : void {
-        if(this.debug) {
+    trace(...args: any[]): void {
+        if (this.debug) {
             console.log(args);
         }
     }
 
-    isSecure() : boolean {
-        if(this.stream) {
+    isSecure(): boolean {
+        if (this.stream) {
             let protocol = new URL(this.stream.url).protocol;
             return protocol.toLowerCase() === "wss";
         }

@@ -1,18 +1,17 @@
-import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {extend} from "./util";
 import {ClientEventMap} from "./nats";
 import {
     ClientHandlers,
-    ProtocolHandler,
-    Sub,
-    MsgCallback,
-    Subscription,
-    defaultSub,
-    RequestOptions,
     defaultReq,
-    Request
+    defaultSub,
+    MsgCallback,
+    ProtocolHandler,
+    Request,
+    RequestOptions,
+    Subscription
 } from "./protocol";
 import {NatsError} from "./error";
+
 const nuid = require('nuid');
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
@@ -20,13 +19,12 @@ export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 
 export interface NatsConnectionOptions {
     url: string;
-    name?:string;
+    name?: string;
 }
 
 export interface Callback {
-    ():void;
+    (): void;
 }
-
 
 export interface ErrorCallback {
     (error: Error): void;
@@ -68,29 +66,29 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    close() : void {
+    close(): void {
         this.protocol.close();
     }
 
     publish(subject: string, data?: string | null, reply?: string) {
         subject = subject || "";
-        if(subject.length === 0) {
+        if (subject.length === 0) {
             this.errorHandler(new Error("subject required"));
             return;
         }
         data = data || "";
-        if(reply) {
+        if (reply) {
             this.protocol.sendCommand(`PUB ${subject} ${reply} ${data.length}\r\n${data}\r\n`);
         } else {
             this.protocol.sendCommand(`PUB ${subject} ${data.length}\r\n${data}\r\n`);
         }
     }
 
-    subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}) : Promise<Subscription> {
+    subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
-            if(this.isClosed()) {
+            if (this.isClosed()) {
                 //FIXME: proper error
-                reject(new NatsError("closed", "closed" ));
+                reject(new NatsError("closed", "closed"));
             }
 
             let s = defaultSub();
@@ -103,9 +101,9 @@ export class NatsConnection implements ClientHandlers {
 
     request(subject: string, cb: MsgCallback, data?: string | null, opts?: RequestOptions): Promise<Request> {
         return new Promise<Request>((resolve, reject) => {
-            if(this.isClosed()) {
+            if (this.isClosed()) {
                 //FIXME: proper error
-                reject(new NatsError("closed", "closed" ));
+                reject(new NatsError("closed", "closed"));
             }
             let r = defaultReq();
             opts = opts || {} as RequestOptions;
@@ -125,13 +123,19 @@ export class NatsConnection implements ClientHandlers {
 
     errorHandler(error: Error): void {
         this.errorListeners.forEach((cb) => {
-            try {cb(error);}catch(ex) {}
+            try {
+                cb(error);
+            } catch (ex) {
+            }
         });
     }
 
     closeHandler(): void {
         this.closeListeners.forEach((cb) => {
-            try {cb();}catch(ex) {}
+            try {
+                cb();
+            } catch (ex) {
+            }
         });
     }
 
@@ -145,7 +149,7 @@ export class NatsConnection implements ClientHandlers {
         }
     }
 
-    isClosed() : boolean {
+    isClosed(): boolean {
         return this.protocol.isClosed();
     }
 }

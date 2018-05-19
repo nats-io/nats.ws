@@ -26,13 +26,7 @@ export class WsToSocket {
         this.webSocket = websocket;
     }
 
-    trace(...args:any[]) {
-        if(this.debug) {
-            console.log(args);
-        }
-    }
-
-    static connect(websocket: ws, host: string, port: number, debug: boolean = false) : Promise<WsToSocket> {
+    static connect(websocket: ws, host: string, port: number, debug: boolean = false): Promise<WsToSocket> {
         return new Promise((resolve, reject) => {
             let proxy = new WsToSocket(websocket);
             proxy.debug = debug || isTracing();
@@ -61,23 +55,29 @@ export class WsToSocket {
 
             proxy.webSocket.on('close', () => {
                 proxy.trace('proxy ws close');
-                if(proxy.tcpSocket) {
+                if (proxy.tcpSocket) {
                     proxy.tcpSocket.destroy();
                 }
             });
 
             proxy.webSocket.on('message', (s: string) => {
                 proxy.trace('>> ws', s);
-                if(proxy.tcpSocket) {
+                if (proxy.tcpSocket) {
                     proxy.tcpSocket.write(Buffer.from(s));
                     proxy.trace('<< nats', s);
                 }
             });
         });
     }
+
+    trace(...args: any[]) {
+        if (this.debug) {
+            console.log(args);
+        }
+    }
 }
 
-function isTracing() : boolean {
+function isTracing(): boolean {
     let v = process.env.TRACE;
     return v != undefined;
 }
@@ -105,8 +105,8 @@ export class NatsWsProxy {
                 let wse = this.webSockets.find((e) => {
                     return e.webSocket === ws;
                 });
-                if(wse) {
-                    this.webSockets.splice(this.webSockets.indexOf(wse),1);
+                if (wse) {
+                    this.webSockets.splice(this.webSockets.indexOf(wse), 1);
                 }
             });
             WsToSocket.connect(websocket, hp[0], hp[1])
@@ -120,8 +120,8 @@ export class NatsWsProxy {
 
     }
 
-    trace(... args: any[]) : void {
-        if(this.debug) {
+    trace(...args: any[]): void {
+        if (this.debug) {
             console.log(args.join(' '));
         }
     }

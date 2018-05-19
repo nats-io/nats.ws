@@ -15,13 +15,13 @@ test.after((t) => {
     try {
         //@ts-ignore
         t.context.wse.shutdown();
-    } catch(ex) {
+    } catch (ex) {
         console.error(ex);
     }
 });
 
 
-test( 'connect', (t) => {
+test('connect', (t) => {
     return NatsConnection.connect({url: `ws://localhost:${PORT}`})
         .then(nc => {
             nc.close();
@@ -40,7 +40,7 @@ test('shouldnt connect', (t) => {
         });
 });
 
-test('publish', (t)=> {
+test('publish', (t) => {
     t.plan(1);
     return new Promise((resolve, reject) => {
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
@@ -55,7 +55,7 @@ test('publish', (t)=> {
     });
 });
 
-test('subscribe and unsubscribe', (t)=> {
+test('subscribe and unsubscribe', (t) => {
     return new Promise((resolve, reject) => {
         try {
             t.plan(10);
@@ -103,7 +103,7 @@ test('subscribe and unsubscribe', (t)=> {
                     reject(err);
                 });
         }
-        catch(err) {
+        catch (err) {
             console.log(err);
         }
     });
@@ -134,7 +134,7 @@ test('request fire callbacks', (t) => {
             .then((c: NatsConnection) => {
                 let s = 'hello';
                 c.subscribe(s, (msg: Msg) => {
-                    if(msg.reply) {
+                    if (msg.reply) {
                         c.publish(msg.reply, 'foo');
                     }
                 });
@@ -185,18 +185,19 @@ test('correct reply in message', (t) => {
 });
 
 test('closed cannot subscribe', (t) => {
-   return new Promise((resolve, reject) => {
-       t.plan(1);
-       NatsConnection.connect({url: `ws://localhost:${PORT}`})
-           .then((c: NatsConnection) => {
-               c.close();
-               c.subscribe('foo', () => {})
-                   .catch((err) => {
-                       t.pass();
-                       resolve();
-                   })
-           })
-   }) ;
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.close();
+                c.subscribe('foo', () => {
+                })
+                    .catch((err) => {
+                        t.pass();
+                        resolve();
+                    })
+            })
+    });
 });
 
 test('close cannot request', (t) => {
@@ -205,11 +206,12 @@ test('close cannot request', (t) => {
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
                 c.close();
-                c.request('foo', () => {})
+                c.request('foo', () => {
+                })
                     .catch((err) => {
                         t.pass();
                         resolve();
                     })
             })
-    }) ;
+    });
 });

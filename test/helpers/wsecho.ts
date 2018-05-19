@@ -29,7 +29,7 @@ export class WSEchoServer {
             client.on('message', (data) => {
                 this.server.clients.forEach((c) => {
                     c.send(data, (err) => {
-                        if(err) {
+                        if (err) {
                             console.error('Error sending %s', err);
                         }
                     });
