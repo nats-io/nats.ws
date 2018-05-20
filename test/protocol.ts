@@ -11,7 +11,7 @@ test('parse messages', (t) => {
         let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
         protocol.infoReceived = true;
         let data = 'MSG test.foo 1 11\r\nHello World\r\nMSG test.bar 1 11\r\nHello World\r\nMSG test.baz 1 11\r\nHello World\r\nPONG\r\n';
-        protocol.inbound.push(data);
+        protocol.inbound.fill(data);
 
         let s = {} as Sub;
         s.sid = 1;

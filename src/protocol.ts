@@ -252,8 +252,8 @@ export interface Msg {
 
 export class MsgBuffer {
     msg: Msg;
-    psize: number;
-    chunks: string[] | null = null;
+    length: number;
+    buf: string[] | null = null;
 
     constructor(chunks: RegExpExecArray) {
         this.msg = {} as Msg;
@@ -261,23 +261,19 @@ export class MsgBuffer {
         this.msg.sid = parseInt(chunks[2], 10);
         this.msg.reply = chunks[4];
         this.msg.size = parseInt(chunks[5], 10);
-        this.psize = this.msg.size + CR_LF_LEN;
+        this.length = this.msg.size + CR_LF_LEN;
     }
 
-    push(s: string) {
-        if (!this.chunks) {
-            this.chunks = [];
+    fill(data: string) {
+        if (!this.buf) {
+            this.buf = [];
         }
-        this.chunks.push(s);
-        this.psize -= s.length;
+        this.buf.push(data);
+        this.length -= data.length;
 
-        if (this.psize === 0) {
-            this.msg.data = this.chunks.join('').slice(0, this.msg.size);
+        if (this.length === 0) {
+            this.msg.data = this.buf.join('').slice(0, this.msg.size);
         }
-    }
-
-    hasChunks(): boolean {
-        return this.chunks != null && this.chunks.length > 0;
     }
 }
 
@@ -289,7 +285,7 @@ export class DataBuffer {
         return this.chunks.length;
     }
 
-    push(data: string) {
+    fill(data: string) {
         if (data) {
             this.chunks.push(data);
             this.length += data.length;
@@ -300,22 +296,18 @@ export class DataBuffer {
         return this.chunks.join('');
     }
 
-    drain(): string {
+    drain(n?: number): string {
         let v = this.chunks.join('');
         this.chunks = [];
         this.length = 0;
+        if(n !== undefined) {
+            let s = v.slice(0, n);
+            let t = v.slice(n);
+            this.fill(t);
+            v = s;
+        }
+
         return v;
-    }
-
-    read(n: number): string {
-        let v = this.chunks.join('');
-        return v.slice(0, n);
-    }
-
-    slice(start: number) {
-        let v = this.drain();
-        v = v.slice(start);
-        this.push(v);
     }
 }
 
@@ -419,13 +411,12 @@ export class ProtocolHandler implements TransportHandlers {
                         break;
                     }
                     if (this.inbound.length < this.payload.msg.size) {
-                        let d = this.inbound.peek();
-                        this.payload.push(d);
+                        let d = this.inbound.drain();
+                        this.payload.fill(d);
                         return;
                     }
-                    let dd = this.inbound.read(this.payload.psize);
-                    this.inbound.slice(this.payload.psize);
-                    this.payload.push(dd);
+                    let dd = this.inbound.drain(this.payload.length);
+                    this.payload.fill(dd);
                     this.processMsg();
                     this.state = ParserState.AWAITING_CONTROL;
                     this.payload = null;
@@ -437,7 +428,7 @@ export class ProtocolHandler implements TransportHandlers {
                 if (psize >= this.inbound.length) {
                     this.inbound.drain();
                 } else {
-                    this.inbound.slice(psize);
+                    this.inbound.drain(psize);
                 }
                 m = null;
             }
@@ -463,7 +454,7 @@ export class ProtocolHandler implements TransportHandlers {
 
     sendCommand(cmd: string) {
         if (cmd && cmd.length) {
-            this.outbound.push(cmd);
+            this.outbound.fill(cmd);
         }
         if (this.outbound.size() === 1) {
             setTimeout(() => {
@@ -560,7 +551,7 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     messageHandler(evt: MessageEvent): void {
-        this.inbound.push(evt.data);
+        this.inbound.fill(evt.data);
         this.processInbound();
     }
 
