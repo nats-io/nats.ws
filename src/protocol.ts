@@ -300,7 +300,7 @@ export class DataBuffer {
         let v = this.chunks.join('');
         this.chunks = [];
         this.length = 0;
-        if(n !== undefined) {
+        if (n !== undefined) {
             let s = v.slice(0, n);
             let t = v.slice(n);
             this.fill(t);

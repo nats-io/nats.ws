@@ -1,5 +1,5 @@
 import test from "ava";
-import {ClientHandlers, Msg, ProtocolHandler, Sub} from "../src/protocol";
+import {ClientHandlers, ProtocolHandler, Sub} from "../src/protocol";
 import {NatsConnectionOptions} from "../src/nats";
 
 test('parse messages', (t) => {
@@ -19,7 +19,7 @@ test('parse messages', (t) => {
         s.callback = (msg => {
             processed++;
             t.is(msg.data, "Hello World");
-            if(processed === expected) {
+            if (processed === expected) {
                 t.pass();
                 resolve();
             }

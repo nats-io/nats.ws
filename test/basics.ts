@@ -329,12 +329,12 @@ test('close cannot request', (t) => {
     });
 });
 
-test('callback called after flush', (t)=> {
+test('callback called after flush', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
-                c.flush(()=>{
+                c.flush(() => {
                     t.pass();
                     c.close();
                     resolve();
@@ -344,7 +344,7 @@ test('callback called after flush', (t)=> {
     });
 });
 
-test('callback called after publish', (t)=> {
+test('callback called after publish', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
@@ -359,12 +359,13 @@ test('callback called after publish', (t)=> {
     });
 });
 
-test('unsubscribe after close', (t)=> {
+test('unsubscribe after close', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
-                c.subscribe(nuid.next(), ()=>{})
+                c.subscribe(nuid.next(), () => {
+                })
                     .then((sub) => {
                         c.close();
                         sub.unsubscribe();
@@ -376,7 +377,7 @@ test('unsubscribe after close', (t)=> {
     });
 });
 
-test('unsubscribe stops messages', (t)=> {
+test('unsubscribe stops messages', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         let received = 0;
@@ -384,9 +385,9 @@ test('unsubscribe stops messages', (t)=> {
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
                 let subj = nuid.next();
-                c.subscribe(subj, ()=>{
+                c.subscribe(subj, () => {
                     received++;
-                    if(sub) {
+                    if (sub) {
                         sub.unsubscribe();
                     }
                 }).then((s) => {
@@ -394,7 +395,7 @@ test('unsubscribe stops messages', (t)=> {
                     c.publish(subj);
                     c.publish(subj);
                     c.publish(subj);
-                    c.publish(subj, "", "", ()=>{
+                    c.publish(subj, "", "", () => {
                         t.is(received, 1);
                         c.close();
                         resolve();
@@ -405,7 +406,61 @@ test('unsubscribe stops messages', (t)=> {
     });
 });
 
-test('close listener is called', (t)=> {
+test('async test', async t => {
+    t.plan(1);
+    let resolver: Function;
+    let timer: number;
+    let lock = new Promise((resolve, reject) => {
+        if (timer) {
+            clearTimeout(timer);
+        }
+        resolver = resolve;
+        //@ts-ignore
+        timer = setTimeout(() => {
+            reject('timeout');
+        }, 1000);
+    });
+    let nc = await NatsConnection.connect({url: `ws://localhost:${PORT}`});
+    let s = nuid.next();
+    let sub = await nc.subscribe(s, (msg: Msg) => {
+        t.pass();
+        resolver();
+    });
+    await nc.flush();
+    nc.publish(s);
+    await lock;
+    sub.unsubscribe();
+    nc.close();
+});
+
+test('request one', async t => {
+    t.plan(1);
+    let nc = await NatsConnection.connect({url: `ws://localhost:${PORT}`});
+    let s = nuid.next();
+    let sub = await nc.subscribe(s, (msg: Msg) => {
+        if (msg.reply) {
+            nc.publish(msg.reply, "foo");
+        }
+    });
+    let msg = await nc.requestOne(s, 1000, "test");
+    t.is(msg.data, "foo");
+    sub.unsubscribe();
+    nc.close();
+});
+
+test('request one timeout', async t => {
+    t.plan(1);
+    let nc = await NatsConnection.connect({url: `ws://localhost:${PORT}`});
+    let s = nuid.next();
+    try {
+        await nc.requestOne(s, 100, "test");
+    } catch (err) {
+        t.pass();
+        nc.close();
+    }
+});
+
+test('close listener is called', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(1);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
@@ -415,7 +470,7 @@ test('close listener is called', (t)=> {
                     resolve();
                 });
                 let stream = (c.protocol.transport as WSTransport).stream;
-                if(stream) {
+                if (stream) {
                     stream.close();
                 }
             });

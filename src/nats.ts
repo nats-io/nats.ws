@@ -4,6 +4,7 @@ import {
     ClientHandlers,
     defaultReq,
     defaultSub,
+    Msg,
     MsgCallback,
     ProtocolHandler,
     Request,
@@ -70,7 +71,7 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: string | null = "", reply: string="", cb?: Callback) {
+    publish(subject: string, data: string | null = "", reply: string = "", cb?: Callback) {
         subject = subject || "";
         if (subject.length === 0) {
             this.errorHandler(new Error("subject required"));
@@ -85,10 +86,11 @@ export class NatsConnection implements ClientHandlers {
             this.protocol.sendCommand(`PUB ${subject} ${data.length}\r\n${data}\r\n`);
         }
 
-        if(cb) {
+        if (cb) {
             this.flush(cb);
         }
     }
+
 
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
@@ -102,6 +104,28 @@ export class NatsConnection implements ClientHandlers {
             s.subject = subject;
             s.callback = cb;
             resolve(this.protocol.subscribe(s));
+        });
+    }
+
+    requestOne(subject: string, timeout: number = 1000, data?: string | null): Promise<Msg> {
+        return new Promise<Msg>((resolve, reject) => {
+            if (this.isClosed()) {
+                //FIXME: proper error
+                reject(new NatsError("closed", "closed"));
+            }
+            let r = defaultReq();
+            let opts = {max: 1} as RequestOptions;
+            extend(r, opts);
+            r.token = nuid.next();
+            //@ts-ignore
+            r.timeout = setTimeout(() => {
+                reject('timeout');
+            }, timeout);
+            r.callback = (msg: Msg) => {
+                resolve(msg);
+            };
+            this.protocol.request(r);
+            this.publish(subject, data, `${this.protocol.muxSubscriptions.baseInbox}${r.token}`);
         });
     }
 
