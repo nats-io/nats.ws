@@ -70,17 +70,23 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data?: string | null, reply?: string) {
+    publish(subject: string, data: string | null = "", reply: string="", cb?: Callback) {
         subject = subject || "";
         if (subject.length === 0) {
             this.errorHandler(new Error("subject required"));
             return;
         }
         data = data || "";
+        reply = reply || "";
+
         if (reply) {
             this.protocol.sendCommand(`PUB ${subject} ${reply} ${data.length}\r\n${data}\r\n`);
         } else {
             this.protocol.sendCommand(`PUB ${subject} ${data.length}\r\n${data}\r\n`);
+        }
+
+        if(cb) {
+            this.flush(cb);
         }
     }
 

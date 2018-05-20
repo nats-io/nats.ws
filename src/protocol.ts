@@ -519,7 +519,8 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     processError(s: string) {
-        console.error('error from server', s);
+        let err = new Error(s);
+        this.errorHandler(err);
     }
 
     sendSubscriptions() {
@@ -542,7 +543,7 @@ export class ProtocolHandler implements TransportHandlers {
         this.clientHandlers.closeHandler();
     }
 
-    errorHandler(evt: Event): void {
+    errorHandler(evt: Event | Error): void {
         let err;
         if (evt) {
             err = (evt as ErrorEvent).error;

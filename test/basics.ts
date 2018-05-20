@@ -2,7 +2,8 @@ import {NatsWsProxy} from './helpers/nats-wsproxy'
 import {NatsConnection} from "../src/nats";
 import test from "ava";
 import nuid from 'nuid';
-import {Msg} from "../src/protocol";
+import {Msg, Subscription} from "../src/protocol";
+import {WSTransport} from "../src/transport";
 
 let PORT = 32000;
 
@@ -127,13 +128,32 @@ test('subscriptions fire callbacks', (t) => {
     });
 });
 
+test('subscriptions pass exact subjects to cb', (t) => {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                let s = nuid.next();
+                let subj = `${s}.foo.bar.baz`;
+                c.subscribe(`${s}.*.*.*`, (msg: Msg) => {
+                    t.is(msg.subject, subj);
+                    c.close();
+                    resolve();
+                }).then(sub => {
+                    c.publish(subj);
+                });
+            });
+    });
+});
+
 test('subscriptions returns Subscription', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(3);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
                 let s = nuid.next();
-                c.subscribe(s, () => {}).then((sub) => {
+                c.subscribe(s, () => {
+                }).then((sub) => {
                     t.true(sub.sid > 0);
                     t.is(1, c.protocol.subscriptions.length);
                     sub.unsubscribe();
@@ -147,32 +167,56 @@ test('subscriptions returns Subscription', (t) => {
 });
 
 test('wildcard subscriptions', (t) => {
-   return new Promise((resolve, reject) => {
-       t.plan(1);
-       let expected = 3;
-       let received = 0;
-       NatsConnection.connect({url: `ws://localhost:${PORT}`})
-           .then((c: NatsConnection) => {
-               let s = nuid.next();
-               c.subscribe(`${s}.*`, (msg: Msg) => {
-                   received++;
-               }).then((sub) => {
-                   c.publish(`${s}.foo.baz`);     // miss
-                   c.publish(`${s}.foo.baz.foo`); // miss
-                   c.publish(`${s}.foo.baz.3`); // miss
-                   c.publish(`${s}.foo`);
-                   c.publish(`${s}.bar`);
-                   c.publish(`${s}.baz`);
-                   c.flush(() => {
-                      t.is(received, expected);
-                      sub.unsubscribe();
-                      c.close();
-                      resolve()
-                   });
-               });
-           });
+    return new Promise((resolve, reject) => {
+        t.plan(3);
+
+        let single = 3;
+        let partial = 2;
+        let full = 5;
+
+        let singleCounter = 0;
+        let partialCounter = 0;
+        let fullCounter = 0;
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                let s = nuid.next();
+                let singleSub = c.subscribe(`${s}.*`, (msg: Msg) => {
+                    singleCounter++;
+                });
+                let partialSub = c.subscribe(`${s}.foo.bar.*`, (msg: Msg) => {
+                    partialCounter++;
+                });
+                let fullSub = c.subscribe(`${s}.foo.>`, (msg: Msg) => {
+                    fullCounter++;
+                });
+
+                Promise.all([singleSub, partialSub, fullSub])
+                    .then((subs) => {
+                        c.publish(`${s}.bar`);
+                        c.publish(`${s}.baz`);
+                        c.publish(`${s}.foo.bar.1`);
+                        c.publish(`${s}.foo.bar.2`);
+                        c.publish(`${s}.foo.baz.3`);
+                        c.publish(`${s}.foo.baz.foo`);
+                        c.publish(`${s}.foo.baz`);
+                        c.publish(`${s}.foo`);
+                        c.flush(() => {
+                            t.is(singleCounter, single);
+                            subs[0].unsubscribe();
+
+                            t.is(partialCounter, partial);
+                            subs[1].unsubscribe();
+
+                            t.is(fullCounter, full);
+                            subs[2].unsubscribe();
+                            c.close();
+                            resolve()
+                        });
+                    });
+            });
     });
 });
+
 
 test('request fire callbacks', (t) => {
     return new Promise((resolve, reject) => {
@@ -184,7 +228,7 @@ test('request fire callbacks', (t) => {
                     t.is(msg.subject, s);
                     t.is(msg.data, 'hi');
                     if (msg.reply) {
-                        t.regex(msg.reply,/^_INBOX\.*/);
+                        t.regex(msg.reply, /^_INBOX\.*/);
                         c.publish(msg.reply, 'foo');
                     }
                 });
@@ -203,7 +247,8 @@ test('request return a Request', (t) => {
         t.plan(3);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
-                c.request(nuid.next(), (msg: Msg) => {})
+                c.request(nuid.next(), (msg: Msg) => {
+                })
                     .then((req) => {
                         t.true(req.token.length > 0);
                         t.is(1, c.protocol.muxSubscriptions.length);
@@ -283,3 +328,112 @@ test('close cannot request', (t) => {
             })
     });
 });
+
+test('callback called after flush', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.flush(()=>{
+                    t.pass();
+                    c.close();
+                    resolve();
+                });
+            });
+
+    });
+});
+
+test('callback called after publish', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.publish('foo', "", "", () => {
+                    t.pass();
+                    c.close();
+                    resolve();
+                });
+            });
+
+    });
+});
+
+test('unsubscribe after close', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.subscribe(nuid.next(), ()=>{})
+                    .then((sub) => {
+                        c.close();
+                        sub.unsubscribe();
+                        t.pass();
+                        resolve();
+                    });
+            });
+
+    });
+});
+
+test('unsubscribe stops messages', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        let received = 0;
+        let sub: Subscription;
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                let subj = nuid.next();
+                c.subscribe(subj, ()=>{
+                    received++;
+                    if(sub) {
+                        sub.unsubscribe();
+                    }
+                }).then((s) => {
+                    sub = s;
+                    c.publish(subj);
+                    c.publish(subj);
+                    c.publish(subj);
+                    c.publish(subj, "", "", ()=>{
+                        t.is(received, 1);
+                        c.close();
+                        resolve();
+                    });
+                });
+            });
+
+    });
+});
+
+test('close listener is called', (t)=> {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.addEventListener("close", () => {
+                    t.pass();
+                    resolve();
+                });
+                let stream = (c.protocol.transport as WSTransport).stream;
+                if(stream) {
+                    stream.close();
+                }
+            });
+    });
+});
+
+test('error listener is called', (t) => {
+    return new Promise((resolve, reject) => {
+        t.plan(1);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.addEventListener("error", () => {
+                    t.pass();
+                    resolve();
+                });
+                (c.protocol.transport as WSTransport).write('HelloWorld');
+            });
+    });
+});
+
+
