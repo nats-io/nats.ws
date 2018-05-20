@@ -127,14 +127,65 @@ test('subscriptions fire callbacks', (t) => {
     });
 });
 
+test('subscriptions returns Subscription', (t) => {
+    return new Promise((resolve, reject) => {
+        t.plan(3);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                let s = nuid.next();
+                c.subscribe(s, () => {}).then((sub) => {
+                    t.true(sub.sid > 0);
+                    t.is(1, c.protocol.subscriptions.length);
+                    sub.unsubscribe();
+                    t.is(0, c.protocol.subscriptions.length);
+                    c.close();
+                    resolve();
+                });
+                c.publish(s);
+            });
+    });
+});
+
+test('wildcard subscriptions', (t) => {
+   return new Promise((resolve, reject) => {
+       t.plan(1);
+       let expected = 3;
+       let received = 0;
+       NatsConnection.connect({url: `ws://localhost:${PORT}`})
+           .then((c: NatsConnection) => {
+               let s = nuid.next();
+               c.subscribe(`${s}.*`, (msg: Msg) => {
+                   console.log('msg');
+                   received++;
+               }).then((sub) => {
+                   c.publish(`${s}.foo.baz`);     // miss
+                   c.publish(`${s}.foo.baz.foo`); // miss
+                   c.publish(`${s}.foo.baz.3`); // miss
+                   c.publish(`${s}.foo`);
+                   c.publish(`${s}.bar`);
+                   c.publish(`${s}.baz`);
+                   c.flush(() => {
+                      t.is(received, expected);
+                      sub.unsubscribe();
+                      c.close();
+                      resolve()
+                   });
+               });
+           });
+    });
+});
+
 test('request fire callbacks', (t) => {
     return new Promise((resolve, reject) => {
-        t.plan(2);
+        t.plan(5);
         NatsConnection.connect({url: `ws://localhost:${PORT}`})
             .then((c: NatsConnection) => {
                 let s = 'hello';
                 c.subscribe(s, (msg: Msg) => {
+                    t.is(msg.subject, s);
+                    t.is(msg.data, 'hi');
                     if (msg.reply) {
+                        t.regex(msg.reply,/^_INBOX\.*/);
                         c.publish(msg.reply, 'foo');
                     }
                 });
@@ -143,7 +194,25 @@ test('request fire callbacks', (t) => {
                     t.is(c.protocol.muxSubscriptions.length, 0);
                     c.close();
                     resolve();
-                });
+                }, "hi");
+            });
+    });
+});
+
+test('request return a Request', (t) => {
+    return new Promise((resolve, reject) => {
+        t.plan(3);
+        NatsConnection.connect({url: `ws://localhost:${PORT}`})
+            .then((c: NatsConnection) => {
+                c.request(nuid.next(), (msg: Msg) => {})
+                    .then((req) => {
+                        t.true(req.token.length > 0);
+                        t.is(1, c.protocol.muxSubscriptions.length);
+                        req.unsubscribe();
+                        t.is(0, c.protocol.muxSubscriptions.length);
+                        c.close();
+                        resolve();
+                    });
             });
     });
 });

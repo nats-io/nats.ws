@@ -252,7 +252,7 @@ export interface Msg {
 
 export class MsgBuffer {
     msg: Msg;
-    length: number;
+    psize: number;
     chunks: string[] | null = null;
 
     constructor(chunks: RegExpExecArray) {
@@ -261,24 +261,23 @@ export class MsgBuffer {
         this.msg.sid = parseInt(chunks[2], 10);
         this.msg.reply = chunks[4];
         this.msg.size = parseInt(chunks[5], 10);
-        this.length = this.msg.size + CR_LF_LEN;
+        this.psize = this.msg.size + CR_LF_LEN;
     }
-
 
     push(s: string) {
         if (!this.chunks) {
             this.chunks = [];
         }
         this.chunks.push(s);
-        this.length -= s.length;
+        this.psize -= s.length;
 
-        if (this.length === 0) {
+        if (this.psize === 0) {
             this.msg.data = this.chunks.join('').slice(0, this.msg.size);
         }
     }
 
     hasChunks(): boolean {
-        return this.chunks != null;
+        return this.chunks != null && this.chunks.length > 0;
     }
 }
 
@@ -286,7 +285,7 @@ export class DataBuffer {
     chunks: string[] = [];
     length: number = 0;
 
-    count(): number {
+    size(): number {
         return this.chunks.length;
     }
 
@@ -348,7 +347,7 @@ export class ProtocolHandler implements TransportHandlers {
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
                     fail(new Error("timeout"));
-                }, 3000);
+                }, 10000);
                 ph.pongs.push(() => {
                     clearTimeout(timer);
                     ok(true);
@@ -375,6 +374,8 @@ export class ProtocolHandler implements TransportHandlers {
         let m: RegExpExecArray | null = null;
         while (this.inbound.length) {
             switch (this.state) {
+                case ParserState.CLOSED:
+                    return;
                 case ParserState.AWAITING_CONTROL:
                     let buf = this.inbound.peek();
                     if ((m = MSG.exec(buf))) {
@@ -417,18 +418,18 @@ export class ProtocolHandler implements TransportHandlers {
                     if (!this.payload) {
                         break;
                     }
-                    if (this.inbound.length < this.payload.length) {
-                        this.payload.push(this.inbound.drain());
+                    if (this.inbound.length < this.payload.msg.size) {
+                        let d = this.inbound.peek();
+                        this.payload.push(d);
                         return;
                     }
-                    if (this.payload.hasChunks()) {
-                        this.payload.push(this.inbound.read(this.payload.length));
-                    } else {
-                        this.payload.push(this.inbound.read(this.payload.length));
-                    }
+                    let dd = this.inbound.read(this.payload.psize);
+                    this.inbound.slice(this.payload.psize);
+                    this.payload.push(dd);
                     this.processMsg();
                     this.state = ParserState.AWAITING_CONTROL;
                     this.payload = null;
+                    break;
             }
 
             if (m) {
@@ -438,6 +439,7 @@ export class ProtocolHandler implements TransportHandlers {
                 } else {
                     this.inbound.slice(psize);
                 }
+                m = null;
             }
         }
     }
@@ -463,7 +465,7 @@ export class ProtocolHandler implements TransportHandlers {
         if (cmd && cmd.length) {
             this.outbound.push(cmd);
         }
-        if (this.outbound.count() === 1) {
+        if (this.outbound.size() === 1) {
             setTimeout(() => {
                 this.flushPending();
             });
