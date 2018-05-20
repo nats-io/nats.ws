@@ -155,7 +155,6 @@ test('wildcard subscriptions', (t) => {
            .then((c: NatsConnection) => {
                let s = nuid.next();
                c.subscribe(`${s}.*`, (msg: Msg) => {
-                   console.log('msg');
                    received++;
                }).then((sub) => {
                    c.publish(`${s}.foo.baz`);     // miss
