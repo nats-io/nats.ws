@@ -7,6 +7,7 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "test": "tsc && nyc ava --verbose -T 5000",
+    "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",
     "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m"
   },
