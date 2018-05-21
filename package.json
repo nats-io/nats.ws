@@ -26,6 +26,7 @@
     "@types/ws": "^5.1.1",
     "ava": "1.0.0-beta.4",
     "browser-env": "^3.2.5",
+    "coveralls": "^3.0.1",
     "jsdom": "^11.10.0",
     "nyc": "^11.8.0",
     "ts-loader": "^4.3.0",
