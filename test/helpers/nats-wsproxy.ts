@@ -101,7 +101,7 @@ export class NatsWsProxy {
             this.trace('proxy: websocket connected');
 
             websocket.on('close', (ws: ws) => {
-                this.trace('proxy ws close')
+                this.trace('proxy ws close');
                 let wse = this.webSockets.find((e) => {
                     return e.webSocket === ws;
                 });
@@ -114,7 +114,7 @@ export class NatsWsProxy {
                     this.webSockets.push(proxy);
                 })
                 .catch((err) => {
-                    console.error('error connecting to nats: ', err);
+                    console.error(`error connecting to nats ${hp[1]}: `, err);
                 });
         });
 

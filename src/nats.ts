@@ -7,7 +7,6 @@ import {
     Msg,
     MsgCallback,
     ProtocolHandler,
-    Request,
     RequestOptions,
     Subscription
 } from "./protocol";
@@ -21,6 +20,10 @@ export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 export interface NatsConnectionOptions {
     url: string;
     name?: string;
+    json?: boolean;
+    user?: string;
+    pass?: string;
+    token?: string;
 }
 
 export interface Callback {
@@ -48,8 +51,12 @@ export class NatsConnection implements ClientHandlers {
     closeListeners: Callback[] = [];
     errorListeners: ErrorCallback[] = [];
 
+
     private constructor(opts: NatsConnectionOptions) {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
+        if (opts.json === undefined) {
+            opts.json = false;
+        }
         extend(this.options, opts);
     }
 
@@ -71,23 +78,31 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: string | null = "", reply: string = "", cb?: Callback) {
+    publish(subject: string, data: any = undefined, reply: string = "") {
         subject = subject || "";
         if (subject.length === 0) {
             this.errorHandler(new Error("subject required"));
             return;
         }
-        data = data || "";
+
+        if (!this.options.json) {
+            data = data || "";
+        } else {
+            data = data === undefined ? null : data;
+        }
+
+        if (this.options.json) {
+            data = JSON.stringify(data);
+        }
+        //@ts-ignore
+        let len = data.length;
+
         reply = reply || "";
 
         if (reply) {
-            this.protocol.sendCommand(`PUB ${subject} ${reply} ${data.length}\r\n${data}\r\n`);
+            this.protocol.sendCommand(`PUB ${subject} ${reply} ${len}\r\n${data}\r\n`);
         } else {
-            this.protocol.sendCommand(`PUB ${subject} ${data.length}\r\n${data}\r\n`);
-        }
-
-        if (cb) {
-            this.flush(cb);
+            this.protocol.sendCommand(`PUB ${subject} ${len}\r\n${data}\r\n`);
         }
     }
 
@@ -107,7 +122,7 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    requestOne(subject: string, timeout: number = 1000, data?: string | null): Promise<Msg> {
+    request(subject: string, timeout: number = 1000, data?: string | null): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
                 //FIXME: proper error
@@ -129,27 +144,23 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    request(subject: string, cb: MsgCallback, data?: string | null, opts?: RequestOptions): Promise<Request> {
-        return new Promise<Request>((resolve, reject) => {
-            if (this.isClosed()) {
-                //FIXME: proper error
-                reject(new NatsError("closed", "closed"));
-            }
-            let r = defaultReq();
-            opts = opts || {} as RequestOptions;
-            extend(r, opts);
-            r.token = nuid.next();
-            r.callback = cb;
-            resolve(this.protocol.request(r));
-            this.publish(subject, data, `${this.protocol.muxSubscriptions.baseInbox}${r.token}`);
-        });
+
+    /**
+     * Flushes to the server. If a callback is provided, the callback is c
+     * @param {Function} cb - optional
+     * @returns {Promise<void> | void}
+     */
+    flush(cb?: Function): Promise<void> | void {
+        if (cb === undefined) {
+            return new Promise((resolve) => {
+                this.protocol.flush(() => {
+                    resolve();
+                });
+            });
+        } else {
+            this.protocol.flush(cb);
+        }
     }
-
-
-    flush(f?: Function): void {
-        this.protocol.flush(f);
-    }
-
 
     errorHandler(error: Error): void {
         this.errorListeners.forEach((cb) => {

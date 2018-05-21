@@ -139,6 +139,9 @@ export class MuxSubscription {
     }
 
     add(r: Req) {
+        if (!isNaN(r.received)) {
+            r.received = 0;
+        }
         this.length++;
         this.reqs[r.token] = r;
     }
@@ -177,9 +180,6 @@ export class MuxSubscription {
                 let r = mux.get(token);
                 if (r) {
                     r.received++;
-                    if (r.max === null) {
-                        mux.cancel(r);
-                    }
                     if (r.max && r.max >= r.received) {
                         mux.cancel(r);
                     }
@@ -247,21 +247,23 @@ export interface Msg {
     sid: number;
     reply?: string;
     size: number;
-    data?: string;
+    data?: any;
 }
 
 export class MsgBuffer {
     msg: Msg;
     length: number;
     buf: string[] | null = null;
+    wantsJSON: boolean;
 
-    constructor(chunks: RegExpExecArray) {
+    constructor(chunks: RegExpExecArray, wantsJSON: boolean = false) {
         this.msg = {} as Msg;
         this.msg.subject = chunks[1];
         this.msg.sid = parseInt(chunks[2], 10);
         this.msg.reply = chunks[4];
         this.msg.size = parseInt(chunks[5], 10);
         this.length = this.msg.size + CR_LF_LEN;
+        this.wantsJSON = wantsJSON;
     }
 
     fill(data: string) {
@@ -272,7 +274,8 @@ export class MsgBuffer {
         this.length -= data.length;
 
         if (this.length === 0) {
-            this.msg.data = this.buf.join('').slice(0, this.msg.size);
+            let t = this.buf.join('').slice(0, this.msg.size);
+            this.msg.data = this.wantsJSON ? JSON.parse(t) : t;
         }
     }
 }
@@ -324,6 +327,7 @@ export class ProtocolHandler implements TransportHandlers {
     clientHandlers: ClientHandlers;
     options: NatsConnectionOptions;
     transport!: Transport;
+    connectError!: ErrorCallback | null;
 
 
     constructor(options: NatsConnectionOptions, handlers: ClientHandlers) {
@@ -336,6 +340,7 @@ export class ProtocolHandler implements TransportHandlers {
     public static connect(options: NatsConnectionOptions, handlers: ClientHandlers): Promise<ProtocolHandler> {
         return new Promise<ProtocolHandler>((resolve, reject) => {
             let ph = new ProtocolHandler(options, handlers);
+            ph.connectError = reject;
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
                     fail(new Error("timeout"));
@@ -351,12 +356,15 @@ export class ProtocolHandler implements TransportHandlers {
                     ph.transport = transport;
                 })
                 .catch((err) => {
+                    ph.connectError = null;
                     reject(err);
                 });
 
             pongPromise.then((ok) => {
+                ph.connectError = null;
                 resolve(ph);
             }).catch((err) => {
+                ph.connectError = null;
                 reject(err);
             });
         });
@@ -371,7 +379,7 @@ export class ProtocolHandler implements TransportHandlers {
                 case ParserState.AWAITING_CONTROL:
                     let buf = this.inbound.peek();
                     if ((m = MSG.exec(buf))) {
-                        this.payload = new MsgBuffer(m);
+                        this.payload = new MsgBuffer(m, this.options.json);
                         this.state = ParserState.AWAITING_MSG_PAYLOAD;
                     } else if ((m = OK.exec(buf))) {
                         // ignored
@@ -520,7 +528,8 @@ export class ProtocolHandler implements TransportHandlers {
 
     processError(s: string) {
         let err = new Error(s);
-        this.errorHandler(err);
+        let evt = {error: err} as ErrorEvent;
+        this.errorHandler(evt);
     }
 
     sendSubscriptions() {
@@ -589,6 +598,10 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     private handleError(err: Error) {
+        if (this.connectError) {
+            this.connectError(err);
+            this.connectError = null;
+        }
         this.close();
         this.clientHandlers.errorHandler(err);
     }

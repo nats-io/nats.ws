@@ -18,26 +18,37 @@ import test from 'ava';
 import {NatsWsProxy} from './helpers/nats-wsproxy'
 import {Transport, TransportHandlers, WSTransport} from '../src/transport';
 import 'assert';
+import {startServer, stopServer} from "./helpers/nats_server_control";
+
+let WSPORT = 43568;
+let PORT = 34512;
 
 test.before((t) => {
-    let wse = new NatsWsProxy(40000, "localhost:4222");
-    t.context = {wse: wse};
+    return new Promise((resolve, reject) => {
+        startServer(PORT)
+            .then((server) => {
+                t.log('server started');
+                let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
+                t.context = {wse: wse, server: server};
+                resolve();
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
 });
 
-test.after((t) => {
-    try {
-        //@ts-ignore
-        t.context.wse.shutdown();
-    } catch (ex) {
-    }
+test.after.always((t) => {
+    //@ts-ignore
+    t.context.wse.shutdown();
+    //@ts-ignore
+    stopServer(t.context.server);
 });
 
 test('wsnats', (t) => {
     return new Promise((resolve, reject) => {
         t.plan(2);
-
         let th = {} as TransportHandlers;
-
         th.closeHandler = () => {
         };
         th.errorHandler = (evt: Event) => {
@@ -56,7 +67,7 @@ test('wsnats', (t) => {
             }
         };
         let transport: Transport;
-        WSTransport.connect(new URL("ws://localhost:40000"), th)
+        WSTransport.connect(new URL(`ws://localhost:${WSPORT}`), th)
             .then(nt => {
                 transport = nt;
             }).catch(err => {

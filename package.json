@@ -7,7 +7,8 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "test": "tsc && nyc ava --verbose -T 5000",
-    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m 'parse messages'"
+    "cover": "nyc report --reporter=html && open coverage/index.html",
+    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m"
   },
   "repository": {
     "type": "git",

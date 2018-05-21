@@ -2,8 +2,8 @@ import test from "ava";
 import {ClientHandlers, ProtocolHandler, Sub} from "../src/protocol";
 import {NatsConnectionOptions} from "../src/nats";
 
-test('parse messages', (t) => {
-    return new Promise((resolve, reject) => {
+test('split messages correctly', (t) => {
+    return new Promise((resolve) => {
         t.plan(4);
         let expected = 3;
         let processed = 0;
