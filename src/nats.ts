@@ -15,6 +15,9 @@ import {NatsError} from "./error";
 const nuid = require('nuid');
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
+export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
+const BAD_AUTHENTICATION_MSG = 'User and Token can not both be provided';
+
 
 
 export interface NatsConnectionOptions {
@@ -56,6 +59,10 @@ export class NatsConnection implements ClientHandlers {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
         if (opts.json === undefined) {
             opts.json = false;
+        }
+
+        if (opts.user && opts.token) {
+            throw (new NatsError(BAD_AUTHENTICATION_MSG, BAD_AUTHENTICATION));
         }
         extend(this.options, opts);
     }

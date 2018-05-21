@@ -3,12 +3,12 @@ import {NatsWsProxy} from "./helpers/nats-wsproxy";
 import test from "ava";
 import {startServer, stopServer} from "./helpers/nats_server_control";
 
-let WSPORT = 45567;
-let PORT = 45398;
+let WSPORT = 54567;
+let PORT = 43598;
 
 
 test.before(async (t) => {
-    let server = await startServer(PORT, ['--user', 'derek', '--pass', 'foobar']);
+    let server = await startServer(PORT, ['--auth', 'tokenxxxx']);
     let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
     t.context = {wse: wse, server: server};
 });
@@ -21,7 +21,7 @@ test.after.always((t) => {
 });
 
 
-test('no auth', async (t) => {
+test('token no auth', async (t) => {
     t.plan(2);
     try {
         await NatsConnection.connect({url: `ws://localhost:${WSPORT}`});
@@ -31,19 +31,19 @@ test('no auth', async (t) => {
     }
 });
 
-test('bad auth', async (t) => {
+test('token bad auth', async (t) => {
     t.plan(2);
     try {
-        await NatsConnection.connect({url: `ws://localhost:${WSPORT}`, user: 'me', pass: 'hello'});
+        await NatsConnection.connect({url: `ws://localhost:${WSPORT}`, token: 'bad'});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
     }
 });
 
-test('auth', async (t) => {
+test('token auth', async (t) => {
     t.plan(1);
-    let nc = await NatsConnection.connect({url: `ws://localhost:${WSPORT}`, user: 'derek', pass: 'foobar'});
+    let nc = await NatsConnection.connect({url: `ws://localhost:${WSPORT}`, token: 'tokenxxxx'});
     nc.close();
     t.pass();
 });

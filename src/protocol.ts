@@ -46,6 +46,9 @@ export class Connect {
 
     constructor(opts?: NatsConnectionOptions) {
         opts = opts || {} as NatsConnectionOptions;
+        if (opts.token) {
+            this.auth_token = opts.token;
+        }
         extend(this, opts);
     }
 }
