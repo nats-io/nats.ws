@@ -16,5 +16,5 @@ before_script:
   - mv gnatsd-$NATS_VERSION-linux-amd64 gnatsd
 
 script:
-  - npm run build
+  - npm run test
   - npm run coveralls
