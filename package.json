@@ -9,7 +9,8 @@
     "test": "tsc && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",
-    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m"
+    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m",
+    "package": "webpack-cli"
   },
   "repository": {
     "type": "git",
@@ -25,12 +26,16 @@
     "@types/node": "^10.1.2",
     "@types/ws": "^5.1.1",
     "ava": "1.0.0-beta.4",
+    "awesome-typescript-loader": "^5.0.0",
     "browser-env": "^3.2.5",
     "coveralls": "^3.0.1",
-    "jsdom": "^11.10.0",
+    "jsdom": "^11.11.0",
     "nyc": "^11.8.0",
     "ts-loader": "^4.3.0",
     "typescript": "^2.8.3",
+    "webpack": "^4.8.3",
+    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-cli": "^2.1.4",
     "ws": "latest"
   },
   "ava": {
@@ -46,6 +51,6 @@
     ]
   },
   "dependencies": {
-    "nuid": "^1.0.0"
+    "js-nuid": "^1.0.1"
   }
 }

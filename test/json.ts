@@ -4,9 +4,9 @@ import {NatsConnection} from "../src/nats";
 import {Msg} from "../src/protocol";
 import {Lock} from "./helpers/latch";
 import {startServer, stopServer} from "./helpers/nats_server_control";
+import {Nuid} from 'js-nuid/src/nuid';
 
-const nuid = require('nuid');
-
+const nuid = new Nuid();
 
 let WSPORT = 12123;
 let PORT = 59464;

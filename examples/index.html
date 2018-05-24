@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+
+<script src="../lib/nats.js"></script>
+
+<script>
+
+    async function doit() {
+        let nc = await nats.NatsConnection.connect({url: "ws://localhost:8080"});
+        await nc.subscribe("foo", (msg) => {
+            if (msg.reply) {
+                nc.publish(msg.reply, "foobar");
+            }
+
+        });
+
+        let msg = await nc.request("foo");
+        console.log(msg);
+    }
+
+    doit();
+
+</script>
+
+</body>
+</html>
+
+
+
+

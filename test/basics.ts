@@ -1,37 +1,39 @@
-import {NatsWsProxy} from './helpers/nats-wsproxy'
 import {NatsConnection} from "../src/nats";
 import test from "ava";
-import nuid from 'nuid';
 import {Msg} from "../src/protocol";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
-import {startServer, stopServer} from "./helpers/nats_server_control";
 
-let WSPORT = 56389;
-let PORT = 47573;
+import {Nuid} from 'js-nuid/src/nuid'
 
-test.before((t) => {
-    return new Promise((resolve, reject) => {
-        startServer(PORT)
-            .then((server) => {
-                t.log('server started');
-                let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
-                t.context = {wse: wse, server: server};
-                resolve();
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
-});
+const nuid = new Nuid();
 
-test.after.always((t) => {
-    //@ts-ignore
-    t.context.wse.shutdown();
-    //@ts-ignore
-    stopServer(t.context.server);
-});
+// let WSPORT = 56389;
+// let PORT = 47573;
 
+let WSPORT = 8080;
+
+// test.before((t) => {
+//     return new Promise((resolve, reject) => {
+//         startServer(PORT)
+//             .then((server) => {
+//                 t.log('server started');
+//                 let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
+//                 t.context = {wse: wse, server: server};
+//                 resolve();
+//             })
+//             .catch((err) => {
+//                 reject(err);
+//             });
+//     });
+// });
+//
+// test.after.always((t) => {
+//     //@ts-ignore
+//     t.context.wse.shutdown();
+//     //@ts-ignore
+//     stopServer(t.context.server);
+// });
 
 test('connect', async (t) => {
     t.plan(1);

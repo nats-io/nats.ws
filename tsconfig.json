@@ -75,6 +75,7 @@
   },
   "include": [
     "./src/**/*",
-    "./test/**/*"
+    "./test/**/*",
+    "./node_modules/js-nuid/src/**/*"
   ]
 }

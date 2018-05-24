@@ -2,10 +2,12 @@ import {NatsConnectionOptions} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {NatsError} from "./error";
 import {extend} from "./util";
+import {Nuid} from 'js-nuid/src/nuid'
 
-const nuid = require('nuid');
+const nuid = new Nuid();
 
 const FLUSH_THRESHOLD = 65536;
+
 
 export enum ParserState {
     CLOSED = -1,

@@ -72,10 +72,17 @@ export class WSTransport {
 
             transport.stream.onerror = function (evt: Event) {
                 let err;
+                console.log(evt);
                 if (evt) {
                     err = (evt as ErrorEvent).error;
+                    if (!err) {
+                        let m = (evt as ErrorEvent).message;
+                        if (m) {
+                            err = new Error(m);
+                        }
+                    }
                 }
-                transport.trace('ws error', err)
+                transport.trace('ws error', err);
                 if (transport.closed) {
                     return;
                 }

@@ -11,13 +11,17 @@ import {
     Subscription
 } from "./protocol";
 import {NatsError} from "./error";
+import {Nuid} from "js-nuid/src/nuid"
 
-const nuid = require('nuid');
+const nuid = new Nuid();
+
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
-const BAD_AUTHENTICATION_MSG = 'User and Token can not both be provided';
 
+export const BAD_SUBJECT = 'BAD_SUBJECT';
+
+const BAD_AUTHENTICATION_MSG = 'User and Token can not both be provided';
 
 
 export interface NatsConnectionOptions {
