@@ -2,12 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Test</title>
+    <title>ws-nats chat</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          crossorigin="anonymous">
 </head>
 <body>
+<div class="container">
+    <h1>ws-nats chat</h1>
+    <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
+    <button id="send" onclick="send()" class="btn btn-primary">Send</button>
+</div>
+<br/>
+<div id="chats" class="container">
 
-<textarea id="data" cols="40" rows="5" type="text" name="data"></textarea><br>
-<button id="send" onclick="send()">Send</button>
+</div>
+
 <script src="../lib/nats.js"></script>
 
 <script>
@@ -19,7 +28,7 @@
             let p = document.createElement("pre");
             let message = msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`;
             p.appendChild(document.createTextNode(message));
-            document.body.appendChild(p);
+            document.getElementById('chats').appendChild(p);
         });
 
         window.nc = nc;
@@ -30,7 +39,7 @@
 
     let input = document.getElementById('data');
     input.addEventListener("keyup", (e) => {
-        if(e.keyCode === 13) {
+        if (e.key === "Enter") {
             document.getElementById("send").click();
         } else {
             e.preventDefault();
@@ -40,7 +49,7 @@
     function send() {
         input = document.getElementById('data');
         let m = input.value;
-        if(m !== "") {
+        if (m !== "") {
             window.nc.publish('chat', {id: me, m: m});
             input.value = "";
         }
@@ -48,7 +57,6 @@
     }
 
 </script>
-
 </body>
 </html>
 
