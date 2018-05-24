@@ -8,18 +8,16 @@ import {Nuid} from 'js-nuid/src/nuid';
 
 const nuid = new Nuid();
 
-let WSPORT = 12123;
-let PORT = 59464;
+let WS_HOSTPORT = "127.0.0.1:12123";
 
 test.before((t) => {
     return new Promise((resolve, reject) => {
-        startServer(PORT)
+        startServer(WS_HOSTPORT)
             .then((server) => {
                 t.log('server started');
-                let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
-                t.context = {wse: wse, server: server};
+                t.context = {server: server};
 
-                NatsConnection.connect({url: `ws://localhost:${WSPORT}`, json: true})
+                NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, json: true})
                     .then(nc => {
                         //@ts-ignore
                         t.context.nc = nc;
@@ -34,15 +32,13 @@ test.before((t) => {
 
 test.after.always((t) => {
     //@ts-ignore
-    t.context.wse.shutdown();
-    //@ts-ignore
     stopServer(t.context.server);
 });
 
 
 test('connect no json propagates options', async (t) => {
     t.plan(2);
-    let nc = await NatsConnection.connect({url: `ws://localhost:${WSPORT}`});
+    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`});
     t.is(nc.options.json, false, 'nc options');
     t.is(nc.protocol.options.json, false, 'protocol');
     nc.close();
@@ -50,7 +46,7 @@ test('connect no json propagates options', async (t) => {
 
 test('connect json propagates options', async (t) => {
     t.plan(2);
-    let nc = await NatsConnection.connect({url: `ws://localhost:${WSPORT}`, json: true});
+    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, json: true});
     t.is(nc.options.json, true, 'nc options');
     t.is(nc.protocol.options.json, true, 'protocol');
     nc.close();

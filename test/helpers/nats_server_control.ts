@@ -19,20 +19,23 @@ import * as net from 'net';
 import {Socket} from 'net';
 import Timer = NodeJS.Timer;
 
-let SERVER = (process.env.TRAVIS) ? 'gnatsd/gnatsd' : 'gnatsd';
-let DEFAULT_PORT = 4222;
+let SERVER = (process.env.TRAVIS) ? 'wsgnatsd/wsgnatsd' : 'wsgnatsd';
+let DEFAULT_HOSTPORT = "127.0.0.1:8080";
 
 export interface Server extends ChildProcess {
     args: string[];
 }
 
 
-export function startServer(port: number, opt_flags?: string[]): Promise<Server> {
+export function startServer(hostport: string, opt_flags?: string[]): Promise<Server> {
     return new Promise((resolve, reject) => {
-        if (!port) {
-            port = DEFAULT_PORT;
+        if (!hostport) {
+            hostport = DEFAULT_HOSTPORT;
         }
-        let flags = ['-p', port.toString(), '-a', '127.0.0.1'];
+
+        let port = parseInt(hostport.split(':')[1],10)
+
+        let flags = ['-hp', hostport];
 
         if (opt_flags) {
             flags = flags.concat(opt_flags);

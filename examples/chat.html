@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+</head>
+<body>
+
+<textarea id="data" cols="40" rows="5" type="text" name="data"></textarea><br>
+<button id="send" onclick="send()">Send</button>
+<script src="../lib/nats.js"></script>
+
+<script>
+    let me = Date.now();
+
+    async function doit() {
+        let nc = await nats.NatsConnection.connect({url: "ws://localhost:8080", json: true});
+        nc.subscribe("chat", (msg) => {
+            let p = document.createElement("pre");
+            let message = msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`;
+            p.appendChild(document.createTextNode(message));
+            document.body.appendChild(p);
+        });
+
+        window.nc = nc;
+    }
+
+    doit();
+
+
+    let input = document.getElementById('data');
+    input.addEventListener("keyup", (e) => {
+        if(e.keyCode === 13) {
+            document.getElementById("send").click();
+        } else {
+            e.preventDefault();
+        }
+    });
+
+    function send() {
+        input = document.getElementById('data');
+        let m = input.value;
+        if(m !== "") {
+            window.nc.publish('chat', {id: me, m: m});
+            input.value = "";
+        }
+        return false;
+    }
+
+</script>
+
+</body>
+</html>
+
+
+
+

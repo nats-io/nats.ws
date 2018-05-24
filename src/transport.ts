@@ -72,7 +72,6 @@ export class WSTransport {
 
             transport.stream.onerror = function (evt: Event) {
                 let err;
-                console.log(evt);
                 if (evt) {
                     err = (evt as ErrorEvent).error;
                     if (!err) {

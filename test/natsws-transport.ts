@@ -20,16 +20,13 @@ import {Transport, TransportHandlers, WSTransport} from '../src/transport';
 import 'assert';
 import {startServer, stopServer} from "./helpers/nats_server_control";
 
-let WSPORT = 43568;
-let PORT = 34512;
+let WS_HOSTPORT = "127.0.0.1:43568";
 
 test.before((t) => {
     return new Promise((resolve, reject) => {
-        startServer(PORT)
+        startServer(WS_HOSTPORT)
             .then((server) => {
-                t.log('server started');
-                let wse = new NatsWsProxy(WSPORT, `localhost:${PORT}`);
-                t.context = {wse: wse, server: server};
+                t.context = {server: server};
                 resolve();
             })
             .catch((err) => {
@@ -39,8 +36,6 @@ test.before((t) => {
 });
 
 test.after.always((t) => {
-    //@ts-ignore
-    t.context.wse.shutdown();
     //@ts-ignore
     stopServer(t.context.server);
 });
@@ -67,7 +62,7 @@ test('wsnats', (t) => {
             }
         };
         let transport: Transport;
-        WSTransport.connect(new URL(`ws://localhost:${WSPORT}`), th)
+        WSTransport.connect(new URL(`ws://${WS_HOSTPORT}`), th)
             .then(nt => {
                 transport = nt;
             }).catch(err => {
