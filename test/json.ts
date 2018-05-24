@@ -1,6 +1,5 @@
-import {NatsWsProxy} from "./helpers/nats-wsproxy";
 import {test} from "ava";
-import {NatsConnection} from "../src/nats";
+import {connect, NatsConnection} from "../src/nats";
 import {Msg} from "../src/protocol";
 import {Lock} from "./helpers/latch";
 import {startServer, stopServer} from "./helpers/nats_server_control";
@@ -38,7 +37,7 @@ test.after.always((t) => {
 
 test('connect no json propagates options', async (t) => {
     t.plan(2);
-    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`});
+    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
     t.is(nc.options.json, false, 'nc options');
     t.is(nc.protocol.options.json, false, 'protocol');
     nc.close();
@@ -46,7 +45,7 @@ test('connect no json propagates options', async (t) => {
 
 test('connect json propagates options', async (t) => {
     t.plan(2);
-    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, json: true});
+    let nc = await connect({url: `ws://${WS_HOSTPORT}`, json: true});
     t.is(nc.options.json, true, 'nc options');
     t.is(nc.protocol.options.json, true, 'protocol');
     nc.close();

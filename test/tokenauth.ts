@@ -1,4 +1,4 @@
-import {NatsConnection} from "../src/nats";
+import {connect} from "../src/nats";
 import test from "ava";
 import {startServer, stopServer} from "./helpers/nats_server_control";
 
@@ -18,7 +18,7 @@ test.after.always((t) => {
 test('token no auth', async (t) => {
     t.plan(2);
     try {
-        await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`});
+        await connect({url: `ws://${WS_HOSTPORT}`});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -28,7 +28,7 @@ test('token no auth', async (t) => {
 test('token bad auth', async (t) => {
     t.plan(2);
     try {
-        await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, token: 'bad'});
+        await connect({url: `ws://${WS_HOSTPORT}`, token: 'bad'});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -37,7 +37,7 @@ test('token bad auth', async (t) => {
 
 test('token auth', async (t) => {
     t.plan(1);
-    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, token: 'tokenxxxx'});
+    let nc = await connect({url: `ws://${WS_HOSTPORT}`, token: 'tokenxxxx'});
     nc.close();
     t.pass();
 });

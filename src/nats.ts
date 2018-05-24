@@ -51,6 +51,10 @@ export interface SubscribeOptions {
     max?: number;
 }
 
+export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
+    return NatsConnection.connect(opts);
+}
+
 
 export class NatsConnection implements ClientHandlers {
     options: NatsConnectionOptions;

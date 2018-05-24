@@ -15,7 +15,6 @@
 
 
 import test from 'ava';
-import {NatsWsProxy} from './helpers/nats-wsproxy'
 import {Transport, TransportHandlers, WSTransport} from '../src/transport';
 import 'assert';
 import {startServer, stopServer} from "./helpers/nats_server_control";

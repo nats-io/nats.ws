@@ -1,17 +1,17 @@
 const path = require('path');
 const webpack = require('webpack');
-const wba = require('webpack-bundle-analyzer');
+// const wba = require('webpack-bundle-analyzer');
 
 module.exports = {
     entry: path.resolve(__dirname, "src/nats.ts"),
     devtool: "source-map",
 
-    mode: "development",
+    mode: "production",
     output: {
         path: path.resolve(__dirname, "lib"),
         filename: "nats.js",
         library: "nats",
-        libraryTarget: "umd",
+        libraryTarget: "global",
 
     },
     resolve: {

@@ -23,13 +23,23 @@
     let me = Date.now();
 
     async function doit() {
-        let nc = await nats.NatsConnection.connect({url: "ws://localhost:8080", json: true});
+        let nc = await nats.connect({url: "ws://localhost:8080", json: true});
         nc.subscribe("chat", (msg) => {
             let p = document.createElement("pre");
             let message = msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`;
             p.appendChild(document.createTextNode(message));
             document.getElementById('chats').appendChild(p);
         });
+
+        nc.subscribe("enter", (msg) => {
+            let p = document.createElement("pre");
+            if (msg.data.id !== me) {
+                p.appendChild(document.createTextNode(`${msg.data.id} entered.`));
+                document.getElementById('chats').appendChild(p);
+            }
+        });
+
+        nc.publish('enter', {id: me});
 
         window.nc = nc;
     }

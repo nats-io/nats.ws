@@ -1,5 +1,4 @@
-import {NatsConnection} from "../src/nats";
-import {NatsWsProxy} from "./helpers/nats-wsproxy";
+import {connect} from "../src/nats";
 import test from "ava";
 import {startServer, stopServer} from "./helpers/nats_server_control";
 
@@ -20,7 +19,7 @@ test.after.always((t) => {
 test('no auth', async (t) => {
     t.plan(2);
     try {
-        await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`});
+        await connect({url: `ws://${WS_HOSTPORT}`});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -30,7 +29,7 @@ test('no auth', async (t) => {
 test('bad auth', async (t) => {
     t.plan(2);
     try {
-        await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, user: 'me', pass: 'hello'});
+        await connect({url: `ws://${WS_HOSTPORT}`, user: 'me', pass: 'hello'});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -39,7 +38,7 @@ test('bad auth', async (t) => {
 
 test('auth', async (t) => {
     t.plan(1);
-    let nc = await NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, user: 'derek', pass: 'foobar'});
+    let nc = await connect({url: `ws://${WS_HOSTPORT}`, user: 'derek', pass: 'foobar'});
     nc.close();
     t.pass();
 });

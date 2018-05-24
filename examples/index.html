@@ -9,17 +9,17 @@
 <script src="../lib/nats.js"></script>
 
 <script>
-
+    console.log('here', window['nats']);
     async function doit() {
-        let nc = await nats.NatsConnection.connect({url: "ws://localhost:8080"});
+        let nc = await nats.connect({url: "ws://localhost:8080"});
         await nc.subscribe("foo", (msg) => {
             if (msg.reply) {
-                nc.publish(msg.reply, "foobar");
+                nc.publish(msg.reply, "chat");
             }
 
         });
 
-        let msg = await nc.request("foo");
+        let msg = await nc.request("chat");
         console.log(msg);
     }
 
