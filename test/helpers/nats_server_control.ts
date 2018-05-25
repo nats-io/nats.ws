@@ -22,6 +22,7 @@ import fs from 'fs'
 import Timer = NodeJS.Timer;
 
 let SERVER = (process.env.TRAVIS) ? 'wsgnatsd/wsgnatsd' : 'wsgnatsd';
+let PID_DIR = (process.env.TRAVIS) ? process.env.TRAVIS_BUILD_DIR : process.env.TMPDIR;
 
 // context for tests
 export interface SC {
@@ -49,7 +50,8 @@ export function getPort(urlString: string): number {
 
 export function startServer(hostport?: string, opt_flags?: string[]): Promise<Server> {
     return new Promise((resolve, reject) => {
-        let flags = [] as string[];
+
+        let flags = ['-pid', PID_DIR] as string[];
         if (hostport) {
             flags.concat(['-hp', hostport]);
         }
@@ -96,7 +98,7 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
             reject(err);
         }
 
-        let count = 20;
+        let count = 50;
         new Promise<any>((r, x) => {
             let t = setInterval(() => {
                 --count;
@@ -105,7 +107,7 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
                     x('Unable to find the pid');
                 }
                 //@ts-ignore
-                let pidFile = path.join(process.env["TMPDIR"], `wsgnatsd_${server.pid}.pid`);
+                let pidFile = path.join(PID_DIR, `wsgnatsd_${server.pid}.pid`);
                 if (fs.existsSync(pidFile)) {
                     fs.readFileSync(pidFile).toString().split("\n").forEach((s) => {
                         if (s.startsWith('ws://') || s.startsWith('wss://')) {
@@ -120,7 +122,7 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
                     r();
                 }
 
-            }, 100);
+            }, 150);
         }).then(() => {
             // Test for when socket is bound.
             timer = <any>setInterval(function () {
