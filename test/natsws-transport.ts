@@ -17,13 +17,12 @@
 import test from 'ava';
 import {Transport, TransportHandlers, WSTransport} from '../src/transport';
 import 'assert';
-import {startServer, stopServer} from "./helpers/nats_server_control";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 
-let WS_HOSTPORT = "127.0.0.1:43568";
 
 test.before((t) => {
     return new Promise((resolve, reject) => {
-        startServer(WS_HOSTPORT)
+        startServer()
             .then((server) => {
                 t.context = {server: server};
                 resolve();
@@ -35,8 +34,7 @@ test.before((t) => {
 });
 
 test.after.always((t) => {
-    //@ts-ignore
-    stopServer(t.context.server);
+    stopServer((t.context as SC).server);
 });
 
 test('wsnats', (t) => {
@@ -61,7 +59,8 @@ test('wsnats', (t) => {
             }
         };
         let transport: Transport;
-        WSTransport.connect(new URL(`ws://${WS_HOSTPORT}`), th)
+        let sc = t.context as SC;
+        WSTransport.connect(new URL(sc.server.ws), th)
             .then(nt => {
                 transport = nt;
             }).catch(err => {

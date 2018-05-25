@@ -1,25 +1,23 @@
 import {connect} from "../src/nats";
 import test from "ava";
-import {startServer, stopServer} from "./helpers/nats_server_control";
-
-let WS_HOSTPORT = "127.0.0.1:45567";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 
 
 test.before(async (t) => {
-    let server = await startServer(WS_HOSTPORT, ['--', '-p', '-1', '--user', 'derek', '--pass', 'foobar']);
-    t.context = {server: server};
+    let server = await startServer("", ['--', '-p', '-1', '--user', 'derek', '--pass', 'foobar']);
+    t.context = {server: server}
 });
 
 test.after.always((t) => {
-    //@ts-ignore
-    stopServer(t.context.server);
+    stopServer((t.context as SC).server);
 });
 
 
 test('no auth', async (t) => {
     t.plan(2);
     try {
-        await connect({url: `ws://${WS_HOSTPORT}`});
+        let sc = t.context as SC;
+        await connect({url: sc.server.ws});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -29,7 +27,8 @@ test('no auth', async (t) => {
 test('bad auth', async (t) => {
     t.plan(2);
     try {
-        await connect({url: `ws://${WS_HOSTPORT}`, user: 'me', pass: 'hello'});
+        let sc = t.context as SC;
+        await connect({url: sc.server.ws, user: 'me', pass: 'hello'});
     } catch (err) {
         t.truthy(err);
         t.regex(err.message, /Authorization/);
@@ -38,7 +37,8 @@ test('bad auth', async (t) => {
 
 test('auth', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`, user: 'derek', pass: 'foobar'});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws, user: 'derek', pass: 'foobar'});
     nc.close();
     t.pass();
 });

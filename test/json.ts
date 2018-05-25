@@ -2,21 +2,18 @@ import {test} from "ava";
 import {connect, NatsConnection} from "../src/nats";
 import {Msg} from "../src/protocol";
 import {Lock} from "./helpers/latch";
-import {startServer, stopServer} from "./helpers/nats_server_control";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {Nuid} from 'js-nuid/src/nuid';
 
 const nuid = new Nuid();
 
-let WS_HOSTPORT = "127.0.0.1:12123";
-
 test.before((t) => {
     return new Promise((resolve, reject) => {
-        startServer(WS_HOSTPORT)
+        startServer()
             .then((server) => {
                 t.log('server started');
                 t.context = {server: server};
-
-                NatsConnection.connect({url: `ws://${WS_HOSTPORT}`, json: true})
+                NatsConnection.connect({url: server.ws, json: true})
                     .then(nc => {
                         //@ts-ignore
                         t.context.nc = nc;
@@ -37,7 +34,8 @@ test.after.always((t) => {
 
 test('connect no json propagates options', async (t) => {
     t.plan(2);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     t.is(nc.options.json, false, 'nc options');
     t.is(nc.protocol.options.json, false, 'protocol');
     nc.close();
@@ -45,7 +43,8 @@ test('connect no json propagates options', async (t) => {
 
 test('connect json propagates options', async (t) => {
     t.plan(2);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`, json: true});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws, json: true});
     t.is(nc.options.json, true, 'nc options');
     t.is(nc.protocol.options.json, true, 'protocol');
     nc.close();

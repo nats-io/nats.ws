@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
           crossorigin="anonymous">
 </head>
-<body>
+<body onunload="exiting()">
 <div class="container">
     <h1>ws-nats chat</h1>
     <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
@@ -39,6 +39,14 @@
             }
         });
 
+        nc.subscribe("exit", (msg) => {
+            let p = document.createElement("pre");
+            if (msg.data.id !== me) {
+                p.appendChild(document.createTextNode(`${msg.data.id} exited.`));
+                document.getElementById('chats').appendChild(p);
+            }
+        });
+
         nc.publish('enter', {id: me});
 
         window.nc = nc;
@@ -64,6 +72,10 @@
             input.value = "";
         }
         return false;
+    }
+
+    function exiting() {
+        window.nc.publish('exit', {id: me});
     }
 
 </script>

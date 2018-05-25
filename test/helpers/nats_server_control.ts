@@ -17,29 +17,48 @@
 import {ChildProcess, spawn} from 'child_process';
 import * as net from 'net';
 import {Socket} from 'net';
+import path from 'path'
+import fs from 'fs'
 import Timer = NodeJS.Timer;
 
 let SERVER = (process.env.TRAVIS) ? 'wsgnatsd/wsgnatsd' : 'wsgnatsd';
-let DEFAULT_HOSTPORT = "127.0.0.1:8080";
+
+// context for tests
+export interface SC {
+    server: Server
+}
 
 export interface Server extends ChildProcess {
     args: string[];
+    ws: string;
+    nats: string;
 }
 
+export function natsURL(s: Server): string {
+    return s.nats;
+}
 
-export function startServer(hostport: string, opt_flags?: string[]): Promise<Server> {
+export function wsURL(s: Server): string {
+    return s.nats;
+}
+
+export function getPort(urlString: string): number {
+    let u = new URL(urlString);
+    return parseInt(u.port, 10);
+}
+
+export function startServer(hostport?: string, opt_flags?: string[]): Promise<Server> {
     return new Promise((resolve, reject) => {
-        if (!hostport) {
-            hostport = DEFAULT_HOSTPORT;
+        let flags = [] as string[];
+        if (hostport) {
+            flags.concat(['-hp', hostport]);
         }
-
-        let port = parseInt(hostport.split(':')[1],10)
-
-        let flags = ['-hp', hostport];
 
         if (opt_flags) {
             flags = flags.concat(opt_flags);
         }
+
+        let port = -1;
 
         if (process.env.PRINT_LAUNCH_CMD) {
             console.log(flags.join(" "));
@@ -70,40 +89,72 @@ export function startServer(hostport: string, opt_flags?: string[]): Promise<Ser
                 timer = null;
             }
             if (err === undefined) {
+                // return where the ws is running
                 resolve(server);
                 return;
             }
             reject(err);
         }
 
-        // Test for when socket is bound.
-        timer = <any>setInterval(function () {
-            resetSocket();
-
-            wait = Date.now() - start;
-            if (wait > maxWait) {
-                finish(new Error('Can\'t connect to server on port: ' + port));
-            }
-
-            // Try to connect to the correct port.
-            socket = net.createConnection(port);
-
-            // Success
-            socket.on('connect', function () {
-                if (server.pid === null) {
-                    // We connected but not to our server..
-                    finish(new Error('Server already running on port: ' + port));
-                } else {
-                    finish();
+        let count = 20;
+        new Promise<any>((r, x) => {
+            let t = setInterval(() => {
+                --count;
+                if (count === 0) {
+                    clearInterval(t);
+                    x('Unable to find the pid');
                 }
+                //@ts-ignore
+                let pidFile = path.join(process.env["TMPDIR"], `wsgnatsd_${server.pid}.pid`);
+                if (fs.existsSync(pidFile)) {
+                    fs.readFileSync(pidFile).toString().split("\n").forEach((s) => {
+                        if (s.startsWith('ws://') || s.startsWith('wss://')) {
+                            (server as Server).ws = s;
+                        } else {
+                            (server as Server).nats = s;
+                        }
+                    });
+
+                    port = getPort(server.nats);
+                    clearInterval(t);
+                    r();
+                }
+
+            }, 100);
+        }).then(() => {
+            // Test for when socket is bound.
+            timer = <any>setInterval(function () {
+                resetSocket();
+
+                wait = Date.now() - start;
+                if (wait > maxWait) {
+                    finish(new Error('Can\'t connect to server on port: ' + port));
+                }
+
+                // Try to connect to the correct port.
+                socket = net.createConnection(port);
+
+                // Success
+                socket.on('connect', function () {
+                    if (server.pid === null) {
+                        // We connected but not to our server..
+                        finish(new Error('Server already running on port: ' + port));
+                    } else {
+                        finish();
+                    }
+                });
+
+                // Wait for next try..
+                socket.on('error', function (error) {
+                    finish(new Error("Problem connecting to server on port: " + port + " (" + error + ")"));
+                });
+
+            }, delta);
+        })
+            .catch((err) => {
+                reject(err);
             });
 
-            // Wait for next try..
-            socket.on('error', function (error) {
-                finish(new Error("Problem connecting to server on port: " + port + " (" + error + ")"));
-            });
-
-        }, delta);
 
         // Other way to catch another server running.
         server.on('exit', function (code, signal) {

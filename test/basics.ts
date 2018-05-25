@@ -5,16 +5,13 @@ import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
 
 import {Nuid} from 'js-nuid/src/nuid'
-import {startServer, stopServer} from "./helpers/nats_server_control";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 
 const nuid = new Nuid();
 
-let WS_HOSTPORT = "127.0.0.1:56389";
-
-
 test.before((t) => {
     return new Promise((resolve, reject) => {
-        startServer(WS_HOSTPORT)
+        startServer()
             .then((server) => {
                 t.context = {server: server};
                 resolve();
@@ -32,7 +29,8 @@ test.after.always((t) => {
 
 test('connect', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.close();
     t.pass();
 });
@@ -50,7 +48,8 @@ test('fail connect', async (t) => {
 
 test('publish', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.publish('foo', '');
     await nc.flush();
     nc.close();
@@ -59,7 +58,8 @@ test('publish', async (t) => {
 
 test('subscribe and unsubscribe', async (t) => {
     t.plan(10);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let subject = nuid.next();
     let sub = await nc.subscribe(subject, () => {
     }, {max: 1000, queueGroup: 'aaa'});
@@ -89,7 +89,8 @@ test('subscribe and unsubscribe', async (t) => {
 test('subscriptions fire callbacks', async t => {
     t.plan(2);
     let lock = new Lock();
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let sub = await nc.subscribe(s, (msg: Msg) => {
         t.pass();
@@ -110,7 +111,8 @@ test('subscriptions fire callbacks', async t => {
 test('subscriptions pass exact subjects to cb', async (t) => {
     t.plan(1);
     let lock = new Lock();
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let subj = `${s}.foo.bar.baz`;
     let sub = await nc.subscribe(`${s}.*.*.*`, (msg: Msg) => {
@@ -125,7 +127,8 @@ test('subscriptions pass exact subjects to cb', async (t) => {
 });
 
 test('subscriptions returns Subscription', async (t) => {
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let subj = nuid.next();
     let sub = await nc.subscribe(subj, () => {
     });
@@ -145,7 +148,8 @@ test('wildcard subscriptions', async (t) => {
     let partialCounter = 0;
     let fullCounter = 0;
 
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
 
     let s = nuid.next();
     let singleSub = await nc.subscribe(`${s}.*`, () => {
@@ -182,7 +186,8 @@ test('wildcard subscriptions', async (t) => {
 
 test('correct data in message', async (t) => {
     t.plan(3);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let subj = nuid.next();
 
     let lock = new Lock();
@@ -201,7 +206,8 @@ test('correct data in message', async (t) => {
 
 test('correct reply in message', async (t) => {
     t.plan(2);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let r = nuid.next();
 
@@ -220,7 +226,8 @@ test('correct reply in message', async (t) => {
 
 test('closed cannot subscribe', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.close();
     try {
         await nc.subscribe('foo', () => {
@@ -232,7 +239,8 @@ test('closed cannot subscribe', async (t) => {
 
 test('close cannot request', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.close();
     try {
         await nc.request('foo');
@@ -243,7 +251,8 @@ test('close cannot request', async (t) => {
 
 test('flush calls callback', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let lock = new Lock();
     let p = nc.flush(() => {
         t.pass();
@@ -260,7 +269,8 @@ test('flush calls callback', async (t) => {
 
 test('flush without callback returns promise', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let p = nc.flush();
     if (!p) {
         t.fail('should have returned a promise');
@@ -273,7 +283,8 @@ test('flush without callback returns promise', async (t) => {
 
 test('unsubscribe after close', async (t) => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let sub = await nc.subscribe(nuid.next(), () => {
     });
     nc.close();
@@ -284,7 +295,8 @@ test('unsubscribe after close', async (t) => {
 test('unsubscribe stops messages', async (t) => {
     t.plan(1);
     let received = 0;
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let subj = nuid.next();
     let sub = await nc.subscribe(subj, () => {
         received++;
@@ -304,7 +316,8 @@ test('unsubscribe stops messages', async (t) => {
 
 test('request', async t => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let sub = await nc.subscribe(s, (msg: Msg) => {
         if (msg.reply) {
@@ -319,7 +332,8 @@ test('request', async t => {
 
 test('request timeout', async t => {
     t.plan(1);
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     try {
         await nc.request(s, 100, "test");
@@ -333,7 +347,8 @@ test('request timeout', async t => {
 test('close listener is called', async (t) => {
     t.plan(1);
     let lock = new Lock();
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.addEventListener('close', () => {
         t.pass();
         lock.unlock();
@@ -349,7 +364,8 @@ test('close listener is called', async (t) => {
 test('error listener is called', async (t) => {
     t.plan(1);
     let lock = new Lock();
-    let nc = await connect({url: `ws://${WS_HOSTPORT}`});
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
     nc.addEventListener('error', () => {
         t.pass();
         lock.unlock();
