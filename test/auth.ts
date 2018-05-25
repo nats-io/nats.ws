@@ -4,6 +4,7 @@ import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 
 
 test.before(async (t) => {
+    t.log("TMDIR", process.env["TMPDIR"]);
     let server = await startServer("", ['--', '-p', '-1', '--user', 'derek', '--pass', 'foobar']);
     t.context = {server: server}
 });
