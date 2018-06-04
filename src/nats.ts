@@ -93,11 +93,11 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: any = undefined, reply: string = "") {
+    publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
         subject = subject || "";
         if (subject.length === 0) {
             this.errorHandler(new Error("subject required"));
-            return;
+            return this;
         }
 
         if (!this.options.json) {
@@ -119,6 +119,8 @@ export class NatsConnection implements ClientHandlers {
         } else {
             this.protocol.sendCommand(`PUB ${subject} ${len}\r\n${data}\r\n`);
         }
+
+        return this;
     }
 
 

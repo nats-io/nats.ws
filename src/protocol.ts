@@ -83,7 +83,7 @@ export interface Base {
     callback: MsgCallback;
     received: number;
     timeout?: number | null;
-    max?: number | null;
+    max?: number | undefined;
 }
 
 export interface Req extends Base {
@@ -462,6 +462,9 @@ export class ProtocolHandler implements TransportHandlers {
         sub.received += 1;
         if (sub.callback) {
             sub.callback(m.msg);
+        }
+        if (sub.max !== undefined && sub.received >= sub.max) {
+            this.unsubscribe(sub.sid);
         }
     }
 
