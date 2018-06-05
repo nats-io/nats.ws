@@ -276,3 +276,40 @@ test('check request leaks', async (t) => {
         t.fail("got exception" + err);
     }
 });
+
+test('check cancelled request leaks', async (t) => {
+    t.plan(6);
+    try {
+        let sc = t.context as SC;
+        let nc = await connect({url: sc.server.ws});
+        let subj = nuid.next();
+
+        // should have no subscriptions
+        t.is(nc.protocol.subscriptions.length, 0);
+
+        let rp = nc.request(subj);
+
+        // should have 2 mux subscriptions, and 2 subscriptions
+        t.is(nc.protocol.subscriptions.length, 1);
+        t.is(nc.protocol.muxSubscriptions.length, 1);
+
+        // the rejection should be timeout
+        rp.catch((rej) => {
+            t.is(rej, 'timeout');
+        });
+
+        // wait for it
+        try {
+            await rp;
+        } catch (err) {
+            t.pass();
+        }
+
+        // mux subs should have pruned
+        t.is(nc.protocol.muxSubscriptions.length, 0);
+
+        nc.close()
+    } catch (err) {
+        t.fail("got exception" + err);
+    }
+});

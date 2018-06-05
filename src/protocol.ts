@@ -74,7 +74,6 @@ export interface MsgCallback {
 }
 
 export interface RequestOptions {
-    max?: number;
     timeout?: number;
 }
 
@@ -114,8 +113,8 @@ export class Request {
         this.protocol = protocol;
     }
 
-    unsubscribe(max?: number): void {
-        this.protocol.cancelRequest(this.token, max);
+    cancel(): void {
+        this.protocol.cancelRequest(this.token, 0);
     }
 }
 

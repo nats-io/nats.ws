@@ -151,12 +151,13 @@ export class NatsConnection implements ClientHandlers {
             r.token = nuid.next();
             //@ts-ignore
             r.timeout = setTimeout(() => {
+                request.cancel();
                 reject('timeout');
             }, timeout);
             r.callback = (msg: Msg) => {
                 resolve(msg);
             };
-            this.protocol.request(r);
+            let request = this.protocol.request(r);
             this.publish(subject, data, `${this.protocol.muxSubscriptions.baseInbox}${r.token}`);
         });
     }
