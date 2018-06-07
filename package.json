@@ -31,6 +31,7 @@
     "coveralls": "^3.0.1",
     "jsdom": "^11.11.0",
     "nyc": "^11.8.0",
+    "text-encoding": "^0.6.4",
     "ts-loader": "^4.3.0",
     "typescript": "^2.8.3",
     "webpack": "^4.8.3",

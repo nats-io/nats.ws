@@ -6,6 +6,7 @@ import {Lock} from "./helpers/latch";
 
 import {Nuid} from 'js-nuid/src/nuid'
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
+import {asciiToByteArray} from "../src/util";
 
 const nuid = new Nuid();
 
@@ -372,7 +373,7 @@ test('error listener is called', async (t) => {
     });
 
     // make the server angry
-    (nc.protocol.transport as WSTransport).write('HelloWorld');
+    (nc.protocol.transport as WSTransport).write(asciiToByteArray('HelloWorld'));
     await lock.latch;
 });
 

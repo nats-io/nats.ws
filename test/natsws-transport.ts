@@ -18,6 +18,7 @@ import test from 'ava';
 import {Transport, TransportHandlers, WSTransport} from '../src/transport';
 import 'assert';
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
+import {NatsConnectionOptions} from "../src/nats";
 
 
 test.before((t) => {
@@ -60,7 +61,8 @@ test('wsnats', (t) => {
         };
         let transport: Transport;
         let sc = t.context as SC;
-        WSTransport.connect(new URL(sc.server.ws), th)
+        let opts = {url: sc.server.ws} as NatsConnectionOptions;
+        WSTransport.connect(opts, th)
             .then(nt => {
                 transport = nt;
             }).catch(err => {

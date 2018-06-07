@@ -31,6 +31,7 @@ export interface NatsConnectionOptions {
     user?: string;
     pass?: string;
     token?: string;
+    binaryType?: BinaryType;
 }
 
 export interface Callback {
@@ -139,7 +140,7 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    request(subject: string, timeout: number = 1000, data?: string | null): Promise<Msg> {
+    request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
                 //FIXME: proper error
