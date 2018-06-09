@@ -1,8 +1,9 @@
 import {BINARY_PAYLOAD, JSON_PAYLOAD, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {NatsError} from "./error";
-import {buildWSMessage, concat, extend, extractProtocolMessage} from "./util";
+import {buildWSMessage, extend, extractProtocolMessage} from "./util";
 import {Nuid} from 'js-nuid/src/nuid'
+import {DataBuffer} from "./databuffer";
 
 const nuid = new Nuid();
 
@@ -274,7 +275,7 @@ export class MsgBuffer {
         if (!this.buf) {
             this.buf = data;
         } else {
-            this.buf = concat(this.buf, data);
+            this.buf = DataBuffer.concat(this.buf, data);
         }
         this.length -= data.byteLength;
 
@@ -294,62 +295,6 @@ export class MsgBuffer {
             this.buf = null;
         }
     }
-}
-
-export class DataBuffer {
-    buffers: ArrayBuffer[] = [];
-    byteLength: number = 0;
-
-    pack() : void {
-        if(this.buffers.length > 1) {
-            let v = this.buffers.splice(0, this.buffers.length);
-            this.buffers.push(concat(...v));
-        }
-    }
-
-    drain(n?: number): ArrayBuffer {
-        if(this.buffers.length) {
-            this.pack();
-            let v = this.buffers.pop();
-            if(v) {
-                let max = this.byteLength;
-                if (n === undefined || n > max) {
-                    n = max;
-                }
-                let d = v.slice(0, n);
-                if (max > n) {
-                    this.buffers.push(v.slice(n));
-                }
-                this.byteLength = max - n;
-                return d;
-            }
-        }
-        return new Uint8Array(0).buffer;
-    }
-
-    fill(data: ArrayBuffer): void {
-        if(data) {
-            this.buffers.push(data);
-            this.byteLength += data.byteLength;
-        }
-    }
-
-    peek(): ArrayBuffer {
-        if(this.buffers.length) {
-            this.pack();
-            return this.buffers[0];
-        }
-        return new Uint8Array(0).buffer;
-    }
-
-    size(): number {
-        return this.byteLength;
-    }
-
-    length() : number {
-        return this.buffers.length;
-    }
-
 }
 
 export class ProtocolHandler implements TransportHandlers {
