@@ -48,12 +48,6 @@ export class Connect {
 
     constructor(opts?: NatsConnectionOptions) {
         opts = opts || {} as NatsConnectionOptions;
-
-        // this is for the ws connection
-        delete opts.binaryType;
-        delete opts.url;
-        delete opts.json;
-
         if (opts.token) {
             this.auth_token = opts.token;
         }
@@ -263,7 +257,7 @@ export interface Msg {
 export class MsgBuffer {
     msg: Msg;
     length: number;
-    buf?: ArrayBuffer;
+    buf?: ArrayBuffer | null;
     wantsJSON: boolean;
 
     constructor(chunks: RegExpExecArray, wantsJSON: boolean = false) {
@@ -287,91 +281,63 @@ export class MsgBuffer {
         if (this.length === 0) {
             // let t = this.buf.join('').slice(0, this.msg.size);
             // this.msg.data = this.wantsJSON ? JSON.parse(t) : t;
-            this.msg.data = this.buf;
-            this.buf = new Uint8Array(0).buffer;
+            this.msg.data = this.buf.slice(0, this.buf.byteLength - 2);
+            if (this.wantsJSON) {
+                this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+            }
+            this.buf = null;
         }
     }
 }
 
-export interface DataBuffer<T> {
-    size(): number;
-
-    fill(data: T): void;
-
-    peek(): T;
-
-    drain(n?: number): T;
-}
-
-export class ArrayBufferDataBuffer implements DataBuffer<ArrayBuffer> {
-    buffer: ArrayBuffer = new Uint8Array(0).buffer;
+export class DataBuffer {
+    buffer?: ArrayBuffer | null = null;
 
     drain(n?: number): ArrayBuffer {
+        if (!this.buffer) {
+            return new Uint8Array(0).buffer;
+        }
         if (n === undefined) {
             n = this.size();
         }
+
         let buf = this.buffer.slice(0, n);
         let len = this.buffer.byteLength;
         if (len > n) {
             this.buffer = this.buffer.slice(n);
         } else {
-            this.buffer = new Uint8Array(0).buffer
+            this.buffer = null
         }
+        let s = new TextDecoder("utf-8").decode(this.buffer);
+
         return buf;
     }
 
     fill(data: ArrayBuffer): void {
-        this.buffer = concat(this.buffer, data);
+        if (this.buffer) {
+            this.buffer = concat(this.buffer, data);
+        } else {
+            this.buffer = data;
+        }
+
     }
 
     peek(): ArrayBuffer {
-        return this.buffer;
+        return this.buffer ? this.buffer : new ArrayBuffer(0);
     }
 
     size(): number {
-        return this.buffer.byteLength;
+        return this.buffer ? this.buffer.byteLength : 0;
     }
 
-}
-
-export class StringDataBuffer implements DataBuffer<string> {
-    chunks: string = "";
-    length: number = 0;
-
-    drain(n?: number): string {
-        let v = this.chunks;
-        this.chunks = "";
-        this.length = 0;
-        if (n !== undefined) {
-            let s = v.slice(0, n);
-            this.chunks = v.slice(n);
-            v = s;
-        }
-        return v;
-    }
-
-    fill(data: string): void {
-        if (data) {
-            this.chunks = [this.chunks, data].join('');
-            this.length += this.chunks.length;
-        }
-    }
-
-    peek(): string {
-        return this.chunks;
-    }
-
-    size(): number {
-        return this.chunks.length;
-    }
 }
 
 export class ProtocolHandler implements TransportHandlers {
     infoReceived: boolean = false;
     subscriptions: Subscriptions;
     muxSubscriptions: MuxSubscription;
-    inbound: DataBuffer<string | ArrayBuffer>;
-    outbound: DataBuffer<string | ArrayBuffer>;
+    inbound: DataBuffer;
+    outbound: DataBuffer;
     state: ParserState = ParserState.AWAITING_CONTROL;
     pongs: Array<Function | undefined> = [];
     pout: number = 0;
@@ -387,13 +353,8 @@ export class ProtocolHandler implements TransportHandlers {
         this.clientHandlers = handlers;
         this.subscriptions = new Subscriptions();
         this.muxSubscriptions = new MuxSubscription();
-        if (options.binaryType === "arraybuffer") {
-            this.inbound = new ArrayBufferDataBuffer();
-            this.outbound = new ArrayBufferDataBuffer();
-        } else {
-            this.inbound = new StringDataBuffer();
-            this.outbound = new StringDataBuffer();
-        }
+        this.inbound = new DataBuffer();
+        this.outbound = new DataBuffer();
     }
 
     public static connect(options: NatsConnectionOptions, handlers: ClientHandlers): Promise<ProtocolHandler> {
@@ -481,11 +442,11 @@ export class ProtocolHandler implements TransportHandlers {
                     }
                     if (this.inbound.size() < this.payload.msg.size) {
                         let d = this.inbound.drain();
-                        this.payload.fill(d as ArrayBuffer);
+                        this.payload.fill(d);
                         return;
                     }
                     let dd = this.inbound.drain(this.payload.length);
-                    this.payload.fill(dd as ArrayBuffer);
+                    this.payload.fill(dd);
                     this.processMsg();
                     this.state = ParserState.AWAITING_CONTROL;
                     this.payload = null;
@@ -524,17 +485,35 @@ export class ProtocolHandler implements TransportHandlers {
         }
     }
 
-    sendCommand(cmd: string) {
-        if (cmd && cmd.length) {
-            this.outbound.fill(cmd);
+    sendCommand(cmd: string | ArrayBuffer) {
+        let buf: ArrayBuffer;
+        if (typeof cmd === 'string') {
+            buf = new TextEncoder().encode(cmd).buffer;
+        } else {
+            buf = cmd as ArrayBuffer;
         }
-        if (this.outbound.size() === 1) {
+        if (cmd) {
+            this.outbound.fill(buf);
+        }
+        if (this.outbound.size()) {
             setTimeout(() => {
                 this.flushPending();
             });
-        } else if (this.outbound.size() > FLUSH_THRESHOLD) {
-            this.flushPending();
         }
+    }
+
+    publish(subject: string, data: ArrayBuffer, reply: string) {
+        let len = Buffer.byteLength(data);
+        reply = reply || "";
+
+        let proto: string;
+        if (reply) {
+            proto = `PUB ${subject} ${reply} ${len}\r\n`;
+        } else {
+            proto = `PUB ${subject} ${len}\r\n`;
+        }
+
+        this.sendCommand(buildWSMessage(proto, data));
     }
 
     request(r: Req): Request {
@@ -642,8 +621,10 @@ export class ProtocolHandler implements TransportHandlers {
 
     private flushPending() {
         if (!this.infoReceived) {
+            console.log('flush - no info, waiting');
             return;
         }
+
         if (this.outbound.size()) {
             let d = this.outbound.drain();
             this.transport.write(d);

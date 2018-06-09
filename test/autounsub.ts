@@ -33,7 +33,7 @@ test('auto unsub from max from options', async (t) => {
         t.is(count, 10);
         nc.close()
     } catch (err) {
-        t.fail("got exception" + err);
+        t.fail("got exception " + err);
     }
 });
 

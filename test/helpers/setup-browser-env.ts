@@ -16,3 +16,12 @@
 
 let browserEnv = require('browser-env');
 browserEnv();
+
+require('fast-text-encoding');
+
+//@ts-ignore
+global['TextEncoder'] = window.TextEncoder;
+//@ts-ignore
+global['TextDecoder'] = window.TextDecoder;
+
+

@@ -194,7 +194,8 @@ test('correct data in message', async (t) => {
     let lock = new Lock();
     let sub = await nc.subscribe(subj, (m) => {
         t.is(m.subject, subj);
-        t.is(m.data, '0xFEEDFACE');
+        //@ts-ignore
+        t.is(new TextDecoder('utf-8').decode(m.data), '0xFEEDFACE');
         t.is(m.reply, undefined);
         lock.unlock();
     }, {max: 1});
@@ -321,12 +322,15 @@ test('request', async t => {
     let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let sub = await nc.subscribe(s, (msg: Msg) => {
+        t.log('got request');
         if (msg.reply) {
             nc.publish(msg.reply, "foo");
+            t.log('sent reply');
         }
     });
     let msg = await nc.request(s, 1000, "test");
-    t.is(msg.data, "foo");
+    //@ts-ignore
+    t.is(new TextDecoder("utf-8").decode(msg.data), "foo");
     sub.unsubscribe();
     nc.close();
 });

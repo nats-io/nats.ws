@@ -1,6 +1,12 @@
+import {Buffer} from 'buffer';
+
 let CRLF : ArrayBuffer = asciiToByteArray("\r\n");
 let CR = new Uint8Array(CRLF)[0]; // 13
 let LF = new Uint8Array(CRLF)[1]; // 10
+
+export function isArrayBuffer(a: any): boolean {
+    return a instanceof ArrayBuffer;
+}
 
 export function extend(a: any, ...b: any[]): any {
     for (let i = 0; i < b.length; i++) {
@@ -12,55 +18,32 @@ export function extend(a: any, ...b: any[]): any {
     return a;
 }
 
-function protoLen(a: ArrayBuffer): number {
-    let buf = new Uint8Array(a)
-    for(let i=0; i < buf.byteLength; i++) {
+function protoLen(a: Buffer): number {
+    for (let i = 0; i < a.byteLength; i++) {
         let n = i+1;
-        if(buf.byteLength > n && buf[i] === CR && buf[n] === LF) {
+        if (a.byteLength > n && a[i] === CR && a[n] === LF) {
             return n+1;
         }
     }
     return -1;
 }
 
-export function debugMsg(a: ArrayBuffer) : string {
-    let uia = new Uint8Array(a);
-    let buf = [];
-    for(let i=0; i < a.byteLength; i++) {
-        buf.push(String.fromCharCode(uia[i]));
-    }
-    return buf.join('');
-}
-
-export function extractProtocolMessage(a: ArrayBuffer | string) : string {
-    if(typeof a === 'string') {
-        return a;
-    }
-    let n = protoLen(a);
-    let uia = new Uint8Array(a);
-    if(n) {
-        let buf = new Array(n);
-        for(let i=0; i < n; i++) {
-            buf.push(String.fromCharCode(uia[i]));
-        }
-        return buf.join('');
-    }
-
-    return '';
+export function extractProtocolMessage(a: ArrayBuffer): string {
+    // protocol messages are ascii, so Uint8Array
+    return String.fromCharCode.apply(null, new Uint8Array(a));
 }
 
 export function asciiToByteArray(m: string) : ArrayBuffer {
-    let len = m ? m.length : 0;
-    let buf = new Uint8Array(len);
-    if(m) {
-        for(let i=0; i < m.length; i++) {
-            buf[i] = m.charCodeAt(i);
-        }
+    if (!m) {
+        m = "";
     }
-
-    return buf.buffer;
+    let buf = new ArrayBuffer(m.length);
+    let v = new Uint8Array(buf);
+    for (let i = 0; i < m.length; i++) {
+        v[i] = m.charCodeAt(i);
+    }
+    return buf;
 }
-
 
 
 export function buildWSMessage(protocol: string, a?: ArrayBuffer) : ArrayBuffer {
@@ -68,20 +51,19 @@ export function buildWSMessage(protocol: string, a?: ArrayBuffer) : ArrayBuffer 
     if(a) {
         msg = concat(msg, a, CRLF)
     }
-
     return msg;
 }
 
-export function concat(...chunks: ArrayBuffer[]) : ArrayBuffer {
+export function concat(...bufs: ArrayBuffer[]): ArrayBuffer {
     let max = 0;
-    for(let i=0; i < chunks.length; i++) {
-        max += chunks[i].byteLength;
+    for (let i = 0; i < bufs.length; i++) {
+        max += bufs[i].byteLength;
     }
     let buf = new Uint8Array(max);
     let index = 0;
-    for(let i=0; i < chunks.length; i++) {
-        buf.set(new Uint8Array(chunks[i]), index);
-        index += chunks[i].byteLength;
+    for (let i = 0; i < bufs.length; i++) {
+        buf.set(new Uint8Array(bufs[i]), index);
+        index += bufs[i].byteLength;
     }
     return buf.buffer;
 }

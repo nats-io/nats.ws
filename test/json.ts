@@ -52,23 +52,29 @@ test('connect json propagates options', async (t) => {
 
 function macro(t: any, input: any): Promise<any> {
     t.plan(1);
-    let subj = nuid.next();
     let lock = new Lock();
-    let nc = t.context.nc;
-    nc.subscribe(subj, (msg: Msg) => {
-        // in JSON undefined is translated to null
-        if (input === undefined) {
-            input = null;
-        }
-        t.deepEqual(msg.data, input);
-        // t.log([input, '===', msg.data]);
-        lock.unlock();
-    });
+    try {
+        let subj = nuid.next();
+        let nc = t.context.nc;
+        nc.subscribe(subj, (msg: Msg) => {
+            // in JSON undefined is translated to null
+            if (input === undefined) {
+                input = null;
+            }
+            //@ts-ignore
+            t.deepEqual(msg.data, input);
+            // t.log([input, '===', msg.data]);
+            lock.unlock();
+        });
 
-    nc.publish(subj, input);
-    nc.flush();
+        nc.publish(subj, input);
+        nc.flush();
+    } catch (err) {
+        t.log(err);
+    }
     return lock.latch;
 }
+
 
 test('string', macro, 'helloworld');
 test('empty', macro, '');

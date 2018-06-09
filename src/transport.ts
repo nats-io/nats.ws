@@ -1,10 +1,10 @@
 import {NatsConnectionOptions} from "./nats";
-import {debugMsg} from "./util";
 
 export interface Transport {
     isConnected(): boolean;
 
     isClosed(): boolean;
+
 
     write(data: any): void;
 
@@ -51,9 +51,7 @@ export class WSTransport {
             let transport = new WSTransport(handlers);
             transport.debug = debug;
             transport.stream = new WebSocket(options.url);
-            if (options.binaryType) {
-                transport.stream.binaryType = options.binaryType as BinaryType;
-            }
+            transport.stream.binaryType = "arraybuffer";
             transport.listeners = {} as TransportHandlers;
 
             // while the promise resolves, we need to trap any errors/close
@@ -137,7 +135,6 @@ export class WSTransport {
         if (!this.stream || !this.isConnected()) {
             return;
         }
-        // console.log('<', [debugMsg(data)], "ArrayBuffer:" + (data instanceof ArrayBuffer));
         this.trace('<', [data]);
 
         this.stream.send(data);

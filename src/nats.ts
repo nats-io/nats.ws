@@ -1,4 +1,9 @@
-import {extend} from "./util";
+//@ts-ignore
+const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
+//@ts-ignore
+const TextDecoder = TextDecoder ? TextDecoder : window.TextDecoder;
+
+import {extend, isArrayBuffer} from "./util";
 import {ClientEventMap} from "./nats";
 import {
     ClientHandlers,
@@ -11,9 +16,11 @@ import {
     Subscription
 } from "./protocol";
 import {NatsError} from "./error";
-import {Nuid} from "js-nuid/src/nuid"
+import {Nuid} from "js-nuid/src/nuid";
+import {Buffer} from "buffer";
 
 const nuid = new Nuid();
+
 
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
@@ -31,7 +38,6 @@ export interface NatsConnectionOptions {
     user?: string;
     pass?: string;
     token?: string;
-    binaryType?: BinaryType;
 }
 
 export interface Callback {
@@ -100,26 +106,19 @@ export class NatsConnection implements ClientHandlers {
             this.errorHandler(new Error("subject required"));
             return this;
         }
-
-        if (!this.options.json) {
-            data = data || "";
-        } else {
-            data = data === undefined ? null : data;
+        // we take string, object to JSON and ArrayBuffer - if argument is not
+        // ArrayBuffer, then process the payload
+        if (!isArrayBuffer(data)) {
+            if (!this.options.json) {
+                data = data || "";
+            } else {
+                data = JSON.stringify(data);
+            }
+            // here we are a string
+            data = new TextEncoder().encode(data);
         }
 
-        if (this.options.json) {
-            data = JSON.stringify(data);
-        }
-        //@ts-ignore
-        let len = data.length;
-
-        reply = reply || "";
-
-        if (reply) {
-            this.protocol.sendCommand(`PUB ${subject} ${reply} ${len}\r\n${data}\r\n`);
-        } else {
-            this.protocol.sendCommand(`PUB ${subject} ${len}\r\n${data}\r\n`);
-        }
+        this.protocol.publish(subject, data, reply);
 
         return this;
     }
