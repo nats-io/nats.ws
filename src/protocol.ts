@@ -297,43 +297,57 @@ export class MsgBuffer {
 }
 
 export class DataBuffer {
-    buffer?: ArrayBuffer | null = null;
+    buffers: ArrayBuffer[] = [];
+    byteLength: number = 0;
+
+    pack() : void {
+        if(this.buffers.length > 1) {
+            let v = this.buffers.splice(0, this.buffers.length);
+            this.buffers.push(concat(...v));
+        }
+    }
 
     drain(n?: number): ArrayBuffer {
-        if (!this.buffer) {
-            return new Uint8Array(0).buffer;
+        if(this.buffers.length) {
+            this.pack();
+            let v = this.buffers.pop();
+            if(v) {
+                let max = this.byteLength;
+                if (n === undefined || n > max) {
+                    n = max;
+                }
+                let d = v.slice(0, n);
+                if (max > n) {
+                    this.buffers.push(v.slice(n));
+                }
+                this.byteLength = max - n;
+                return d;
+            }
         }
-        if (n === undefined) {
-            n = this.size();
-        }
-
-        let buf = this.buffer.slice(0, n);
-        let len = this.buffer.byteLength;
-        if (len > n) {
-            this.buffer = this.buffer.slice(n);
-        } else {
-            this.buffer = null
-        }
-        let s = new TextDecoder("utf-8").decode(this.buffer);
-
-        return buf;
+        return new Uint8Array(0).buffer;
     }
 
     fill(data: ArrayBuffer): void {
-        if (this.buffer) {
-            this.buffer = concat(this.buffer, data);
-        } else {
-            this.buffer = data;
+        if(data) {
+            this.buffers.push(data);
+            this.byteLength += data.byteLength;
         }
-
     }
 
     peek(): ArrayBuffer {
-        return this.buffer ? this.buffer : new ArrayBuffer(0);
+        if(this.buffers.length) {
+            this.pack();
+            return this.buffers[0];
+        }
+        return new Uint8Array(0).buffer;
     }
 
     size(): number {
-        return this.buffer ? this.buffer.byteLength : 0;
+        return this.byteLength;
+    }
+
+    length() : number {
+        return this.buffers.length;
     }
 
 }
@@ -501,10 +515,14 @@ export class ProtocolHandler implements TransportHandlers {
         if (cmd) {
             this.outbound.fill(buf);
         }
-        if (this.outbound.size()) {
+
+        let chunks = this.outbound.length();
+        if (chunks === 1) {
             setTimeout(() => {
                 this.flushPending();
             });
+        } else if (chunks > FLUSH_THRESHOLD) {
+            this.flushPending();
         }
     }
 
