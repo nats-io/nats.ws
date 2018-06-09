@@ -6,6 +6,7 @@ import {Lock} from "./helpers/latch";
 
 import {Nuid} from 'js-nuid/src/nuid'
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
+import {asciiToByteArray} from "../src/util";
 
 const nuid = new Nuid();
 
@@ -193,6 +194,7 @@ test('correct data in message', async (t) => {
     let lock = new Lock();
     let sub = await nc.subscribe(subj, (m) => {
         t.is(m.subject, subj);
+        //@ts-ignore
         t.is(m.data, '0xFEEDFACE');
         t.is(m.reply, undefined);
         lock.unlock();
@@ -325,6 +327,7 @@ test('request', async t => {
         }
     });
     let msg = await nc.request(s, 1000, "test");
+    //@ts-ignore
     t.is(msg.data, "foo");
     sub.unsubscribe();
     nc.close();
@@ -372,7 +375,7 @@ test('error listener is called', async (t) => {
     });
 
     // make the server angry
-    (nc.protocol.transport as WSTransport).write('HelloWorld');
+    (nc.protocol.transport as WSTransport).write(asciiToByteArray('HelloWorld'));
     await lock.latch;
 });
 

@@ -1,7 +1,10 @@
+import {NatsConnectionOptions} from "./nats";
+
 export interface Transport {
     isConnected(): boolean;
 
     isClosed(): boolean;
+
 
     write(data: any): void;
 
@@ -43,11 +46,12 @@ export class WSTransport {
         this.handlers = handlers;
     }
 
-    static connect(url: URL, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
+    static connect(options: NatsConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
         return new Promise((resolve, reject) => {
             let transport = new WSTransport(handlers);
             transport.debug = debug;
-            transport.stream = new WebSocket(url.toString());
+            transport.stream = new WebSocket(options.url);
+            transport.stream.binaryType = "arraybuffer";
             transport.listeners = {} as TransportHandlers;
 
             // while the promise resolves, we need to trap any errors/close
@@ -127,12 +131,14 @@ export class WSTransport {
         return this.stream !== null && this.stream.readyState === WebSocket.OPEN;
     }
 
-    write(data: string): void {
+    write(data: ArrayBuffer): void {
         if (!this.stream || !this.isConnected()) {
             return;
         }
-        this.stream.send(data);
         this.trace('<', [data]);
+
+        this.stream.send(data);
+
     }
 
     destroy(): void {

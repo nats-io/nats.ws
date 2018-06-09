@@ -1,4 +1,9 @@
-import {extend} from "./util";
+//@ts-ignore
+const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
+//@ts-ignore
+const TextDecoder = TextDecoder ? TextDecoder : window.TextDecoder;
+
+import {extend, isArrayBuffer} from "./util";
 import {ClientEventMap} from "./nats";
 import {
     ClientHandlers,
@@ -11,10 +16,15 @@ import {
     Subscription
 } from "./protocol";
 import {NatsError} from "./error";
-import {Nuid} from "js-nuid/src/nuid"
+import {Nuid} from "js-nuid/src/nuid";
+import {Buffer} from "buffer";
 
 const nuid = new Nuid();
 
+
+export const BINARY_PAYLOAD = "binary";
+export const JSON_PAYLOAD = "json";
+export const STRING_PAYLOAD = "string";
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
@@ -31,6 +41,7 @@ export interface NatsConnectionOptions {
     user?: string;
     pass?: string;
     token?: string;
+    payload?: "json" | "binary" | "string";
 }
 
 export interface Callback {
@@ -65,8 +76,13 @@ export class NatsConnection implements ClientHandlers {
 
     private constructor(opts: NatsConnectionOptions) {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
-        if (opts.json === undefined) {
-            opts.json = false;
+        if (opts.payload === undefined) {
+            opts.payload = "string";
+        }
+
+        let payloadTypes = ["json", "string", "binary"];
+        if (!payloadTypes.includes(opts.payload)) {
+            throw `payload options can be: ${payloadTypes.join(', ')}`
         }
 
         if (opts.user && opts.token) {
@@ -99,26 +115,20 @@ export class NatsConnection implements ClientHandlers {
             this.errorHandler(new Error("subject required"));
             return this;
         }
-
-        if (!this.options.json) {
-            data = data || "";
-        } else {
-            data = data === undefined ? null : data;
+        // we take string, object to JSON and ArrayBuffer - if argument is not
+        // ArrayBuffer, then process the payload
+        if (!isArrayBuffer(data)) {
+            if (this.options.payload !== JSON_PAYLOAD) {
+                data = data || "";
+            } else {
+                data = data === undefined ? null : data;
+                data = JSON.stringify(data);
+            }
+            // here we are a string
+            data = new TextEncoder().encode(data);
         }
 
-        if (this.options.json) {
-            data = JSON.stringify(data);
-        }
-        //@ts-ignore
-        let len = data.length;
-
-        reply = reply || "";
-
-        if (reply) {
-            this.protocol.sendCommand(`PUB ${subject} ${reply} ${len}\r\n${data}\r\n`);
-        } else {
-            this.protocol.sendCommand(`PUB ${subject} ${len}\r\n${data}\r\n`);
-        }
+        this.protocol.publish(subject, data, reply);
 
         return this;
     }
@@ -139,7 +149,7 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    request(subject: string, timeout: number = 1000, data?: string | null): Promise<Msg> {
+    request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
                 //FIXME: proper error

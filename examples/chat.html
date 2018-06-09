@@ -23,7 +23,7 @@
     let me = Date.now();
 
     async function doit() {
-        let nc = await nats.connect({url: "ws://localhost:8080", json: true});
+        let nc = await nats.connect({url: "ws://localhost:8080", payload: "json"});
         nc.subscribe("chat", (msg) => {
             let p = document.createElement("pre");
             let message = msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`;

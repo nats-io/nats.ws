@@ -1,7 +1,7 @@
-import {NatsConnectionOptions} from "./nats";
+import {BINARY_PAYLOAD, JSON_PAYLOAD, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {NatsError} from "./error";
-import {extend} from "./util";
+import {buildWSMessage, concat, extend, extractProtocolMessage} from "./util";
 import {Nuid} from 'js-nuid/src/nuid'
 
 const nuid = new Nuid();
@@ -257,73 +257,107 @@ export interface Msg {
 export class MsgBuffer {
     msg: Msg;
     length: number;
-    buf: string[] | null = null;
-    wantsJSON: boolean;
+    buf?: ArrayBuffer | null;
+    payload: string;
 
-    constructor(chunks: RegExpExecArray, wantsJSON: boolean = false) {
+    constructor(chunks: RegExpExecArray, payload: "string" | "json" | "binary" = "string") {
         this.msg = {} as Msg;
         this.msg.subject = chunks[1];
         this.msg.sid = parseInt(chunks[2], 10);
         this.msg.reply = chunks[4];
         this.msg.size = parseInt(chunks[5], 10);
         this.length = this.msg.size + CR_LF_LEN;
-        this.wantsJSON = wantsJSON;
+        this.payload = payload;
     }
 
-    fill(data: string) {
+    fill(data: ArrayBuffer) {
         if (!this.buf) {
-            this.buf = [];
+            this.buf = data;
+        } else {
+            this.buf = concat(this.buf, data);
         }
-        this.buf.push(data);
-        this.length -= data.length;
+        this.length -= data.byteLength;
 
         if (this.length === 0) {
-            let t = this.buf.join('').slice(0, this.msg.size);
-            this.msg.data = this.wantsJSON ? JSON.parse(t) : t;
+            this.msg.data = this.buf.slice(0, this.buf.byteLength - 2);
+            switch (this.payload) {
+                case JSON_PAYLOAD:
+                    this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+                    this.msg.data = JSON.parse(this.msg.data);
+                    break;
+                case STRING_PAYLOAD:
+                    this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+                    break;
+                case BINARY_PAYLOAD:
+                    break;
+            }
+            this.buf = null;
         }
     }
 }
 
 export class DataBuffer {
-    chunks: string[] = [];
-    length: number = 0;
+    buffers: ArrayBuffer[] = [];
+    byteLength: number = 0;
+
+    pack() : void {
+        if(this.buffers.length > 1) {
+            let v = this.buffers.splice(0, this.buffers.length);
+            this.buffers.push(concat(...v));
+        }
+    }
+
+    drain(n?: number): ArrayBuffer {
+        if(this.buffers.length) {
+            this.pack();
+            let v = this.buffers.pop();
+            if(v) {
+                let max = this.byteLength;
+                if (n === undefined || n > max) {
+                    n = max;
+                }
+                let d = v.slice(0, n);
+                if (max > n) {
+                    this.buffers.push(v.slice(n));
+                }
+                this.byteLength = max - n;
+                return d;
+            }
+        }
+        return new Uint8Array(0).buffer;
+    }
+
+    fill(data: ArrayBuffer): void {
+        if(data) {
+            this.buffers.push(data);
+            this.byteLength += data.byteLength;
+        }
+    }
+
+    peek(): ArrayBuffer {
+        if(this.buffers.length) {
+            this.pack();
+            return this.buffers[0];
+        }
+        return new Uint8Array(0).buffer;
+    }
 
     size(): number {
-        return this.chunks.length;
+        return this.byteLength;
     }
 
-    fill(data: string) {
-        if (data) {
-            this.chunks.push(data);
-            this.length += data.length;
-        }
+    length() : number {
+        return this.buffers.length;
     }
 
-    peek(): string {
-        return this.chunks.join('');
-    }
-
-    drain(n?: number): string {
-        let v = this.chunks.join('');
-        this.chunks = [];
-        this.length = 0;
-        if (n !== undefined) {
-            let s = v.slice(0, n);
-            let t = v.slice(n);
-            this.fill(t);
-            v = s;
-        }
-
-        return v;
-    }
 }
 
 export class ProtocolHandler implements TransportHandlers {
     infoReceived: boolean = false;
     subscriptions: Subscriptions;
     muxSubscriptions: MuxSubscription;
-    inbound: DataBuffer = new DataBuffer();
-    outbound: DataBuffer = new DataBuffer();
+    inbound: DataBuffer;
+    outbound: DataBuffer;
     state: ParserState = ParserState.AWAITING_CONTROL;
     pongs: Array<Function | undefined> = [];
     pout: number = 0;
@@ -339,6 +373,8 @@ export class ProtocolHandler implements TransportHandlers {
         this.clientHandlers = handlers;
         this.subscriptions = new Subscriptions();
         this.muxSubscriptions = new MuxSubscription();
+        this.inbound = new DataBuffer();
+        this.outbound = new DataBuffer();
     }
 
     public static connect(options: NatsConnectionOptions, handlers: ClientHandlers): Promise<ProtocolHandler> {
@@ -355,7 +391,7 @@ export class ProtocolHandler implements TransportHandlers {
                 });
             });
 
-            WSTransport.connect(new URL(options.url), ph)
+            WSTransport.connect(options, ph)
                 .then((transport) => {
                     ph.transport = transport;
                 })
@@ -376,14 +412,16 @@ export class ProtocolHandler implements TransportHandlers {
 
     processInbound(): void {
         let m: RegExpExecArray | null = null;
-        while (this.inbound.length) {
+        while (this.inbound.size()) {
             switch (this.state) {
                 case ParserState.CLOSED:
                     return;
                 case ParserState.AWAITING_CONTROL:
-                    let buf = this.inbound.peek();
+                    let raw = this.inbound.peek();
+                    let buf = extractProtocolMessage(raw);
+
                     if ((m = MSG.exec(buf))) {
-                        this.payload = new MsgBuffer(m, this.options.json);
+                        this.payload = new MsgBuffer(m, this.options.payload);
                         this.state = ParserState.AWAITING_MSG_PAYLOAD;
                     } else if ((m = OK.exec(buf))) {
                         // ignored
@@ -397,7 +435,7 @@ export class ProtocolHandler implements TransportHandlers {
                             cb();
                         }
                     } else if ((m = PING.exec(buf))) {
-                        this.transport.write(PONG_RESPONSE);
+                        this.transport.write(buildWSMessage(PONG_RESPONSE));
                     } else if ((m = INFO.exec(buf))) {
                         if (!this.infoReceived) {
                             // send connect
@@ -408,9 +446,9 @@ export class ProtocolHandler implements TransportHandlers {
                                 return;
                             }
                             let cs = JSON.stringify(new Connect(this.options));
-                            this.transport.write(`${CONNECT} ${cs}${CR_LF}`);
+                            this.transport.write(buildWSMessage(`${CONNECT} ${cs}${CR_LF}`));
                             this.sendSubscriptions();
-                            this.transport.write(PING_REQUEST);
+                            this.transport.write(buildWSMessage(PING_REQUEST));
                             this.infoReceived = true;
                             this.flushPending();
                         }
@@ -422,7 +460,7 @@ export class ProtocolHandler implements TransportHandlers {
                     if (!this.payload) {
                         break;
                     }
-                    if (this.inbound.length < this.payload.msg.size) {
+                    if (this.inbound.size() < this.payload.msg.size) {
                         let d = this.inbound.drain();
                         this.payload.fill(d);
                         return;
@@ -437,7 +475,7 @@ export class ProtocolHandler implements TransportHandlers {
 
             if (m) {
                 let psize = m[0].length;
-                if (psize >= this.inbound.length) {
+                if (psize >= this.inbound.size()) {
                     this.inbound.drain();
                 } else {
                     this.inbound.drain(psize);
@@ -467,17 +505,39 @@ export class ProtocolHandler implements TransportHandlers {
         }
     }
 
-    sendCommand(cmd: string) {
-        if (cmd && cmd.length) {
-            this.outbound.fill(cmd);
+    sendCommand(cmd: string | ArrayBuffer) {
+        let buf: ArrayBuffer;
+        if (typeof cmd === 'string') {
+            buf = new TextEncoder().encode(cmd).buffer;
+        } else {
+            buf = cmd as ArrayBuffer;
         }
-        if (this.outbound.size() === 1) {
+        if (cmd) {
+            this.outbound.fill(buf);
+        }
+
+        let chunks = this.outbound.length();
+        if (chunks === 1) {
             setTimeout(() => {
                 this.flushPending();
             });
-        } else if (this.outbound.length > FLUSH_THRESHOLD) {
+        } else if (chunks > FLUSH_THRESHOLD) {
             this.flushPending();
         }
+    }
+
+    publish(subject: string, data: ArrayBuffer, reply: string) {
+        let len = Buffer.byteLength(data);
+        reply = reply || "";
+
+        let proto: string;
+        if (reply) {
+            proto = `PUB ${subject} ${reply} ${len}\r\n`;
+        } else {
+            proto = `PUB ${subject} ${len}\r\n`;
+        }
+
+        this.sendCommand(buildWSMessage(proto, data));
     }
 
     request(r: Req): Request {
@@ -548,7 +608,9 @@ export class ProtocolHandler implements TransportHandlers {
                 cmds.push(`${SUB} ${s.subject} ${s.sid} ${CR_LF}`);
             }
         });
-        this.transport.write(cmds.join(''));
+        if(cmds.length) {
+            this.transport.write(buildWSMessage(cmds.join('')));
+        }
     }
 
     openHandler(evt: Event): void {
@@ -583,10 +645,12 @@ export class ProtocolHandler implements TransportHandlers {
 
     private flushPending() {
         if (!this.infoReceived) {
+            console.log('flush - no info, waiting');
             return;
         }
-        let d = this.outbound.drain();
-        if (d) {
+
+        if (this.outbound.size()) {
+            let d = this.outbound.drain();
             this.transport.write(d);
         }
     }

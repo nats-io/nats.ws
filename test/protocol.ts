@@ -11,13 +11,14 @@ test('split messages correctly', (t) => {
         let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
         protocol.infoReceived = true;
         let data = 'MSG test.foo 1 11\r\nHello World\r\nMSG test.bar 1 11\r\nHello World\r\nMSG test.baz 1 11\r\nHello World\r\nPONG\r\n';
-        protocol.inbound.fill(data);
+        protocol.inbound.fill(new TextEncoder().encode(data).buffer);
 
         let s = {} as Sub;
         s.sid = 1;
         s.subject = "test.*";
         s.callback = (msg => {
             processed++;
+            //@ts-ignore
             t.is(msg.data, "Hello World");
             if (processed === expected) {
                 t.pass();
