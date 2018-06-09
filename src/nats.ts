@@ -121,6 +121,7 @@ export class NatsConnection implements ClientHandlers {
             if (this.options.payload !== JSON_PAYLOAD) {
                 data = data || "";
             } else {
+                data = data === undefined ? null : data;
                 data = JSON.stringify(data);
             }
             // here we are a string

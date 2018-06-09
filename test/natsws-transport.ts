@@ -49,12 +49,11 @@ test('wsnats', (t) => {
             reject(err ? err.error : "");
         };
         th.messageHandler = (me: MessageEvent) => {
-
-            if (me.data.toString("utf-8").match(/^INFO/)) {
+            if (new TextDecoder("utf-8").decode(me.data).match(/^INFO/)) {
                 t.pass();
                 transport.write(Buffer.from("PING\r\n"));
             }
-            if (me.data.toString("utf-8").match(/^PONG/)) {
+            if (new TextDecoder("utf-8").decode(me.data).match(/^PONG/)) {
                 t.pass();
                 transport.close();
                 resolve();
