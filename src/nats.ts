@@ -22,6 +22,9 @@ import {Buffer} from "buffer";
 const nuid = new Nuid();
 
 
+export const BINARY_PAYLOAD = "binary";
+export const JSON_PAYLOAD = "json";
+export const STRING_PAYLOAD = "string";
 
 export const BAD_SUBJECT_MSG = 'Subject must be supplied';
 export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
@@ -38,6 +41,7 @@ export interface NatsConnectionOptions {
     user?: string;
     pass?: string;
     token?: string;
+    payload?: "json" | "binary" | "string";
 }
 
 export interface Callback {
@@ -72,8 +76,13 @@ export class NatsConnection implements ClientHandlers {
 
     private constructor(opts: NatsConnectionOptions) {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
-        if (opts.json === undefined) {
-            opts.json = false;
+        if (opts.payload === undefined) {
+            opts.payload = "string";
+        }
+
+        let payloadTypes = ["json", "string", "binary"];
+        if (!payloadTypes.includes(opts.payload)) {
+            throw `payload options can be: ${payloadTypes.join(', ')}`
         }
 
         if (opts.user && opts.token) {
@@ -109,7 +118,7 @@ export class NatsConnection implements ClientHandlers {
         // we take string, object to JSON and ArrayBuffer - if argument is not
         // ArrayBuffer, then process the payload
         if (!isArrayBuffer(data)) {
-            if (!this.options.json) {
+            if (this.options.payload !== JSON_PAYLOAD) {
                 data = data || "";
             } else {
                 data = JSON.stringify(data);

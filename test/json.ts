@@ -1,5 +1,5 @@
 import {test} from "ava";
-import {connect, NatsConnection} from "../src/nats";
+import {connect, JSON_PAYLOAD, NatsConnection} from "../src/nats";
 import {Msg} from "../src/protocol";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
@@ -13,7 +13,7 @@ test.before((t) => {
             .then((server) => {
                 t.log('server started');
                 t.context = {server: server};
-                NatsConnection.connect({url: server.ws, json: true})
+                NatsConnection.connect({url: server.ws, payload: "json"})
                     .then(nc => {
                         //@ts-ignore
                         t.context.nc = nc;
@@ -36,17 +36,17 @@ test('connect no json propagates options', async (t) => {
     t.plan(2);
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws});
-    t.is(nc.options.json, false, 'nc options');
-    t.is(nc.protocol.options.json, false, 'protocol');
+    t.is(nc.options.payload, "string", 'nc options');
+    t.is(nc.protocol.options.payload, "string", 'protocol');
     nc.close();
 });
 
 test('connect json propagates options', async (t) => {
     t.plan(2);
     let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws, json: true});
-    t.is(nc.options.json, true, 'nc options');
-    t.is(nc.protocol.options.json, true, 'protocol');
+    let nc = await connect({url: sc.server.ws, payload: JSON_PAYLOAD});
+    t.is(nc.options.payload, JSON_PAYLOAD, 'nc options');
+    t.is(nc.protocol.options.payload, JSON_PAYLOAD, 'protocol');
     nc.close();
 });
 
@@ -74,7 +74,6 @@ function macro(t: any, input: any): Promise<any> {
     }
     return lock.latch;
 }
-
 
 test('string', macro, 'helloworld');
 test('empty', macro, '');

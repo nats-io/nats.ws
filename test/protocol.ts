@@ -19,7 +19,7 @@ test('split messages correctly', (t) => {
         s.callback = (msg => {
             processed++;
             //@ts-ignore
-            t.is(new TextDecoder("utf-8").decode(msg.data), "Hello World");
+            t.is(msg.data, "Hello World");
             if (processed === expected) {
                 t.pass();
                 resolve();

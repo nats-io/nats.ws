@@ -1,4 +1,4 @@
-import {NatsConnectionOptions} from "./nats";
+import {BINARY_PAYLOAD, JSON_PAYLOAD, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {NatsError} from "./error";
 import {buildWSMessage, concat, extend, extractProtocolMessage} from "./util";
@@ -258,16 +258,16 @@ export class MsgBuffer {
     msg: Msg;
     length: number;
     buf?: ArrayBuffer | null;
-    wantsJSON: boolean;
+    payload: string;
 
-    constructor(chunks: RegExpExecArray, wantsJSON: boolean = false) {
+    constructor(chunks: RegExpExecArray, payload: "string" | "json" | "binary" = "string") {
         this.msg = {} as Msg;
         this.msg.subject = chunks[1];
         this.msg.sid = parseInt(chunks[2], 10);
         this.msg.reply = chunks[4];
         this.msg.size = parseInt(chunks[5], 10);
         this.length = this.msg.size + CR_LF_LEN;
-        this.wantsJSON = wantsJSON;
+        this.payload = payload;
     }
 
     fill(data: ArrayBuffer) {
@@ -279,11 +279,17 @@ export class MsgBuffer {
         this.length -= data.byteLength;
 
         if (this.length === 0) {
-            // let t = this.buf.join('').slice(0, this.msg.size);
-            // this.msg.data = this.wantsJSON ? JSON.parse(t) : t;
             this.msg.data = this.buf.slice(0, this.buf.byteLength - 2);
-            if (this.wantsJSON) {
-                this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+            switch (this.payload) {
+                case JSON_PAYLOAD:
+                    this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+                    this.msg.data = JSON.parse(this.msg.data);
+                    break;
+                case STRING_PAYLOAD:
+                    this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
+                    break;
+                case BINARY_PAYLOAD:
+                    break;
             }
             this.buf = null;
         }
@@ -401,7 +407,7 @@ export class ProtocolHandler implements TransportHandlers {
                     let buf = extractProtocolMessage(raw);
 
                     if ((m = MSG.exec(buf))) {
-                        this.payload = new MsgBuffer(m, this.options.json);
+                        this.payload = new MsgBuffer(m, this.options.payload);
                         this.state = ParserState.AWAITING_MSG_PAYLOAD;
                     } else if ((m = OK.exec(buf))) {
                         // ignored
