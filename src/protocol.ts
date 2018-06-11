@@ -1,6 +1,12 @@
-import {BINARY_PAYLOAD, JSON_PAYLOAD, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
+import {BINARY_PAYLOAD, JSON_PAYLOAD, Msg, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
-import {NatsError} from "./error";
+import {
+    AUTHORIZATION_VIOLATION,
+    CONNECTION_TIMEOUT,
+    NATS_PROTOCOL_ERR,
+    NatsError,
+    PERMISSIONS_VIOLATION
+} from "./error";
 import {buildWSMessage, extend, extractProtocolMessage} from "./util";
 import {Nuid} from 'js-nuid/src/nuid'
 import {DataBuffer} from "./databuffer";
@@ -247,13 +253,7 @@ export class Subscriptions {
     }
 }
 
-export interface Msg {
-    subject: string;
-    sid: number;
-    reply?: string;
-    size: number;
-    data?: any;
-}
+
 
 export class MsgBuffer {
     msg: Msg;
@@ -328,7 +328,7 @@ export class ProtocolHandler implements TransportHandlers {
             ph.connectError = reject;
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
-                    fail(new Error("timeout"));
+                    fail(new NatsError(CONNECTION_TIMEOUT, CONNECTION_TIMEOUT));
                 }, 10000);
                 ph.pongs.push(() => {
                     clearTimeout(timer);
@@ -538,8 +538,19 @@ export class ProtocolHandler implements TransportHandlers {
         this.sendCommand(PING_REQUEST);
     }
 
+    static toError(s: string) {
+        let t = s ? s.toLowerCase() : "";
+        if (t.indexOf('permissions violation') !== -1) {
+            return new NatsError(s, PERMISSIONS_VIOLATION);
+        } else if (t.indexOf('authorization violation') !== -1) {
+            return new NatsError(s, AUTHORIZATION_VIOLATION);
+        } else {
+            return new NatsError(s, NATS_PROTOCOL_ERR);
+        }
+    }
+
     processError(s: string) {
-        let err = new Error(s);
+        let err = ProtocolHandler.toError(s);
         let evt = {error: err} as ErrorEvent;
         this.errorHandler(evt);
     }

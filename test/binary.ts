@@ -1,7 +1,6 @@
 import test from "ava";
-import {BINARY_PAYLOAD, connect} from "../src/nats";
+import {BINARY_PAYLOAD, connect, Msg} from "../src/nats";
 import {Nuid} from 'js-nuid/src/nuid'
-import {Msg} from "../src/protocol";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 

@@ -1,10 +1,10 @@
 import {NatsConnectionOptions} from "./nats";
+import {CLOSED, CONNECTION_REFUSED, NatsError, UNKNOWN} from "./error";
 
 export interface Transport {
     isConnected(): boolean;
 
     isClosed(): boolean;
-
 
     write(data: any): void;
 
@@ -50,6 +50,10 @@ export class WSTransport {
         return new Promise((resolve, reject) => {
             let transport = new WSTransport(handlers);
             transport.debug = debug;
+
+            // on browsers, new WebSocket will fail with an exception
+            // no catch will get the error, just a console error message
+            // tests are more amazing and provide nothing.
             transport.stream = new WebSocket(options.url);
             transport.stream.binaryType = "arraybuffer";
             transport.listeners = {} as TransportHandlers;
@@ -70,7 +74,7 @@ export class WSTransport {
                     transport.close();
                 } else {
                     clearTimeout(resolveTimeout);
-                    reject(new Error('closed'));
+                    reject(new NatsError(CLOSED, CLOSED));
                 }
             };
 
@@ -80,8 +84,14 @@ export class WSTransport {
                     err = (evt as ErrorEvent).error;
                     if (!err) {
                         let m = (evt as ErrorEvent).message;
-                        if (m) {
-                            err = new Error(m);
+                        if (!m) {
+                            if (!connected) {
+                                err = new NatsError(CONNECTION_REFUSED, CONNECTION_REFUSED);
+                            } else {
+                                err = new NatsError(UNKNOWN, UNKNOWN);
+                            }
+                        } else {
+                            err = new Error(m)
                         }
                     }
                 }

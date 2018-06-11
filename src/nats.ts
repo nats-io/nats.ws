@@ -9,13 +9,12 @@ import {
     ClientHandlers,
     defaultReq,
     defaultSub,
-    Msg,
     MsgCallback,
     ProtocolHandler,
     RequestOptions,
     Subscription
 } from "./protocol";
-import {NatsError} from "./error";
+import {BAD_AUTHENTICATION, BAD_AUTHENTICATION_MSG, BAD_SUBJECT, BAD_SUBJECT_MSG, NatsError} from "./error";
 import {Nuid} from "js-nuid/src/nuid";
 import {Buffer} from "buffer";
 
@@ -26,13 +25,14 @@ export const BINARY_PAYLOAD = "binary";
 export const JSON_PAYLOAD = "json";
 export const STRING_PAYLOAD = "string";
 
-export const BAD_SUBJECT_MSG = 'Subject must be supplied';
-export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
 
-export const BAD_SUBJECT = 'BAD_SUBJECT';
-
-const BAD_AUTHENTICATION_MSG = 'User and Token can not both be provided';
-
+export interface Msg {
+    subject: string;
+    sid: number;
+    reply?: string;
+    size: number;
+    data?: any;
+}
 
 export interface NatsConnectionOptions {
     url: string;
@@ -112,7 +112,7 @@ export class NatsConnection implements ClientHandlers {
     publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
         subject = subject || "";
         if (subject.length === 0) {
-            this.errorHandler(new Error("subject required"));
+            this.errorHandler(new NatsError(BAD_SUBJECT_MSG, BAD_SUBJECT));
             return this;
         }
         // we take string, object to JSON and ArrayBuffer - if argument is not

@@ -1,26 +1,18 @@
-import {connect} from "../src/nats";
+import {connect, Msg} from "../src/nats";
 import test from "ava";
-import {Msg} from "../src/protocol";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
 
 import {Nuid} from 'js-nuid/src/nuid'
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {DataBuffer} from "../src/databuffer";
+import {CONNECTION_REFUSED, NatsError} from "../src/error";
 
 const nuid = new Nuid();
 
-test.before((t) => {
-    return new Promise((resolve, reject) => {
-        startServer()
-            .then((server) => {
-                t.context = {server: server};
-                resolve();
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
+test.before(async (t) => {
+    let server = await startServer();
+    t.context = {server: server};
 });
 
 test.after.always((t) => {
@@ -42,8 +34,9 @@ test('fail connect', async (t) => {
         let nc = await connect({url: `ws://localhost:32001`});
         nc.close();
         t.fail();
-    } catch (err) {
-        t.pass();
+    } catch (ex) {
+        let err = ex as NatsError;
+        t.is(err.code, CONNECTION_REFUSED)
     }
 });
 

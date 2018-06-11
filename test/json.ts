@@ -1,29 +1,16 @@
 import {test} from "ava";
-import {connect, JSON_PAYLOAD, NatsConnection} from "../src/nats";
-import {Msg} from "../src/protocol";
+import {connect, JSON_PAYLOAD, Msg, NatsConnection} from "../src/nats";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {Nuid} from 'js-nuid/src/nuid';
 
 const nuid = new Nuid();
 
-test.before((t) => {
-    return new Promise((resolve, reject) => {
-        startServer()
-            .then((server) => {
-                t.log('server started');
-                t.context = {server: server};
-                NatsConnection.connect({url: server.ws, payload: "json"})
-                    .then(nc => {
-                        //@ts-ignore
-                        t.context.nc = nc;
-                        resolve();
-                    });
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
+
+test.before(async (t) => {
+    let server = await startServer();
+    let nc = await NatsConnection.connect({url: server.ws, payload: "json"});
+    t.context = {server: server, nc: nc};
 });
 
 test.after.always((t) => {
