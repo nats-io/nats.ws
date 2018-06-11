@@ -8,7 +8,7 @@ git:
   depth: false
 
 env:
-  - WSGNATSD_VERSION=v0.7.0
+  - WSGNATSD_VERSION=v0.7.1
 
 before_script:
   - wget "https://github.com/aricart/wsgnatsd/releases/download/$WSGNATSD_VERSION/wsgnatsd-$WSGNATSD_VERSION-linux-amd64.zip" -O tmp.zip

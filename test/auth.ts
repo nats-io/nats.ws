@@ -8,6 +8,8 @@ import {Lock} from "./helpers/latch";
 
 const nuid = new Nuid();
 
+let CONF_DIR = (process.env.TRAVIS) ? process.env.TRAVIS_BUILD_DIR : process.env.TMPDIR;
+
 
 test.before(async (t) => {
     let conf = {
@@ -25,7 +27,7 @@ test.before(async (t) => {
         }
     };
 
-    let fp = process.env['TMPDIR'] + '/' + nuid.next() + ".conf";
+    let fp = CONF_DIR + '/' + nuid.next() + ".conf";
     t.log(fp);
     writeFile(fp, jsonToYaml(conf));
     let server = await startServer("localhost:0", ['--', '-c', fp]);
