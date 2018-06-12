@@ -13,7 +13,7 @@ import {DataBuffer} from "./databuffer";
 
 const nuid = new Nuid();
 
-const FLUSH_THRESHOLD = 65536;
+const FLUSH_THRESHOLD = 1024 * 8;
 
 
 export enum ParserState {
@@ -461,12 +461,11 @@ export class ProtocolHandler implements TransportHandlers {
             this.outbound.fill(buf);
         }
 
-        let chunks = this.outbound.length();
-        if (chunks === 1) {
+        if (this.outbound.length() === 1) {
             setTimeout(() => {
                 this.flushPending();
             });
-        } else if (chunks > FLUSH_THRESHOLD) {
+        } else if (this.outbound.size() > FLUSH_THRESHOLD) {
             this.flushPending();
         }
     }
@@ -601,7 +600,6 @@ export class ProtocolHandler implements TransportHandlers {
 
     private flushPending() {
         if (!this.infoReceived) {
-            console.log('flush - no info, waiting');
             return;
         }
 

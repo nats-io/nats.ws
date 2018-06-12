@@ -16,7 +16,6 @@
             if (msg.reply) {
                 nc.publish(msg.reply, "chat");
             }
-
         });
 
         let msg = await nc.request("chat");

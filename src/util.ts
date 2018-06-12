@@ -19,10 +19,11 @@ export function extend(a: any, ...b: any[]): any {
     return a;
 }
 
-function protoLen(a: Buffer): number {
-    for (let i = 0; i < a.byteLength; i++) {
+function protoLen(a: ArrayBuffer): number {
+    let ba = new Uint8Array(a);
+    for (let i = 0; i < ba.byteLength; i++) {
         let n = i+1;
-        if (a.byteLength > n && a[i] === CR && a[n] === LF) {
+        if (ba.byteLength > n && ba[i] === CR && ba[n] === LF) {
             return n+1;
         }
     }
@@ -31,7 +32,13 @@ function protoLen(a: Buffer): number {
 
 export function extractProtocolMessage(a: ArrayBuffer): string {
     // protocol messages are ascii, so Uint8Array
-    return String.fromCharCode.apply(null, new Uint8Array(a));
+    let len = protoLen(a);
+    if (len) {
+        let ba = new Uint8Array(a);
+        let small = ba.slice(0, len);
+        return String.fromCharCode.apply(null, small);
+    }
+    return "";
 }
 
 
