@@ -56,7 +56,7 @@ test('wssonly', async (t) => {
     t.pass();
 });
 
-test.skip('tls required', async (t) => {
+test('tls required', async (t) => {
     t.plan(1);
     let sc = t.context as SC;
     await connect({url: sc.server.ws});

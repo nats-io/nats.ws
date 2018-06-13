@@ -9,7 +9,7 @@ git:
 
 env:
   global:
-    - WSGNATSD_VERSION=v0.7.2
+    - WSGNATSD_VERSION=v0.7.3
     - NODE_EXTRA_CA_CERTS=$TRAVIS_BUILD_DIR/test/helpers/certs/ca.pem
 
 before_script:

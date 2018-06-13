@@ -162,7 +162,7 @@ export class WSTransport {
             this.stream.onmessage = null;
         }
         if (this.stream.readyState !== WebSocket.CLOSED && this.stream.readyState !== WebSocket.CLOSING) {
-            this.stream.close();
+            this.stream.close(1000);
         }
         this.stream = null;
     }
