@@ -1,4 +1,4 @@
-import {connect, Msg} from "../src/nats";
+import {BINARY_PAYLOAD, connect, JSON_PAYLOAD, Msg, STRING_PAYLOAD} from "../src/nats";
 import test from "ava";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
@@ -6,7 +6,7 @@ import {Lock} from "./helpers/latch";
 import {Nuid} from 'js-nuid/src/nuid'
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {DataBuffer} from "../src/databuffer";
-import {CONNECTION_REFUSED, NatsError} from "../src/error";
+import {BAD_SUBJECT, CONNECTION_REFUSED, NatsError} from "../src/error";
 
 const nuid = new Nuid();
 
@@ -48,6 +48,21 @@ test('publish', async (t) => {
     await nc.flush();
     nc.close();
     t.pass();
+});
+
+test('no publish without subject', async (t) => {
+    t.plan(1);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+    nc.addEventListener('error', (ex) => {
+        //@ts-ignore
+        let nex = ex as NatsError;
+        t.is(nex.code, BAD_SUBJECT);
+        lock.unlock();
+    });
+    nc.publish("");
+    return lock.latch;
 });
 
 test('subscribe and unsubscribe', async (t) => {
@@ -372,4 +387,29 @@ test('error listener is called', async (t) => {
     await lock.latch;
 });
 
+async function payloads(t: any, payload: string, ok: boolean) {
+    t.plan(1);
+    let sc = t.context as SC;
+    try {
+        //@ts-ignore
+        let nc = await connect({url: sc.server.ws, payload: payload});
+        if (ok) {
+            t.pass();
+        } else {
+            t.fail();
+        }
+        nc.close();
+    } catch (ex) {
+        if (!ok) {
+            t.pass();
+        } else {
+            t.fail(ex);
+        }
+    }
+}
+
+test('payload - json', payloads, JSON_PAYLOAD, true);
+test('payload - binary', payloads, BINARY_PAYLOAD, true);
+test('payload - string', payloads, STRING_PAYLOAD, true);
+test('payload - test', payloads, 'test', false);
 

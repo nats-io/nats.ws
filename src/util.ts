@@ -1,7 +1,7 @@
 import {Buffer} from 'buffer';
 import {DataBuffer} from "./databuffer";
 
-let CRLF : ArrayBuffer = DataBuffer.fromAscii("\r\n");
+let CRLF: ArrayBuffer = DataBuffer.fromAscii("\r\n");
 let CR = new Uint8Array(CRLF)[0]; // 13
 let LF = new Uint8Array(CRLF)[1]; // 10
 
@@ -22,9 +22,9 @@ export function extend(a: any, ...b: any[]): any {
 function protoLen(a: ArrayBuffer): number {
     let ba = new Uint8Array(a);
     for (let i = 0; i < ba.byteLength; i++) {
-        let n = i+1;
+        let n = i + 1;
         if (ba.byteLength > n && ba[i] === CR && ba[n] === LF) {
-            return n+1;
+            return n + 1;
         }
     }
     return -1;
@@ -42,7 +42,7 @@ export function extractProtocolMessage(a: ArrayBuffer): string {
 }
 
 
-export function buildWSMessage(protocol: string, a?: ArrayBuffer) : ArrayBuffer {
+export function buildWSMessage(protocol: string, a?: ArrayBuffer): ArrayBuffer {
     let msg = DataBuffer.fromAscii(protocol);
     if (a) {
         msg = DataBuffer.concat(msg, a, CRLF)
