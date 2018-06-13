@@ -10,16 +10,17 @@
 
 <div class="container">
     <h1 id="title">WS NATS Browser Performance</h1>
-    <label for="server">Server</label>
+    <label for="server">NATS Websocket Proxy</label>
     <input type="text" class="form-control" id="server" placeholder="server" autocomplete="off"
            value="ws://localhost:8080"><br/>
     <label for="subject">Subject</label>
     <input type="text" class="form-control" id="subject" placeholder="subject" autocomplete="off" value="foo"><br/>
-    <label for="messages">Number of Messages</label>
-    <input type="number" class="form-control" id="messages" placeholder="messages" autocomplete="off"
+    <label for="count">Count</label>
+    <input type="number" class="form-control" id="count" placeholder="messages" autocomplete="off"
            value="100000"><br/>
-    <label for="flush">Flush after</label>
-    <input type="number" class="form-control" id="flush" placeholder="flush" autocomplete="off" value="1000"><br/>
+    <label for="payload">Payload size</label>
+    <input type="number" class="form-control" id="payload" placeholder="payload size in bytes" autocomplete="off"
+           value="0"><br/>
 
     <h3>Test</h3>
     <div class="radio-inline">
@@ -31,6 +32,9 @@
     </div>
     <div class="radio-inline">
         <label><input class="form-check-input" type="radio" value="sub" id="sub" name="test">Subscribe</label>
+    </div>
+    <div class="radio-inline">
+        <label><input class="form-check-input" type="radio" value="sub" id="reqrep" name="test">ReqRep</label>
     </div>
 
     <br/><br/>
@@ -60,6 +64,8 @@
             return "pub";
         } else if (isChecked("sub")) {
             return "sub";
+        } else if (isChecked("reqrep")) {
+            return "reqrep";
         }
     }
 
@@ -87,6 +93,9 @@
             case "pubsub":
                 pubsub();
                 break;
+            case "reqrep":
+                reqrep();
+                break;
         }
     }
 
@@ -94,81 +103,131 @@
         return {
             server: getString('server'),
             subject: getString('subject'),
-            max: getNumber('messages'),
-            count: 0,
-            flush: getNumber('flush'),
+            count: getNumber('count'),
             start: 0,
-            end: 0
+            end: 0,
+            payload: getPayload()
         };
     }
 
-    function results(test, opts) {
+    function getPayload() {
+        let size = getNumber('payload');
+        if (size) {
+            let ba = new Uint8Array(size);
+            window.crypto.getRandomValues(ba);
+            return ba;
+        }
+        return undefined;
+    }
+
+    function formatReport(test, opts) {
         let time = opts.end - opts.start;
         let count = Number(opts.count).toLocaleString();
         let times = Number(time).toLocaleString();
+        let rps = parseInt(opts.count / (time / 1000), 10);
+        let rate = Number(rps).toLocaleString();
 
-        let rate = Number(Number(opts.count / (time / 1000)).toFixed(0)).toLocaleString();
-
-        setResults(`${test} ${count} messages in ${times} ms (${rate} msgs/sec)`);
+        return `${test} ${count} msgs in ${times} ms (${rate} msgs/sec)`;
     }
+
 
     async function pub() {
         let opts = getOpts();
-        setResults('working...');
-        let nc = await nats.connect({url: opts.server});
-        opts.start = Date.now();
-        for (let i = 0; i < opts.max; i++) {
-            nc.publish(opts.subject);
-            if (i % opts.flush === 0) {
-                await nc.flush();
+        try {
+            setResults('working...');
+            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            opts.start = Date.now();
+            for (let i = 0; i < opts.count; i++) {
+                nc.publish(opts.subject, opts.payload);
             }
+            await nc.flush();
+            opts.end = Date.now();
+            nc.close();
+            setResults(formatReport("pub", opts));
+        } catch (ex) {
+            setResults(ex);
         }
-        await nc.flush();
-        opts.count = opts.max;
-        opts.end = Date.now();
-        nc.close();
-        results("pub", opts);
     }
 
     async function sub() {
         let opts = getOpts();
-        setResults('waiting for messages...');
-        let nc = await nats.connect({url: opts.server});
-        await nc.subscribe(opts.subject, () => {
-            if (opts.count === 0) {
-                setResults('Working...');
-                opts.start = Date.now();
-            }
-            opts.count++;
-            if (opts.count >= opts.max) {
-                opts.end = Date.now();
-                nc.close();
-                results('sub', opts);
-            }
-        }, {max: opts.max});
+        try {
+            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            let received = 0;
+            await nc.subscribe(opts.subject, () => {
+                if (received === 0) {
+                    setResults('working...');
+                    opts.start = Date.now();
+                }
+                received++;
+                if (received >= opts.count) {
+                    opts.end = Date.now();
+                    nc.close();
+                    setResults(formatReport('sub', opts));
+                }
+            }, {max: opts.count});
+            await nc.flush();
+            setResults('waiting for messages...');
+        } catch (ex) {
+            setResults(ex);
+        }
     }
 
     async function pubsub() {
         let opts = getOpts();
-        setResults('working...');
-        let nc = await nats.connect({url: opts.server});
-        await nc.subscribe(opts.subject, () => {
-            opts.count++;
-            if (opts.count >= opts.max) {
-                opts.end = Date.now();
-                opts.count *= 2;
-                nc.close();
-                results("pubsub", opts);
-            }
-        }, {max: opts.max});
+        try {
+            setResults('working...');
+            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            nc.addEventListener('error', (err) => {
+                console.error(err);
+            });
 
-        nc.flush();
-        opts.start = Date.now();
-        for (let i = 0; i < opts.max; i++) {
-            nc.publish(opts.subject);
-            if (i % opts.flush === 0) {
-                await nc.flush();
+            let received = 0;
+            await nc.subscribe(opts.subject, () => {
+                received++;
+                if (received >= opts.count) {
+                    opts.end = Date.now();
+                    nc.close();
+                    setResults(formatReport("pubsub", opts));
+                }
+            }, {max: opts.count});
+            nc.flush();
+
+            opts.start = Date.now();
+            for (let i = 0; i < opts.count; i++) {
+                nc.publish(opts.subject, opts.payload);
             }
+        } catch (ex) {
+            setResults(ex);
+        }
+    }
+
+    async function reqrep() {
+        let opts = getOpts();
+        try {
+            setResults('working...');
+            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            nc.addEventListener('error', (err) => {
+                console.error(err);
+            });
+
+            await nc.subscribe(opts.subject, (m) => {
+                nc.publish(m.reply);
+            }, {max: opts.count});
+            await nc.flush();
+
+            let futures = [];
+            opts.start = Date.now();
+            for (let i = 0; i < opts.count; i++) {
+                let f = nc.request(opts.subject, 200000);
+                futures.push(f);
+            }
+            let responses = await Promise.all(futures);
+            opts.end = Date.now();
+            setResults(formatReport("reqrep", opts));
+
+        } catch (ex) {
+            setResults(ex);
         }
     }
 </script>

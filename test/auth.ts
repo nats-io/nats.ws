@@ -115,3 +115,15 @@ test('cannot pub bar', async (t) => {
 
     return lock.latch;
 });
+
+test('no user and token', async (t) => {
+    t.plan(1);
+    let sc = t.context as SC;
+    try {
+        let nc = await connect({url: sc.server.ws, user: 'derek', token: 'foobar'});
+        t.fail();
+        nc.close();
+    } catch (ex) {
+        t.pass();
+    }
+});

@@ -34,7 +34,7 @@ test('simple', (t) => {
     t.is("Hello World", DataBuffer.toAscii(d));
 });
 
-test ('from empty', (t) => {
+test('from empty', (t) => {
     t.plan(1);
     //@ts-ignore
     let a = DataBuffer.fromAscii(undefined);

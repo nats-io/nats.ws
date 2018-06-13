@@ -185,7 +185,7 @@ export class WSTransport {
     isSecure(): boolean {
         if (this.stream) {
             let protocol = new URL(this.stream.url).protocol;
-            return protocol.toLowerCase() === "wss";
+            return protocol.toLowerCase() === "wss:";
         }
         return false;
     }

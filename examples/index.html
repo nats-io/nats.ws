@@ -10,6 +10,7 @@
 
 <script>
     console.log('here', window['nats']);
+
     async function doit() {
         let nc = await nats.connect({url: "ws://localhost:8080"});
         await nc.subscribe("foo", (msg) => {

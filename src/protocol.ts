@@ -254,7 +254,6 @@ export class Subscriptions {
 }
 
 
-
 export class MsgBuffer {
     msg: Msg;
     length: number;
@@ -355,6 +354,17 @@ export class ProtocolHandler implements TransportHandlers {
         });
     }
 
+    static toError(s: string) {
+        let t = s ? s.toLowerCase() : "";
+        if (t.indexOf('permissions violation') !== -1) {
+            return new NatsError(s, PERMISSIONS_VIOLATION);
+        } else if (t.indexOf('authorization violation') !== -1) {
+            return new NatsError(s, AUTHORIZATION_VIOLATION);
+        } else {
+            return new NatsError(s, NATS_PROTOCOL_ERR);
+        }
+    }
+
     processInbound(): void {
         let m: RegExpExecArray | null = null;
         while (this.inbound.size()) {
@@ -405,14 +415,20 @@ export class ProtocolHandler implements TransportHandlers {
                     if (!this.payload) {
                         break;
                     }
-                    if (this.inbound.size() < this.payload.msg.size) {
+                    // drain what we have collected
+                    if (this.inbound.size() < this.payload.length) {
                         let d = this.inbound.drain();
                         this.payload.fill(d);
                         return;
                     }
+                    // drain the number of bytes we need
                     let dd = this.inbound.drain(this.payload.length);
                     this.payload.fill(dd);
-                    this.processMsg();
+                    try {
+                        this.processMsg();
+                    } catch (ex) {
+                        // ignore exception in client handling
+                    }
                     this.state = ParserState.AWAITING_CONTROL;
                     this.payload = null;
                     break;
@@ -537,17 +553,6 @@ export class ProtocolHandler implements TransportHandlers {
         this.sendCommand(PING_REQUEST);
     }
 
-    static toError(s: string) {
-        let t = s ? s.toLowerCase() : "";
-        if (t.indexOf('permissions violation') !== -1) {
-            return new NatsError(s, PERMISSIONS_VIOLATION);
-        } else if (t.indexOf('authorization violation') !== -1) {
-            return new NatsError(s, AUTHORIZATION_VIOLATION);
-        } else {
-            return new NatsError(s, NATS_PROTOCOL_ERR);
-        }
-    }
-
     processError(s: string) {
         let err = ProtocolHandler.toError(s);
         let evt = {error: err} as ErrorEvent;
@@ -563,7 +568,7 @@ export class ProtocolHandler implements TransportHandlers {
                 cmds.push(`${SUB} ${s.subject} ${s.sid} ${CR_LF}`);
             }
         });
-        if(cmds.length) {
+        if (cmds.length) {
             this.transport.write(buildWSMessage(cmds.join('')));
         }
     }
