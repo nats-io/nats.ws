@@ -8,14 +8,13 @@ git:
   depth: false
 
 env:
-  - WSGNATSD_VERSION=v0.7.2
-  - NODE_EXTRA_CA_CERTS=$TRAVIS_BUILD_DIR//test/helpers/certs/ca.pem
+  global:
+    - WSGNATSD_VERSION=v0.7.2
+    - NODE_EXTRA_CA_CERTS=$TRAVIS_BUILD_DIR/test/helpers/certs/ca.pem
 
 before_script:
   - wget "https://github.com/aricart/wsgnatsd/releases/download/$WSGNATSD_VERSION/wsgnatsd-$WSGNATSD_VERSION-linux-amd64.zip" -O tmp.zip
   - unzip -d wsgnatsd tmp.zip
-  - echo $NODE_EXTRA_CA_CERTS
-  - cat $NODE_EXTRA_CA_CERTS
 
 script:
   - npm run test
