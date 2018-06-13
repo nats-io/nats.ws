@@ -6,24 +6,57 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
           crossorigin="anonymous">
 </head>
+<!-- when the browser exits, we publish a message -->
 <body onunload="exiting()">
+
+<!-- a form for entering messages -->
 <div class="container">
     <h1>ws-nats chat</h1>
     <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
     <button id="send" onclick="send()" class="btn btn-primary">Send</button>
 </div>
 <br/>
-<div id="chats" class="container">
 
-</div>
+<!-- a place to record messages -->
+<div id="chats" class="container"></div>
 
+<!-- load the nats library -->
 <script src="../lib/nats.js"></script>
 
 <script>
     let me = Date.now();
 
-    async function doit() {
-        let nc = await nats.connect({url: "ws://localhost:8080", payload: "json"});
+    // create a connection, and register listeners
+    async function init() {
+        let nc;
+        try {
+            // if the connection doesn't resolve, an exception is thrown
+            // a real app would allow configuring the URL
+            let conn = await nats.connect({url: "ws://localhost:8080", payload: "json"});
+            nc = conn;
+        } catch (ex) {
+            // show the user there was an error
+            let p = document.createElement("pre");
+            p.appendChild(document.createTextNode(`Error connecting to NATS: ${ex}`));
+            document.getElementById('chats').appendChild(p);
+            return;
+        }
+
+        // handle errors sent by the gnatsd - permissions errors, etc.
+        nc.addEventListener('error', (ex) => {
+            let p = document.createElement("pre");
+            p.appendChild(document.createTextNode(`Got error from NATS: ${ex}`));
+            document.getElementById('chats').appendChild(p);
+        });
+
+        // handle connection to the server is closed
+        nc.addEventListener('close', () => {
+            let p = document.createElement("pre");
+            p.appendChild(document.createTextNode(`NATS connection closed`));
+            document.getElementById('chats').appendChild(p);
+        });
+
+        // the chat application listens for messages sent under the subject 'chat'
         nc.subscribe("chat", (msg) => {
             let p = document.createElement("pre");
             let message = msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`;
@@ -31,6 +64,7 @@
             document.getElementById('chats').appendChild(p);
         });
 
+        // when a new browser joins, the joining browser publishes an 'enter' message
         nc.subscribe("enter", (msg) => {
             let p = document.createElement("pre");
             if (msg.data.id !== me) {
@@ -39,6 +73,7 @@
             }
         });
 
+        // when a browser closes, the leaving browser publishes an 'exit' message
         nc.subscribe("exit", (msg) => {
             let p = document.createElement("pre");
             if (msg.data.id !== me) {
@@ -47,15 +82,18 @@
             }
         });
 
+        // we connected, and we publish our enter message
         nc.publish('enter', {id: me});
 
-        window.nc = nc;
+        return nc;
     }
 
-    doit();
+    let nc = init();
 
-
+    // this is the input field
     let input = document.getElementById('data');
+
+    // add a listener to detect edits. If they hit Enter, we publish it
     input.addEventListener("keyup", (e) => {
         if (e.key === "Enter") {
             document.getElementById("send").click();
@@ -64,20 +102,21 @@
         }
     });
 
+    // send a message if user typed one
     function send() {
         input = document.getElementById('data');
         let m = input.value;
         if (m !== "") {
-            window.nc.publish('chat', {id: me, m: m});
+            nc.publish('chat', {id: me, m: m});
             input.value = "";
         }
         return false;
     }
 
+    //
     function exiting() {
-        window.nc.publish('exit', {id: me});
+        nc.publish('exit', {id: me});
     }
-
 </script>
 </body>
 </html>
