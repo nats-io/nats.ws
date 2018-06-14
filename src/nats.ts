@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 The NATS Authors
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //@ts-ignore
 const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
 //@ts-ignore
@@ -14,7 +29,7 @@ import {
     RequestOptions,
     Subscription
 } from "./protocol";
-import {BAD_AUTHENTICATION, BAD_AUTHENTICATION_MSG, BAD_SUBJECT, BAD_SUBJECT_MSG, NatsError} from "./error";
+import {BAD_AUTHENTICATION, BAD_SUBJECT, CLOSED, NatsError} from "./error";
 import {Nuid} from "js-nuid/src/nuid";
 import {Buffer} from "buffer";
 
@@ -86,7 +101,7 @@ export class NatsConnection implements ClientHandlers {
         }
 
         if (opts.user && opts.token) {
-            throw (new NatsError(BAD_AUTHENTICATION_MSG, BAD_AUTHENTICATION));
+            throw (NatsError.errorForCode(BAD_AUTHENTICATION));
         }
         extend(this.options, opts);
     }
@@ -112,7 +127,7 @@ export class NatsConnection implements ClientHandlers {
     publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
         subject = subject || "";
         if (subject.length === 0) {
-            this.errorHandler(new NatsError(BAD_SUBJECT_MSG, BAD_SUBJECT));
+            this.errorHandler(NatsError.errorForCode(BAD_SUBJECT));
             return this;
         }
         // we take string, object to JSON and ArrayBuffer - if argument is not
@@ -137,8 +152,7 @@ export class NatsConnection implements ClientHandlers {
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
             if (this.isClosed()) {
-                //FIXME: proper error
-                reject(new NatsError("closed", "closed"));
+                reject(NatsError.errorForCode(CLOSED));
             }
 
             let s = defaultSub();
@@ -152,8 +166,7 @@ export class NatsConnection implements ClientHandlers {
     request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
-                //FIXME: proper error
-                reject(new NatsError("closed", "closed"));
+                reject(NatsError.errorForCode(CLOSED));
             }
             let r = defaultReq();
             let opts = {max: 1} as RequestOptions;

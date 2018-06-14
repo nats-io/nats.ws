@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 The NATS Authors
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {BINARY_PAYLOAD, JSON_PAYLOAD, Msg, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {
@@ -5,7 +20,8 @@ import {
     CONNECTION_TIMEOUT,
     NATS_PROTOCOL_ERR,
     NatsError,
-    PERMISSIONS_VIOLATION
+    PERMISSIONS_VIOLATION,
+    WSS_REQUIRED
 } from "./error";
 import {buildWSMessage, extend, extractProtocolMessage} from "./util";
 import {Nuid} from 'js-nuid/src/nuid'
@@ -327,7 +343,7 @@ export class ProtocolHandler implements TransportHandlers {
             ph.connectError = reject;
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
-                    fail(new NatsError(CONNECTION_TIMEOUT, CONNECTION_TIMEOUT));
+                    fail(NatsError.errorForCode(CONNECTION_TIMEOUT));
                 }, 10000);
                 ph.pongs.push(() => {
                     clearTimeout(timer);
@@ -396,8 +412,7 @@ export class ProtocolHandler implements TransportHandlers {
                             // send connect
                             let info = JSON.parse(m[1]);
                             if (info.tls_required && !this.transport.isSecure()) {
-                                // fixme: normalize error format
-                                this.handleError(new NatsError('wss required', 'wss required'));
+                                this.handleError(NatsError.errorForCode(WSS_REQUIRED));
                                 return;
                             }
                             let cs = JSON.stringify(new Connect(this.options));

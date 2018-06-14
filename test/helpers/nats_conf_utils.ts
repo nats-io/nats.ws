@@ -16,7 +16,7 @@
 import {PathLike, writeFileSync} from "fs";
 
 // TODO: add array support
-export function jsonToYaml(o: object, indent?: string): string {
+export function jsonToNatsConf(o: object, indent?: string): string {
     let pad = arguments[1] !== undefined ? arguments[1] + '  ' : '';
     let buf = [];
     for (let k in o) {
@@ -25,17 +25,22 @@ export function jsonToYaml(o: object, indent?: string): string {
             let v = o[k];
             if (Array.isArray(v)) {
                 buf.push(pad + k + ' [');
-                buf.push(jsonToYaml(v, pad));
+                buf.push(jsonToNatsConf(v, pad));
                 buf.push(pad + ' ]');
             } else if (typeof v === 'object') {
                 // don't print a key if it is an array and it is an index
                 let kn = Array.isArray(o) ? '' : k;
                 buf.push(pad + kn + ' {');
-                buf.push(jsonToYaml(v, pad));
+                buf.push(jsonToNatsConf(v, pad));
                 buf.push(pad + ' }');
             } else {
                 if (!Array.isArray(o)) {
-                    buf.push(pad + k + ': ' + v);
+                    //@ts-ignore
+                    if (typeof v === 'string' && v.charAt(0) >= '0' && v.charAt(0) <= '9' && isNaN(v)) {
+                        buf.push(pad + k + ': \"' + v + '\"');
+                    } else {
+                        buf.push(pad + k + ': ' + v);
+                    }
                 } else {
                     buf.push(pad + v);
                 }
