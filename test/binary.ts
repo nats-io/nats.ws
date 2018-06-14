@@ -14,7 +14,7 @@
  */
 
 import test from "ava";
-import {BINARY_PAYLOAD, connect, Msg} from "../src/nats";
+import {connect, Msg, Payload} from "../src/nats";
 import {Nuid} from 'js-nuid/src/nuid'
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
@@ -36,7 +36,7 @@ async function macro(t: any, input: any): Promise<any> {
     let lock = new Lock();
     let sc = t.context as SC;
     let subj = nuid.next();
-    let nc = await connect({url: sc.server.ws, payload: BINARY_PAYLOAD});
+    let nc = await connect({url: sc.server.ws, payload: Payload.BINARY});
     //
     nc.subscribe(subj, (msg: Msg) => {
         t.deepEqual(msg.data, input);

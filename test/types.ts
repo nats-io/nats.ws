@@ -16,7 +16,7 @@
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import test from "ava";
 import {Nuid} from 'js-nuid/src/nuid'
-import {BINARY_PAYLOAD, connect, JSON_PAYLOAD, Msg, STRING_PAYLOAD} from "../src/nats";
+import {connect, Msg, Payload} from "../src/nats";
 import {Lock} from "./helpers/latch";
 import {DataBuffer} from "../src/databuffer";
 
@@ -37,7 +37,7 @@ test('json types', async (t) => {
     t.plan(2);
     let lock = new Lock();
     let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws, payload: JSON_PAYLOAD});
+    let nc = await connect({url: sc.server.ws, payload: Payload.JSON});
     let subj = nuid.next();
     nc.subscribe(subj, (msg: Msg) => {
         t.is(typeof msg.data, 'number');
@@ -54,7 +54,7 @@ test('string types', async (t) => {
     t.plan(2);
     let lock = new Lock();
     let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws, payload: STRING_PAYLOAD});
+    let nc = await connect({url: sc.server.ws, payload: Payload.STRING});
     let subj = nuid.next();
     nc.subscribe(subj, (msg: Msg) => {
         t.is(typeof msg.data, "string");
@@ -71,7 +71,7 @@ test('binary types', async (t) => {
     t.plan(2);
     let lock = new Lock();
     let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws, payload: BINARY_PAYLOAD});
+    let nc = await connect({url: sc.server.ws, payload: Payload.BINARY});
     let subj = nuid.next();
     nc.subscribe(subj, (msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);
@@ -89,8 +89,8 @@ test('binary encoded per client', async (t) => {
     let lock = new Lock(2);
 
     let sc = t.context as SC;
-    let nc1 = await connect({url: sc.server.ws, payload: BINARY_PAYLOAD});
-    let nc2 = await connect({url: sc.server.ws, payload: STRING_PAYLOAD});
+    let nc1 = await connect({url: sc.server.ws, payload: Payload.BINARY});
+    let nc2 = await connect({url: sc.server.ws, payload: Payload.STRING});
     let subj = nuid.next();
     nc1.subscribe(subj, (msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);
@@ -115,7 +115,7 @@ test('binary client gets binary', async (t) => {
     let lock = new Lock();
 
     let sc = t.context as SC;
-    let nc1 = await connect({url: sc.server.ws, payload: BINARY_PAYLOAD});
+    let nc1 = await connect({url: sc.server.ws, payload: Payload.BINARY});
     let subj = nuid.next();
     nc1.subscribe(subj, (msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);

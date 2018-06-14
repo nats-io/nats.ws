@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {BINARY_PAYLOAD, connect, JSON_PAYLOAD, Msg, STRING_PAYLOAD} from "../src/nats";
+import {connect, Msg, Payload, SubscribeOptions} from "../src/nats";
 import test from "ava";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
@@ -21,7 +21,7 @@ import {Lock} from "./helpers/latch";
 import {Nuid} from 'js-nuid/src/nuid'
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {DataBuffer} from "../src/databuffer";
-import {BAD_SUBJECT, CONNECTION_REFUSED, NatsError} from "../src/error";
+import {ErrorCode, NatsError} from "../src/error";
 
 const nuid = new Nuid();
 
@@ -51,7 +51,7 @@ test('fail connect', async (t) => {
         t.fail();
     } catch (ex) {
         let err = ex as NatsError;
-        t.is(err.code, CONNECTION_REFUSED)
+        t.is(err.code, ErrorCode.CONNECTION_REFUSED)
     }
 });
 
@@ -73,7 +73,7 @@ test('no publish without subject', async (t) => {
     nc.addEventListener('error', (ex) => {
         //@ts-ignore
         let nex = ex as NatsError;
-        t.is(nex.code, BAD_SUBJECT);
+        t.is(nex.code, ErrorCode.BAD_SUBJECT);
         lock.unlock();
     });
     nc.publish("");
@@ -402,6 +402,157 @@ test('error listener is called', async (t) => {
     await lock.latch;
 });
 
+test('chaining', async (t) => {
+    t.plan(3);
+    let lock = new Lock(2);
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+    let subjects = [];
+    subjects.push(nuid.next());
+    subjects.push(nuid.next());
+    nc.subscribe(subjects[0], () => {
+        t.pass();
+        lock.unlock();
+    });
+    nc.subscribe(subjects[1], () => {
+        t.pass();
+        lock.unlock();
+    });
+    nc.publish(subjects[0]).publish(subjects[1]).flush();
+    t.pass();
+    return lock.latch;
+});
+
+test('subscription with timeout', async (t) => {
+    t.plan(1);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+    let to = setTimeout(() => {
+        t.pass();
+        lock.unlock();
+    });
+    nc.subscribe(nuid.next(), () => {
+        //@ts-ignore
+    }, {max: 1, timeout: to});
+    nc.flush();
+    return lock.latch;
+});
+
+test('subscription expecting 2 fires timeout', async (t) => {
+    t.plan(2);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+    let subj = nuid.next();
+    let sub = await nc.subscribe(subj, () => {
+        t.pass();
+    }, {max: 2});
+    sub.setTimeout(250, () => {
+        t.pass();
+        lock.unlock();
+    });
+    nc.publish(subj);
+    nc.flush();
+    return lock.latch;
+});
+
+test('subscription timeout with count is autocancel', async (t) => {
+    t.plan(1);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+
+    let subj = nuid.next();
+    let sub = await nc.subscribe(subj, () => {
+    }, {max: 2} as SubscribeOptions);
+    sub.setTimeout(500, () => {
+        t.fail("didn't get expected message count");
+    });
+    nc.publish(subj);
+    nc.publish(subj);
+    nc.flush();
+    setTimeout(() => {
+        lock.unlock();
+        t.pass();
+    }, 600);
+    return lock.latch;
+});
+
+test('subscription cancel timeout', async (t) => {
+    t.plan(1);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+
+    let subj = nuid.next();
+    let sub = await nc.subscribe(subj, () => {
+        if (sub.hasTimeout()) {
+            sub.cancelTimeout();
+        }
+    }, {max: 2} as SubscribeOptions);
+    sub.setTimeout(500, () => {
+        t.fail('timeout fired');
+    });
+
+    nc.publish(subj);
+    nc.flush();
+    setTimeout(() => {
+        lock.unlock();
+        t.pass();
+    }, 600);
+    return lock.latch;
+});
+
+test('subscription timeout is cancelled', async (t) => {
+    t.plan(1);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+
+    let subj = nuid.next();
+    let sub = await nc.subscribe(subj, () => {
+        t.pass();
+    });
+    sub.setTimeout(200, () => {
+        t.fail();
+    });
+    nc.publish(subj);
+    nc.flush();
+    setTimeout(() => {
+        lock.unlock();
+    }, 300);
+    return lock.latch;
+});
+
+test('subscription received', async (t) => {
+    t.plan(4);
+    let lock = new Lock();
+    let sc = t.context as SC;
+    let nc = await connect({url: sc.server.ws});
+    let subj = nuid.next();
+    let sub = await nc.subscribe(subj, () => {
+        t.pass();
+        if (sub.getReceived() === 3) {
+            lock.unlock();
+        }
+    });
+    sub.setTimeout(300, () => {
+        t.fail();
+    });
+    // do it again
+    sub.setTimeout(300, () => {
+        t.fail();
+    });
+    nc.publish(subj);
+    nc.publish(subj);
+    nc.publish(subj);
+
+    await lock.latch;
+    sub.unsubscribe();
+    t.is(0, sub.getReceived());
+});
+
 async function payloads(t: any, payload: string, ok: boolean) {
     t.plan(1);
     let sc = t.context as SC;
@@ -423,8 +574,8 @@ async function payloads(t: any, payload: string, ok: boolean) {
     }
 }
 
-test('payload - json', payloads, JSON_PAYLOAD, true);
-test('payload - binary', payloads, BINARY_PAYLOAD, true);
-test('payload - string', payloads, STRING_PAYLOAD, true);
+test('payload - json', payloads, Payload.JSON, true);
+test('payload - binary', payloads, Payload.BINARY, true);
+test('payload - string', payloads, Payload.STRING, true);
 test('payload - test', payloads, 'test', false);
 

@@ -49,6 +49,8 @@
 <script src="../lib/nats.js"></script>
 
 <script>
+    const Payload = nats.Payload;
+
     function getString(id) {
         return document.getElementById(id).value;
     }
@@ -106,7 +108,8 @@
             count: getNumber('count'),
             start: 0,
             end: 0,
-            payload: getPayload()
+            payload: getPayload(),
+            debug: true
         };
     }
 
@@ -135,7 +138,7 @@
         let opts = getOpts();
         try {
             setResults('working...');
-            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            let nc = await nats.connect({url: opts.server, payload: Payload.BINARY});
             opts.start = Date.now();
             for (let i = 0; i < opts.count; i++) {
                 nc.publish(opts.subject, opts.payload);
@@ -152,7 +155,7 @@
     async function sub() {
         let opts = getOpts();
         try {
-            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            let nc = await nats.connect({url: opts.server, payload: Payload.BINARY});
             let received = 0;
             await nc.subscribe(opts.subject, () => {
                 if (received === 0) {
@@ -177,7 +180,7 @@
         let opts = getOpts();
         try {
             setResults('working...');
-            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            let nc = await nats.connect({url: opts.server, payload: Payload.BINARY});
             nc.addEventListener('error', (err) => {
                 console.error(err);
             });
@@ -206,7 +209,7 @@
         let opts = getOpts();
         try {
             setResults('working...');
-            let nc = await nats.connect({url: opts.server, payload: nats.BINARY_PAYLOAD});
+            let nc = await nats.connect({url: opts.server, payload: Payload.BINARY});
             nc.addEventListener('error', (err) => {
                 console.error(err);
             });
@@ -222,7 +225,7 @@
                 let f = nc.request(opts.subject, 200000);
                 futures.push(f);
             }
-            let responses = await Promise.all(futures);
+            await Promise.all(futures);
             opts.end = Date.now();
             setResults(formatReport("reqrep", opts));
 

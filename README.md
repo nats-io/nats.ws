@@ -16,68 +16,148 @@ npm install wsnats
 
 Ws-nats requires a websocket proxy, if the NATS server requires LTS, the websocket must be a secure websocket.
 
-# API
+# Basic Usage
 
 Ws-nats supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
 
-```typescript
+```javascript
+// create a connection
+let nc = await nats.connect({url: "ws://localhost:8080", payload: nats.Payload.STRING});
 
-import {NatsConnection, Msg} from 'wsnats';
+// simple publisher
+nc.publish('hello', 'world');
 
-async function test() {
-    // if the connnection fails an exception is thrown
-    let nc = await NatsConnection.connect({url: `ws://localhost:8080`});
-    
-    // if the server returns an error, lets learn about it
-    nc.addEventListener('error', (ex)=> {
-        console.log('server sent error: ', ex);
-    });
-    
-    // if we disconnect from the server lets learn about it
-    nc.addEventListener('close', ()=> {
-        console.log('the connection closed');
-    });   
-    
-    // publish a message
-    // <subject>, <body of the message>
-    nc.publish('hello', 'nats');
-    
-    // publish a request - need a subscription listening
-    // <subject>, <body of the message>, <reply subject>
-    nc.publish('hello', 'world', 'say.hi');
-    
-    
-    // simple subscription
-    let sub = await nc.subscribe('help', (msg: Msg) => {
-        if (msg.reply) {
-            nc.publish(msg.reply, `I can help ${msg.data}`);
-        }
-    });
-    
-    // subscriptions can be serviced by a member of a queue
-    // the options argument can also specify the 'max' number
-    // messages before the subscription auto-unsubscribes
-    let queuesub = await nc.subscribe('urgent.help', (msg: Msg) => {
-        if (msg.reply) {
-            nc.publish(msg.reply, `I can help ${msg.data}`);
-        }
-    }, {queueGroup: "urgent"});
+// simple subscriber, if the message has a reply subject
+// send a reply
+let sub = await nc.subscribe('help', (msg) => {
+    if (msg.reply) {
+        nc.publish(msg.reply, `I can help ${msg.data}`);
+    }
+});
 
-    // simple request
-    let msg = await nc.request('help', 1000, 'nats request');
-    console.log(`I got a response: ${msg.data}`);
-    
-    // flushing
-    await nc.flush();
-    
-    // stop listening for 'help' messages - you optionally specify
-    // the number of messages you want before the unsubscribed
-    // if the count has passed, the unsubscribe happens immediately
-    sub.unsubscribe();
-    
-    // close the connection
-    nc.close();
-}
+// unsubscribe
+sub.unsubscribe();
+
+// request data - requests only receive one message
+// to receive multiple messages, create a subscription
+let msg = await nc.request('help', 1000, 'nats request');
+
+// publishing a request, is similar to publishing. You must have
+// a subscription ready to handle the reply subject. Requests
+// sent this way can get multiple replies
+nc.publish('help', '', 'replysubject');
+
+
+// close the connection
+nc.close();
+```
+
+## Wildcard Subscriptions
+```javascript
+// the `*` matches any string in the subject token
+let sub = await nc.subscribe('help.*.system', (msg) => {
+    if (msg.reply) {
+        nc.publish(msg.reply, `I can help ${msg.data}`);
+    }
+});
+
+let sub2 = await nc.subscribe('help.me.*', (msg) => {
+    if (msg.reply) {
+        nc.publish(msg.reply, `I can help ${msg.data}`);
+    }
+});
+
+// the `>` matches any tokens, can only be at the last token
+let sub3 = await nc.subscribe('help.>', (msg) => {
+    if (msg.reply) {
+        nc.publish(msg.reply, `I can help ${msg.data}`);
+    }
+});
+
+```
+
+## Queue Groups
+```javascript
+// All subscriptions with the same queue name form a queue group.
+// The server will select a single subscriber in each queue group
+// matching the subscription to receive the message.
+let qsub = await nc.subscribe('urgent.help', (msg) => {
+    if (msg.reply) {
+        nc.publish(msg.reply, `I can help ${msg.data}`);
+    }
+}, {queueGroup: "urgent"});
+```
+
+## Authentication
+```javascript
+// if the websocket server requires authentication, 
+// provide it in the URL. NATS credentials are specified
+// in the `user`, `pass` or `token` options in the NatsConnectionOptions
+
+let nc = nats.connect({url: "ws://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"});
+let nc1 = nats.connect({url: "ws://localhost:8080", user: "jenny", token: "867-5309"});
+let nc3 = nats.connect({url: "ws://localhost:8080", token: "t0pS3cret!"});
+```
+
+## Advanced Usage
+
+### Flush
+```javascript
+// flush does a round trip to the server. When it
+// returns the the server saw it
+await nc.flush();
+
+// or with a custom callback
+nc.flush(()=>{
+    console.log('sent!');
+});
+
+// or publish a few things, and wait for the flush
+await nc.publish('foo').publish('bar').flush()
+```
+
+### Auto unsubscribe
+```javascript
+// subscriptions can auto unsubscribe after a certain number of messages
+let sub = await nc.subscribe('foo', ()=> {}, {max:10});
+
+// the number can be changed or set afterwards
+// if the number is less than the number of received
+// messages it cancels immediately
+let next = sub.getReceived() + 1;
+sub.unsubscribe(next);
+```
+
+### Timeout Subscriptions
+```javascript
+// subscriptions can specify attach a timeout
+// timeout will clear with first message
+let sub = await nc.subscribe('foo', ()=> {});
+sub.setTimeout(300, ()=> {
+    console.log('no messages received');
+});
+
+// if 10 messages are not received, timeout fires
+let sub = await nc.subscribe('foo', ()=> {}, {max:10});
+sub.setTimeout(300, ()=> {
+    console.log(`got ${sub.getReceived()} messages. Was expecting 10`);
+});
+
+// timeout can be cancelled
+sub.clearTimeout();
+```
+
+### Error Handling
+```javascript
+// when server returns an error, you are notified asynchronously
+nc.addEventListener('error', (ex)=> {
+    console.log('server sent error: ', ex);
+});
+
+// when disconnected from the server, the 'close' event is sent
+nc.addEventListener('close', ()=> {
+    console.log('the connection closed');
+});
 ```
 
 ## NATS in the Browser
@@ -112,6 +192,7 @@ a chat application using ws-nats.
 <script src="../lib/nats.js"></script>
 
 <script>
+    let Payload = nats.Payload;
     let me = Date.now();
 
     // this will block until we initialize or fail
@@ -122,7 +203,7 @@ a chat application using ws-nats.
         try {
             // if the connection doesn't resolve, an exception is thrown
             // a real app would allow configuring the URL
-            let conn = await nats.connect({url: "ws://localhost:8080", payload: "json"});
+            let conn = await nats.connect({url: "ws://localhost:8080", payload: Payload.JSON});
 
             // handle errors sent by the gnatsd - permissions errors, etc.
             conn.addEventListener('error', (ex) => {
@@ -189,7 +270,7 @@ a chat application using ws-nats.
 
     // send the exit message
     function exiting() {
-        if(nc) {
+        if (nc) {
             window.nc.publish('exit', {id: me});
         }
     }

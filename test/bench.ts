@@ -35,7 +35,7 @@ test(`pubsub`, async (t) => {
     let count = 0;
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws});
-    let sub = await nc.subscribe("foo", (msg) => {
+    await nc.subscribe("foo", () => {
         lock.unlock();
         count++;
         if (count >= max) {

@@ -37,7 +37,7 @@ test('auto unsub from max from options', async (t) => {
 
         let count = 0;
         let subj = nuid.next();
-        let sub = await nc.subscribe(subj, () => {
+        await nc.subscribe(subj, () => {
             count++;
         }, {max: 10});
         for (let i = 0; i < 20; i++) {

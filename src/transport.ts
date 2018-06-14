@@ -14,7 +14,9 @@
  */
 
 import {NatsConnectionOptions} from "./nats";
-import {CLOSED, CONNECTION_REFUSED, NatsError, UNKNOWN} from "./error";
+import {ErrorCode, NatsError} from "./error";
+
+const ARRAY_BUFFER = "arraybuffer";
 
 export interface Transport {
     isConnected(): boolean;
@@ -70,7 +72,7 @@ export class WSTransport {
             // no catch will get the error, just a console error message
             // tests are more amazing and provide nothing.
             transport.stream = new WebSocket(options.url);
-            transport.stream.binaryType = "arraybuffer";
+            transport.stream.binaryType = ARRAY_BUFFER;
             transport.listeners = {} as TransportHandlers;
 
             // while the promise resolves, we need to trap any errors/close
@@ -89,7 +91,7 @@ export class WSTransport {
                     transport.close();
                 } else {
                     clearTimeout(resolveTimeout);
-                    reject(NatsError.errorForCode(CLOSED));
+                    reject(NatsError.errorForCode(ErrorCode.CLOSED));
                 }
             };
 
@@ -101,12 +103,12 @@ export class WSTransport {
                         let m = (evt as ErrorEvent).message;
                         if (!m) {
                             if (!connected) {
-                                err = NatsError.errorForCode(CONNECTION_REFUSED);
+                                err = NatsError.errorForCode(ErrorCode.CONNECTION_REFUSED);
                             } else {
-                                err = NatsError.errorForCode(UNKNOWN);
+                                err = NatsError.errorForCode(ErrorCode.UNKNOWN);
                             }
                         } else {
-                            err = new Error(m)
+                            err = new NatsError(m, ErrorCode.UNKNOWN);
                         }
                     }
                 }

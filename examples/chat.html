@@ -24,6 +24,7 @@
 <script src="../lib/nats.js"></script>
 
 <script>
+    let Payload = nats.Payload;
     let me = Date.now();
 
     // this will block until we initialize or fail
@@ -34,7 +35,7 @@
         try {
             // if the connection doesn't resolve, an exception is thrown
             // a real app would allow configuring the URL
-            let conn = await nats.connect({url: "ws://localhost:8080", payload: "json"});
+            let conn = await nats.connect({url: "ws://localhost:8080", payload: Payload.JSON});
 
             // handle errors sent by the gnatsd - permissions errors, etc.
             conn.addEventListener('error', (ex) => {
@@ -115,7 +116,3 @@
 </script>
 </body>
 </html>
-
-
-
-

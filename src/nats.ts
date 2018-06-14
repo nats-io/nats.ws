@@ -29,17 +29,17 @@ import {
     RequestOptions,
     Subscription
 } from "./protocol";
-import {BAD_AUTHENTICATION, BAD_SUBJECT, CLOSED, NatsError} from "./error";
+import {ErrorCode, NatsError} from "./error";
 import {Nuid} from "js-nuid/src/nuid";
 import {Buffer} from "buffer";
 
 const nuid = new Nuid();
 
-
-export const BINARY_PAYLOAD = "binary";
-export const JSON_PAYLOAD = "json";
-export const STRING_PAYLOAD = "string";
-
+export enum Payload {
+    STRING = "string",
+    JSON = "json",
+    BINARY = "binary"
+}
 
 export interface Msg {
     subject: string;
@@ -52,11 +52,13 @@ export interface Msg {
 export interface NatsConnectionOptions {
     url: string;
     name?: string;
-    json?: boolean;
     user?: string;
     pass?: string;
     token?: string;
-    payload?: "json" | "binary" | "string";
+    payload?: Payload;
+    verbose?: boolean;
+    pedantic?: boolean;
+    connectTimeout?: number;
 }
 
 export interface Callback {
@@ -83,25 +85,25 @@ export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
 
 
 export class NatsConnection implements ClientHandlers {
+    static VERSION = "1.0.0";
     options: NatsConnectionOptions;
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];
     errorListeners: ErrorCallback[] = [];
 
-
     private constructor(opts: NatsConnectionOptions) {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
         if (opts.payload === undefined) {
-            opts.payload = "string";
+            opts.payload = Payload.STRING;
         }
 
         let payloadTypes = ["json", "string", "binary"];
         if (!payloadTypes.includes(opts.payload)) {
-            throw `payload options can be: ${payloadTypes.join(', ')}`
+            throw NatsError.errorForCode(ErrorCode.INVALID_PAYLOAD_TYPE);
         }
 
         if (opts.user && opts.token) {
-            throw (NatsError.errorForCode(BAD_AUTHENTICATION));
+            throw (NatsError.errorForCode(ErrorCode.BAD_AUTHENTICATION));
         }
         extend(this.options, opts);
     }
@@ -127,13 +129,13 @@ export class NatsConnection implements ClientHandlers {
     publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
         subject = subject || "";
         if (subject.length === 0) {
-            this.errorHandler(NatsError.errorForCode(BAD_SUBJECT));
+            this.errorHandler(NatsError.errorForCode(ErrorCode.BAD_SUBJECT));
             return this;
         }
         // we take string, object to JSON and ArrayBuffer - if argument is not
         // ArrayBuffer, then process the payload
         if (!isArrayBuffer(data)) {
-            if (this.options.payload !== JSON_PAYLOAD) {
+            if (this.options.payload !== Payload.JSON) {
                 data = data || "";
             } else {
                 data = data === undefined ? null : data;
@@ -152,7 +154,7 @@ export class NatsConnection implements ClientHandlers {
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CLOSED));
             }
 
             let s = defaultSub();
@@ -166,7 +168,7 @@ export class NatsConnection implements ClientHandlers {
     request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CLOSED));
             }
             let r = defaultReq();
             let opts = {max: 1} as RequestOptions;

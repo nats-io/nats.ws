@@ -17,7 +17,7 @@ import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import test from "ava";
 import {connect} from "../src/nats";
 import {Lock} from "./helpers/latch";
-import {NatsError, WSS_REQUIRED} from "../src/error";
+import {ErrorCode, NatsError} from "../src/error";
 import * as path from 'path'
 
 test.before(async (t) => {
@@ -25,7 +25,6 @@ test.before(async (t) => {
 
     let serverCert = path.join(__dirname, "../../test/helpers/certs/server-cert.pem");
     let serverKey = path.join(__dirname, "../../test/helpers/certs/server-key.pem");
-    let ca = path.join(__dirname, "../../test/helpers/certs/ca.pem");
 
     let wsonly = await startServer("", ["--", "--tlscert", serverCert,
         "--tlskey", serverKey]);
@@ -57,7 +56,7 @@ test('wsonly', async (t) => {
     } catch (ex) {
         //@ts-ignore
         let nex = ex as NatsError;
-        t.is(nex.code, WSS_REQUIRED);
+        t.is(nex.code, ErrorCode.WSS_REQUIRED);
         lock.unlock();
     }
     return lock.latch;

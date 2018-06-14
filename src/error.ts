@@ -13,34 +13,35 @@
  * limitations under the License.
  */
 
-// these are emitted by the client
-export const UNKNOWN = "UNKNOWN_ERROR";
-export const CONNECTION_REFUSED = "CONNECTION_REFUSED";
-export const CLOSED = "CLOSED";
-export const BAD_SUBJECT = 'BAD_SUBJECT';
-export const CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT";
-export const BAD_AUTHENTICATION = 'BAD_AUTHENTICATION';
-export const INVALID_PAYLOAD_TYPE = 'INVALID_PAYLOAD';
-export const WSS_REQUIRED = 'WSS_REQUIRED';
+export enum ErrorCode {
+    // emitted by the client
+    UNKNOWN = "UNKNOWN_ERROR",
+    CONNECTION_REFUSED = "CONNECTION_REFUSED",
+    CLOSED = "CLOSED",
+    BAD_SUBJECT = 'BAD_SUBJECT',
+    CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT",
+    BAD_AUTHENTICATION = 'BAD_AUTHENTICATION',
+    INVALID_PAYLOAD_TYPE = 'INVALID_PAYLOAD',
+    WSS_REQUIRED = 'WSS_REQUIRED',
 
-// these are from the server
-export const PERMISSIONS_VIOLATION = "PERMISSIONS_VIOLATION";
-export const AUTHORIZATION_VIOLATION = "AUTHORIZATION_VIOLATION";
-export const NATS_PROTOCOL_ERR = 'NATS_PROTOCOL_ERR';
-
+    // emitted by the server
+    PERMISSIONS_VIOLATION = "PERMISSIONS_VIOLATION",
+    AUTHORIZATION_VIOLATION = "AUTHORIZATION_VIOLATION",
+    NATS_PROTOCOL_ERR = 'NATS_PROTOCOL_ERR'
+}
 
 export class Messages {
     static messages = new Messages();
     messages: { [key: string]: string } = {};
 
     private constructor() {
-        this.messages[CONNECTION_REFUSED] = "Connection refused";
-        this.messages[CLOSED] = "Connection closed";
-        this.messages[BAD_SUBJECT] = "Subject must be supplied";
-        this.messages[CONNECTION_TIMEOUT] = "Connection timeout";
-        this.messages[BAD_AUTHENTICATION] = "User and Token can not both be provided";
-        this.messages[INVALID_PAYLOAD_TYPE] = "Invalid payload type - payloads can be 'binary', 'string', or 'json'";
-        this.messages[WSS_REQUIRED] = "TLS is required, therefore a secure websocket connection is also required";
+        this.messages[ErrorCode.CONNECTION_REFUSED] = "Connection refused";
+        this.messages[ErrorCode.CLOSED] = "Connection closed";
+        this.messages[ErrorCode.BAD_SUBJECT] = "Subject must be supplied";
+        this.messages[ErrorCode.CONNECTION_TIMEOUT] = "Connection timeout";
+        this.messages[ErrorCode.BAD_AUTHENTICATION] = "User and Token can not both be provided";
+        this.messages[ErrorCode.INVALID_PAYLOAD_TYPE] = "Invalid payload type - payloads can be 'binary', 'string', or 'json'";
+        this.messages[ErrorCode.WSS_REQUIRED] = "TLS is required, therefore a secure websocket connection is also required";
     }
 
     static getMessage(s: string): string {

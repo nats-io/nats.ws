@@ -16,7 +16,7 @@
 import {connect} from "../src/nats";
 import test from "ava";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
-import {AUTHORIZATION_VIOLATION, NatsError, PERMISSIONS_VIOLATION} from "../src/error";
+import {ErrorCode, NatsError} from "../src/error";
 import {jsonToNatsConf, writeFile} from "./helpers/nats_conf_utils";
 import {Nuid} from 'js-nuid/src/nuid'
 import {Lock} from "./helpers/latch";
@@ -61,7 +61,7 @@ test('no auth', async (t) => {
         await connect({url: sc.server.ws});
     } catch (ex) {
         let err = ex as NatsError;
-        t.is(err.code, AUTHORIZATION_VIOLATION);
+        t.is(err.code, ErrorCode.AUTHORIZATION_VIOLATION);
     }
 });
 
@@ -72,7 +72,7 @@ test('bad auth', async (t) => {
         await connect({url: sc.server.ws, user: 'me', pass: 'hello'});
     } catch (ex) {
         let err = ex as NatsError;
-        t.is(err.code, AUTHORIZATION_VIOLATION);
+        t.is(err.code, ErrorCode.AUTHORIZATION_VIOLATION);
     }
 });
 
@@ -93,7 +93,7 @@ test('cannot sub to foo', async (t) => {
     nc.addEventListener('error', (err) => {
         //@ts-ignore
         let ne = err as NatsError;
-        t.is(ne.code, PERMISSIONS_VIOLATION);
+        t.is(ne.code, ErrorCode.PERMISSIONS_VIOLATION);
         lock.unlock();
 
     });
@@ -116,7 +116,7 @@ test('cannot pub bar', async (t) => {
     nc.addEventListener('error', (err) => {
         //@ts-ignore
         let ne = err as NatsError;
-        t.is(ne.code, PERMISSIONS_VIOLATION);
+        t.is(ne.code, ErrorCode.PERMISSIONS_VIOLATION);
         lock.unlock();
 
     });

@@ -13,16 +13,9 @@
  * limitations under the License.
  */
 
-import {BINARY_PAYLOAD, JSON_PAYLOAD, Msg, NatsConnectionOptions, STRING_PAYLOAD} from "./nats";
+import {Msg, NatsConnectionOptions, Payload} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
-import {
-    AUTHORIZATION_VIOLATION,
-    CONNECTION_TIMEOUT,
-    NATS_PROTOCOL_ERR,
-    NatsError,
-    PERMISSIONS_VIOLATION,
-    WSS_REQUIRED
-} from "./error";
+import {ErrorCode, NatsError} from "./error";
 import {buildWSMessage, extend, extractProtocolMessage} from "./util";
 import {Nuid} from 'js-nuid/src/nuid'
 import {DataBuffer} from "./databuffer";
@@ -44,7 +37,6 @@ const ERR = /^-ERR\s+('.+')?\r\n/i;
 const PING = /^PING\r\n/i;
 const PONG = /^PONG\r\n/i;
 const INFO = /^INFO\s+([^\r\n]+)\r\n/i;
-const SUBRE = /^SUB\s+([^\r\n]+)\r\n/i;
 
 const CR_LF = '\r\n';
 const CR_LF_LEN = CR_LF.length;
@@ -153,6 +145,41 @@ export class Subscription {
     unsubscribe(max?: number): void {
         this.protocol.unsubscribe(this.sid, max);
     }
+
+    hasTimeout(): boolean {
+        let sub = this.protocol.subscriptions.get(this.sid);
+        return sub !== null && sub.timeout !== null;
+    }
+
+    cancelTimeout(): void {
+        let sub = this.protocol.subscriptions.get(this.sid);
+        if (sub !== null && sub.timeout !== null) {
+            clearTimeout(sub.timeout);
+            sub.timeout = null;
+        }
+    }
+
+    setTimeout(millis: number, cb: Callback): boolean {
+        let sub = this.protocol.subscriptions.get(this.sid);
+        if (sub !== null) {
+            if (sub.timeout) {
+                clearTimeout(sub.timeout);
+                sub.timeout = null;
+            }
+            // @ts-ignore
+            sub.timeout = setTimeout(cb, millis);
+            return true;
+        }
+        return false;
+    }
+
+    getReceived(): number {
+        let sub = this.protocol.subscriptions.get(this.sid);
+        if (sub) {
+            return sub.received;
+        }
+        return 0;
+    }
 }
 
 export class MuxSubscription {
@@ -207,10 +234,10 @@ export class MuxSubscription {
                 let r = mux.get(token);
                 if (r) {
                     r.received++;
-                    if (r.max && r.max >= r.received) {
+                    r.callback(m);
+                    if (r.max && r.received >= r.max) {
                         mux.cancel(r);
                     }
-                    r.callback(m);
                 }
             }
         }
@@ -297,14 +324,14 @@ export class MsgBuffer {
         if (this.length === 0) {
             this.msg.data = this.buf.slice(0, this.buf.byteLength - 2);
             switch (this.payload) {
-                case JSON_PAYLOAD:
+                case Payload.JSON:
                     this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
                     this.msg.data = JSON.parse(this.msg.data);
                     break;
-                case STRING_PAYLOAD:
+                case Payload.STRING:
                     this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
                     break;
-                case BINARY_PAYLOAD:
+                case Payload.BINARY:
                     break;
             }
             this.buf = null;
@@ -341,17 +368,19 @@ export class ProtocolHandler implements TransportHandlers {
         return new Promise<ProtocolHandler>((resolve, reject) => {
             let ph = new ProtocolHandler(options, handlers);
             ph.connectError = reject;
+            let connectTimeout = options.connectTimeout || 10000;
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
-                    fail(NatsError.errorForCode(CONNECTION_TIMEOUT));
-                }, 10000);
+                    fail(NatsError.errorForCode(ErrorCode.CONNECTION_TIMEOUT));
+                }, connectTimeout);
                 ph.pongs.push(() => {
                     clearTimeout(timer);
                     ok(true);
                 });
             });
 
-            WSTransport.connect(options, ph)
+            //@ts-ignore
+            WSTransport.connect(options, ph, options.debug)
                 .then((transport) => {
                     ph.transport = transport;
                 })
@@ -360,7 +389,7 @@ export class ProtocolHandler implements TransportHandlers {
                     reject(err);
                 });
 
-            pongPromise.then((ok) => {
+            pongPromise.then(() => {
                 ph.connectError = null;
                 resolve(ph);
             }).catch((err) => {
@@ -373,11 +402,11 @@ export class ProtocolHandler implements TransportHandlers {
     static toError(s: string) {
         let t = s ? s.toLowerCase() : "";
         if (t.indexOf('permissions violation') !== -1) {
-            return new NatsError(s, PERMISSIONS_VIOLATION);
+            return new NatsError(s, ErrorCode.PERMISSIONS_VIOLATION);
         } else if (t.indexOf('authorization violation') !== -1) {
-            return new NatsError(s, AUTHORIZATION_VIOLATION);
+            return new NatsError(s, ErrorCode.AUTHORIZATION_VIOLATION);
         } else {
-            return new NatsError(s, NATS_PROTOCOL_ERR);
+            return new NatsError(s, ErrorCode.NATS_PROTOCOL_ERR);
         }
     }
 
@@ -412,7 +441,7 @@ export class ProtocolHandler implements TransportHandlers {
                             // send connect
                             let info = JSON.parse(m[1]);
                             if (info.tls_required && !this.transport.isSecure()) {
-                                this.handleError(NatsError.errorForCode(WSS_REQUIRED));
+                                this.handleError(NatsError.errorForCode(ErrorCode.WSS_REQUIRED));
                                 return;
                             }
                             let cs = JSON.stringify(new Connect(this.options));
@@ -473,9 +502,17 @@ export class ProtocolHandler implements TransportHandlers {
             return;
         }
         sub.received += 1;
+
+        if (sub.timeout && sub.max === undefined) {
+            // first message clears it
+            clearTimeout(sub.timeout);
+            sub.timeout = null;
+        }
+
         if (sub.callback) {
             sub.callback(m.msg);
         }
+
         if (sub.max !== undefined && sub.received >= sub.max) {
             this.unsubscribe(sub.sid);
         }

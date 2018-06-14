@@ -14,7 +14,7 @@
  */
 
 import {test} from "ava";
-import {connect, JSON_PAYLOAD, Msg, NatsConnection} from "../src/nats";
+import {connect, Msg, NatsConnection, Payload} from "../src/nats";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {Nuid} from 'js-nuid/src/nuid';
@@ -24,7 +24,7 @@ const nuid = new Nuid();
 
 test.before(async (t) => {
     let server = await startServer();
-    let nc = await NatsConnection.connect({url: server.ws, payload: "json"});
+    let nc = await NatsConnection.connect({url: server.ws, payload: Payload.JSON});
     t.context = {server: server, nc: nc};
 });
 
@@ -38,17 +38,17 @@ test('connect no json propagates options', async (t) => {
     t.plan(2);
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws});
-    t.is(nc.options.payload, "string", 'nc options');
-    t.is(nc.protocol.options.payload, "string", 'protocol');
+    t.is(nc.options.payload, Payload.STRING, 'nc options');
+    t.is(nc.protocol.options.payload, Payload.STRING, 'protocol');
     nc.close();
 });
 
 test('connect json propagates options', async (t) => {
     t.plan(2);
     let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws, payload: JSON_PAYLOAD});
-    t.is(nc.options.payload, JSON_PAYLOAD, 'nc options');
-    t.is(nc.protocol.options.payload, JSON_PAYLOAD, 'protocol');
+    let nc = await connect({url: sc.server.ws, payload: Payload.JSON});
+    t.is(nc.options.payload, Payload.JSON, 'nc options');
+    t.is(nc.protocol.options.payload, Payload.JSON, 'protocol');
     nc.close();
 });
 
