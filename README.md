@@ -114,56 +114,55 @@ a chat application using ws-nats.
 <script>
     let me = Date.now();
 
+    // this will block until we initialize or fail
+    init();
+
     // create a connection, and register listeners
     async function init() {
         try {
             // if the connection doesn't resolve, an exception is thrown
             // a real app would allow configuring the URL
             let conn = await nats.connect({url: "ws://localhost:8080", payload: "json"});
-            nc = conn;
+
+            // handle errors sent by the gnatsd - permissions errors, etc.
+            conn.addEventListener('error', (ex) => {
+                addEntry(`Received error from NATS: ${ex}`);
+            });
+
+            // handle connection to the server is closed - should disable the ui
+            conn.addEventListener('close', () => {
+                addEntry("NATS connection closed");
+            });
+
+            // the chat application listens for messages sent under the subject 'chat'
+            conn.subscribe("chat", (msg) => {
+                addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`);
+            });
+
+            // when a new browser joins, the joining browser publishes an 'enter' message
+            conn.subscribe("enter", (msg) => {
+                if (msg.data.id !== me) {
+                    addEntry(`${msg.data.id} entered.`);
+                }
+            });
+
+            // when a browser closes, the leaving browser publishes an 'exit' message
+            conn.subscribe("exit", (msg) => {
+                if (msg.data.id !== me) {
+                    addEntry(`${msg.data.id} exited.`);
+                }
+            });
+
+            // we connected, and we publish our enter message
+            conn.publish('enter', {id: me});
+
+            window.nc = conn;
         } catch (ex) {
             // show the user there was an error - should disable the ui
             addEntry(`Error connecting to NATS: ${ex}`);
-            return;
+            return null;
         }
-
-        // handle errors sent by the gnatsd - permissions errors, etc.
-        nc.addEventListener('error', (ex) => {
-            addEntry(`Received error from NATS: ${ex}`);
-        });
-
-        // handle connection to the server is closed - should disable the ui
-        nc.addEventListener('close', () => {
-            addEntry("NATS connection closed");
-        });
-
-        // the chat application listens for messages sent under the subject 'chat'
-        nc.subscribe("chat", (msg) => {
-            addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`);
-        });
-
-        // when a new browser joins, the joining browser publishes an 'enter' message
-        nc.subscribe("enter", (msg) => {
-            if (msg.data.id !== me) {
-                addEntry(`${msg.data.id} entered.`);
-            }
-        });
-
-        // when a browser closes, the leaving browser publishes an 'exit' message
-        nc.subscribe("exit", (msg) => {
-            if (msg.data.id !== me) {
-                addEntry(`${msg.data.id} exited.`);
-            }
-        });
-
-        // we connected, and we publish our enter message
-        nc.publish('enter', {id: me});
-
-        return nc;
     }
-
-    // this will block until we initialize or fail
-    let nc = init();
 
     // this is the input field
     let input = document.getElementById('data');
@@ -182,7 +181,7 @@ a chat application using ws-nats.
         input = document.getElementById('data');
         let m = input.value;
         if (m !== "") {
-            nc.publish('chat', {id: me, m: m});
+            window.nc.publish('chat', {id: me, m: m});
             input.value = "";
         }
         return false;
@@ -190,7 +189,9 @@ a chat application using ws-nats.
 
     // send the exit message
     function exiting() {
-        nc.publish('exit', {id: me});
+        if(nc) {
+            window.nc.publish('exit', {id: me});
+        }
     }
 
     // add an entry to the document
