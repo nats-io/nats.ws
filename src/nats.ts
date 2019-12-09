@@ -19,7 +19,6 @@ const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
 const TextDecoder = TextDecoder ? TextDecoder : window.TextDecoder;
 
 import {extend, isArrayBuffer} from "./util";
-import {ClientEventMap} from "./nats";
 import {
     ClientHandlers,
     defaultReq,
@@ -30,7 +29,7 @@ import {
     Subscription
 } from "./protocol";
 import {ErrorCode, NatsError} from "./error";
-import {Nuid} from "js-nuid/src/nuid";
+import {Nuid} from "js-nuid/lib/src/nuid"
 import {Buffer} from "buffer";
 
 const nuid = new Nuid();

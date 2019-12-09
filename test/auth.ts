@@ -18,7 +18,7 @@ import test from "ava";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {ErrorCode, NatsError} from "../src/error";
 import {jsonToNatsConf, writeFile} from "./helpers/nats_conf_utils";
-import {Nuid} from 'js-nuid/src/nuid'
+import {Nuid} from "js-nuid/lib/src/nuid"
 import {Lock} from "./helpers/latch";
 
 const nuid = new Nuid();

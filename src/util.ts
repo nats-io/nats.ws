@@ -51,6 +51,7 @@ export function extractProtocolMessage(a: ArrayBuffer): string {
     if (len) {
         let ba = new Uint8Array(a);
         let small = ba.slice(0, len);
+        // @ts-ignore
         return String.fromCharCode.apply(null, small);
     }
     return "";

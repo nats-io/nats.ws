@@ -1,0 +1,22 @@
+# Logs
+npm-debug.log*
+
+# generated files
+lib/
+index.d.ts
+index.js
+
+# nyc test coverage
+.nyc_output
+coverage/
+
+# Dependency directories
+node_modules
+
+# Optional npm cache directory
+.npm
+
+
+# ide crud
+vcs.xml
+

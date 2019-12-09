@@ -17,7 +17,7 @@ import {Msg, NatsConnectionOptions, Payload} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {ErrorCode, NatsError} from "./error";
 import {buildWSMessage, extend, extractProtocolMessage} from "./util";
-import {Nuid} from 'js-nuid/src/nuid'
+import {Nuid} from "js-nuid/lib/src/nuid"
 import {DataBuffer} from "./databuffer";
 
 const nuid = new Nuid();

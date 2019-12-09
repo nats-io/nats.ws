@@ -23,21 +23,23 @@
   "author": "Alberto Ricart",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@types/node": "^10.3.1",
-    "@types/ws": "^5.1.1",
-    "ava": "1.0.0-beta.4",
-    "awesome-typescript-loader": "^5.0.0",
-    "browser-env": "^3.2.5",
+    "@types/node": "^12.12.15",
+    "@types/ws": "^6.0.4",
+    "ajv": "^6.10.2",
+    "ava": "^1.4.1",
+    "awesome-typescript-loader": "^5.2.1",
+    "browser-env": "^3.3.0",
+    "canvas": "^2.6.0",
     "coveralls": "^3.0.1",
     "fast-text-encoding": "^1.0.0",
-    "jsdom": "^11.11.0",
-    "nyc": "^11.9.0",
+    "jsdom": "^15.2.1",
+    "nyc": "^14.1.1",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.3.1",
-    "typescript": "^2.9.1",
-    "webpack": "^4.11.1",
-    "webpack-bundle-analyzer": "^2.13.1",
-    "webpack-cli": "^2.1.5",
+    "typescript": "^3.5.1",
+    "webpack": "^4.41.2",
+    "webpack-bundle-analyzer": "^3.6.0",
+    "webpack-cli": "^3.3.10",
     "ws": "latest"
   },
   "ava": {
@@ -53,6 +55,7 @@
     ]
   },
   "dependencies": {
-    "js-nuid": "^1.0.1"
+    "js-nuid": "^1.0.4",
+    "npm": "^6.13.2"
   }
 }

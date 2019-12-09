@@ -166,6 +166,7 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
         });
 
         // Server does not exist..
+        // @ts-ignore
         server.stderr.on('data', function (data) {
             if (/^execvp\(\)/.test(data.toString())) {
                 if (timer) {

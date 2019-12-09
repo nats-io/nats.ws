@@ -44,6 +44,7 @@ export class DataBuffer {
     }
 
     static toAscii(a: ArrayBuffer): string {
+        // @ts-ignore
         return String.fromCharCode.apply(null, new Uint8Array(a));
     }
 
