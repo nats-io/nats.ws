@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {Msg, NatsConnectionOptions, Payload} from "./nats";
+import {Msg, NatsConnectionOptions, Payload, VERSION} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {ErrorCode, NatsError} from "./error";
 import {buildWSMessage, extend, extractProtocolMessage} from "./util";
@@ -52,7 +52,7 @@ export function createInbox(): string {
 
 export class Connect {
     lang: string = "javascript";
-    version: string = "1.0.0";
+    version: string = VERSION;
     verbose: boolean = false;
     pedantic: boolean = false;
     protocol: number = 1;

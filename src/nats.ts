@@ -15,8 +15,8 @@
 
 //@ts-ignore
 const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
-//@ts-ignore
-const TextDecoder = TextDecoder ? TextDecoder : window.TextDecoder;
+
+export const VERSION = "0.0.1";
 
 import {extend, isArrayBuffer} from "./util";
 import {
@@ -30,7 +30,6 @@ import {
 } from "./protocol";
 import {ErrorCode, NatsError} from "./error";
 import {Nuid} from "js-nuid/lib/src/nuid"
-import {Buffer} from "buffer";
 
 const nuid = new Nuid();
 
