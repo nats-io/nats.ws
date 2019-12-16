@@ -57,5 +57,21 @@
   "dependencies": {
     "js-nuid": "^1.0.4",
     "npm": "^6.13.2"
+  },
+  "nyc": {
+    "extension": [
+      ".ts",
+      ".js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "lib/src/**/*.js"
+    ],
+    "exclude": [
+      "lib/test/**",
+      "examples/**"
+    ],
+    "sourceMap": true,
+    "all": true
   }
 }
