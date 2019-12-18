@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ws-nats chat</title>
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<!-- when the browser exits, we publish a message -->
+<body onunload="exiting()">
+
+<!-- a form for entering messages -->
+<div class="container">
+    <h1>ws-nats chat</h1>
+    <label for="data"></label><input autocomplete="off" class="form-control" id="data" placeholder="Message"
+                                     type="text"><br/>
+    <button class="btn btn-primary" id="send" onclick="send()">Send</button>
+</div>
+<br/>
+
+<!-- a place to record messages -->
+<div class="container" id="chats"></div>
+
+<!-- load the nats library -->
+<script src="../lib/nats.js"></script>
+
+<script>
+    let Payload = nats.Payload;
+    let me = Date.now();
+
+    // this will block until we initialize or fail
+    init();
+
+    // create a connection, and register listeners
+    async function init() {
+        try {
+            // if the connection doesn't resolve, an exception is thrown
+            // a real app would allow configuring the URL
+            let conn = await nats.connect({
+                url: "ws://localhost:8080",
+                payload: Payload.JSON,
+                userJWT: "eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJqdGkiOiJSNko1QkdDUkhWM1FHUUxRTTRPVTM0UFk2Rk0yTlJXNFNZSURaQlpPVkpRU1E2TTRUQ1BBIiwiaWF0IjoxNTc2Njc5MTkwLCJpc3MiOiJBRDdZNFYyTkRXR05CRlhHTjZCV0RWVFJNSEY0QkVVTFZPUzRCNTZDSUpMWktNREVUTlBBWUdFUCIsIm5hbWUiOiJVIiwic3ViIjoiVUJBUlNKUFc3UVlYWFRNQVRXQkZMTUQ1WVhQWFBDVVA3QjdPVTVVQ1dJVkdUTExaQUNUSUpQVDYiLCJ0eXBlIjoidXNlciIsIm5hdHMiOnsicHViIjp7fSwic3ViIjp7fX0sImJlYXJlcl90b2tlbiI6dHJ1ZX0.jDrXwtfTY5uv6keYlvwmKNproQFLKtMrFhwYmJmilwtkeAp91Q4qDJUl2I3QWkcdLO1oHEpHEaOqQw96MQQnCw"
+            });
+
+            // handle errors sent by the gnatsd - permissions errors, etc.
+            conn.addEventListener('error', (ex) => {
+                addEntry(`Received error from NATS: ${ex}`);
+            });
+
+            // handle connection to the server is closed - should disable the ui
+            conn.addEventListener('close', () => {
+                addEntry("NATS connection closed");
+            });
+
+            // the chat application listens for messages sent under the subject 'chat'
+            conn.subscribe("chat", (msg) => {
+                addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`);
+            });
+
+            // when a new browser joins, the joining browser publishes an 'enter' message
+            conn.subscribe("enter", (msg) => {
+                if (msg.data.id !== me) {
+                    addEntry(`${msg.data.id} entered.`);
+                }
+            });
+
+            // when a browser closes, the leaving browser publishes an 'exit' message
+            conn.subscribe("exit", (msg) => {
+                if (msg.data.id !== me) {
+                    addEntry(`${msg.data.id} exited.`);
+                }
+            });
+
+            // we connected, and we publish our enter message
+            conn.publish('enter', {id: me});
+
+            window.nc = conn;
+        } catch (ex) {
+            // show the user there was an error - should disable the ui
+            addEntry(`Error connecting to NATS: ${ex}`);
+            return null;
+        }
+    }
+
+    // this is the input field
+    let input = document.getElementById('data');
+
+    // add a listener to detect edits. If they hit Enter, we publish it
+    input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+            document.getElementById("send").click();
+        } else {
+            e.preventDefault();
+        }
+    });
+
+    // send a message if user typed one
+    function send() {
+        input = document.getElementById('data');
+        let m = input.value;
+        if (m !== "") {
+            window.nc.publish('chat', {id: me, m: m});
+            input.value = "";
+        }
+        return false;
+    }
+
+    // send the exit message
+    function exiting() {
+        if (nc) {
+            window.nc.publish('exit', {id: me});
+        }
+    }
+
+    // add an entry to the document
+    function addEntry(s) {
+        let p = document.createElement("pre");
+        p.appendChild(document.createTextNode(s));
+        document.getElementById('chats').appendChild(p);
+    }
+</script>
+</body>
+</html>

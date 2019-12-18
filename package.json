@@ -4,7 +4,7 @@
   "description": "WebSocket NATS client",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run package",
     "clean": "rm -rf lib",
     "test": "tsc && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
@@ -55,7 +55,7 @@
     ]
   },
   "dependencies": {
-    "js-nuid": "^1.0.4",
+    "js-nuid": "^1.0.6",
     "npm": "^6.13.2"
   },
   "nyc": {

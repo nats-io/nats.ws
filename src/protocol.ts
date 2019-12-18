@@ -40,31 +40,38 @@ const INFO = /^INFO\s+([^\r\n]+)\r\n/i;
 
 const CR_LF = '\r\n';
 const CR_LF_LEN = CR_LF.length;
-const PING_REQUEST = 'PING' + CR_LF;
-const PONG_RESPONSE = 'PONG' + CR_LF;
-const CONNECT = 'CONNECT';
-const SUB = 'SUB';
-const UNSUB = 'UNSUB';
 
 export function createInbox(): string {
     return `_INBOX.${nuid.next()}`;
 }
 
 export class Connect {
+    auth_token?: string;
+    echo?: boolean;
+    jwt?: string;
     lang: string = "javascript";
-    version: string = VERSION;
-    verbose: boolean = false;
+    name?: string;
+    pass?: string;
     pedantic: boolean = false;
     protocol: number = 1;
     user?: string;
-    pass?: string;
-    auth_token?: string;
-    name?: string;
+    verbose: boolean = false;
+    version: string = VERSION;
 
     constructor(opts?: NatsConnectionOptions) {
         opts = opts || {} as NatsConnectionOptions;
         if (opts.token) {
             this.auth_token = opts.token;
+        }
+        if (opts.noEcho) {
+            this.echo = false;
+        }
+        if (opts.userJWT) {
+            if (typeof opts.userJWT === 'function') {
+                this.jwt = opts.userJWT();
+            } else {
+                this.jwt = opts.userJWT;
+            }
         }
         extend(this, opts);
     }
@@ -435,7 +442,7 @@ export class ProtocolHandler implements TransportHandlers {
                             cb();
                         }
                     } else if ((m = PING.exec(buf))) {
-                        this.transport.write(buildWSMessage(PONG_RESPONSE));
+                        this.transport.write(buildWSMessage(`PONG ${CR_LF}`));
                     } else if ((m = INFO.exec(buf))) {
                         if (!this.infoReceived) {
                             // send connect
@@ -445,9 +452,9 @@ export class ProtocolHandler implements TransportHandlers {
                                 return;
                             }
                             let cs = JSON.stringify(new Connect(this.options));
-                            this.transport.write(buildWSMessage(`${CONNECT} ${cs}${CR_LF}`));
+                            this.transport.write(buildWSMessage(`CONNECT ${cs}${CR_LF}`));
                             this.sendSubscriptions();
-                            this.transport.write(buildWSMessage(PING_REQUEST));
+                            this.transport.write(buildWSMessage(`PING ${CR_LF}`));
                             this.infoReceived = true;
                             this.flushPending();
                         }
@@ -602,7 +609,7 @@ export class ProtocolHandler implements TransportHandlers {
 
     flush(f?: Function): void {
         this.pongs.push(f);
-        this.sendCommand(PING_REQUEST);
+        this.sendCommand(`PING ${CR_LF}`);
     }
 
     processError(s: string) {
@@ -615,9 +622,9 @@ export class ProtocolHandler implements TransportHandlers {
         let cmds: string[] = [];
         this.subscriptions.all().forEach((s) => {
             if (s.queueGroup) {
-                cmds.push(`${SUB} ${s.subject} ${s.queueGroup} ${s.sid} ${CR_LF}`);
+                cmds.push(`SUB ${s.subject} ${s.queueGroup} ${s.sid} ${CR_LF}`);
             } else {
-                cmds.push(`${SUB} ${s.subject} ${s.sid} ${CR_LF}`);
+                cmds.push(`SUB ${s.subject} ${s.sid} ${CR_LF}`);
             }
         });
         if (cmds.length) {
@@ -625,10 +632,10 @@ export class ProtocolHandler implements TransportHandlers {
         }
     }
 
-    openHandler(evt: Event): void {
+    openHandler(_: Event): void {
     }
 
-    closeHandler(evt: CloseEvent): void {
+    closeHandler(_: CloseEvent): void {
         this.close();
         this.clientHandlers.closeHandler();
     }

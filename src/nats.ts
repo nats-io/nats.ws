@@ -48,15 +48,17 @@ export interface Msg {
 }
 
 export interface NatsConnectionOptions {
-    url: string;
-    name?: string;
-    user?: string;
-    pass?: string;
-    token?: string;
-    payload?: Payload;
-    verbose?: boolean;
-    pedantic?: boolean;
     connectTimeout?: number;
+    name?: string;
+    noEcho?: boolean;
+    pass?: string;
+    payload?: Payload;
+    pedantic?: boolean;
+    token?: string;
+    url: string;
+    user?: string;
+    userJWT?: string | JWTProvider;
+    verbose?: boolean;
 }
 
 export interface Callback {
@@ -75,6 +77,10 @@ export interface ClientEventMap {
 export interface SubscribeOptions {
     queueGroup?: string;
     max?: number;
+}
+
+export interface JWTProvider {
+    (): string;
 }
 
 export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
