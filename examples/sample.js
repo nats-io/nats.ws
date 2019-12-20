@@ -15,7 +15,7 @@
 
 async function test() {
     // if the connection fails an exception is thrown
-    let nc = await await nats.connect({url: "ws://localhost:8080", payload: nats.Payload.STRING});
+    let nc = await nats.connect({url: "{{WSURL}}", payload: nats.Payload.STRING});
 
     // if the server returns an error, lets learn about it
     nc.addEventListener('error', (ex) => {
@@ -30,6 +30,7 @@ async function test() {
     // publish a message
     // <subject>, <body of the message>
     nc.publish('hello', 'nats');
+
 
     // publish a request - need a subscription listening
     // <subject>, <body of the message>, <reply subject>

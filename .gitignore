@@ -5,6 +5,7 @@ npm-debug.log*
 lib/
 index.d.ts
 index.js
+.idea/
 
 # nyc test coverage
 .nyc_output

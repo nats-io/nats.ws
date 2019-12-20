@@ -37,7 +37,7 @@
             // if the connection doesn't resolve, an exception is thrown
             // a real app would allow configuring the URL
             let conn = await nats.connect({
-                url: "ws://localhost:8080",
+                url: "{{WSURL}}",
                 payload: Payload.JSON,
                 userJWT: "eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJqdGkiOiJSNko1QkdDUkhWM1FHUUxRTTRPVTM0UFk2Rk0yTlJXNFNZSURaQlpPVkpRU1E2TTRUQ1BBIiwiaWF0IjoxNTc2Njc5MTkwLCJpc3MiOiJBRDdZNFYyTkRXR05CRlhHTjZCV0RWVFJNSEY0QkVVTFZPUzRCNTZDSUpMWktNREVUTlBBWUdFUCIsIm5hbWUiOiJVIiwic3ViIjoiVUJBUlNKUFc3UVlYWFRNQVRXQkZMTUQ1WVhQWFBDVVA3QjdPVTVVQ1dJVkdUTExaQUNUSUpQVDYiLCJ0eXBlIjoidXNlciIsIm5hdHMiOnsicHViIjp7fSwic3ViIjp7fX0sImJlYXJlcl90b2tlbiI6dHJ1ZX0.jDrXwtfTY5uv6keYlvwmKNproQFLKtMrFhwYmJmilwtkeAp91Q4qDJUl2I3QWkcdLO1oHEpHEaOqQw96MQQnCw"
             });

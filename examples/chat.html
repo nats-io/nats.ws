@@ -35,7 +35,7 @@
         try {
             // if the connection doesn't resolve, an exception is thrown
             // a real app would allow configuring the URL
-            let conn = await nats.connect({url: "ws://localhost:8080", payload: Payload.JSON});
+            let conn = await nats.connect({url: "{{WSURL}}", payload: Payload.JSON});
 
             // handle errors sent by the gnatsd - permissions errors, etc.
             conn.addEventListener('error', (ex) => {
