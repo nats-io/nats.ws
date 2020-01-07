@@ -21,10 +21,8 @@ import {ErrorCode, NatsError} from "../src/error";
 import * as path from 'path'
 
 test.before(async (t) => {
-    t.log(__dirname);
-
-    let serverCert = path.join(__dirname, "../../test/helpers/certs/server-cert.pem");
-    let serverKey = path.join(__dirname, "../../test/helpers/certs/server-key.pem");
+    let serverCert = path.join(__dirname, "../../test/helpers/certs/server.pem");
+    let serverKey = path.join(__dirname, "../../test/helpers/certs/key.pem");
 
     let wsonly = await startServer("", ["--", "--tlscert", serverCert,
         "--tlskey", serverKey]);

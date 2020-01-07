@@ -13,10 +13,9 @@
  * limitations under the License.
  */
 
-//@ts-ignore
-const TextEncoder = TextEncoder ? TextEncoder : window.TextEncoder;
+const TextEncoder = window.TextEncoder;
 
-export const VERSION = "0.0.1";
+export const VERSION = "0.7.0";
 
 import {extend, isArrayBuffer} from "./util";
 import {
@@ -89,7 +88,7 @@ export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
 
 
 export class NatsConnection implements ClientHandlers {
-    static VERSION = "1.0.0";
+    static VERSION = VERSION;
     options: NatsConnectionOptions;
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];

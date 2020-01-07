@@ -76,6 +76,14 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
         let socket: Socket | null;
         let timer: Timer | null;
 
+        //@ts-ignore
+        // server.stderr.on('data', function (data) {
+        //     let lines = data.toString().split('\n');
+        //     lines.forEach((m: string) => {
+        //         console.log(m);
+        //     });
+        // });
+
         function resetSocket() {
             if (socket) {
                 socket.removeAllListeners();

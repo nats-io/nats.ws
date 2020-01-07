@@ -43,7 +43,6 @@ test.before(async (t) => {
     };
 
     let fp = CONF_DIR + '/' + nuid.next() + ".conf";
-    t.log(fp);
     writeFile(fp, jsonToNatsConf(conf));
     let server = await startServer("localhost:0", ['--', '-c', fp]);
     t.context = {server: server}

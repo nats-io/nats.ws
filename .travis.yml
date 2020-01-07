@@ -9,11 +9,11 @@ git:
 
 env:
   global:
-  - WSGNATSD_VERSION=v0.7.6
+  - WSGNATSD_VERSION=v0.8.4
   - NODE_EXTRA_CA_CERTS=$TRAVIS_BUILD_DIR/test/helpers/certs/ca.pem
 
 before_script:
-- wget "https://github.com/aricart/wsgnatsd/releases/download/$WSGNATSD_VERSION/wsgnatsd-$WSGNATSD_VERSION-linux-amd64.zip" -O tmp.zip
+  - wget "https://github.com/aricart/wsgnatsd/releases/download/$WSGNATSD_VERSION/wsgnatsd-linux-amd64.zip" -O tmp.zip
 - unzip -d wsgnatsd tmp.zip
 
 script:

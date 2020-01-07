@@ -1,50 +1,57 @@
 {
-  "name": "ws-nats",
-  "version": "1.0.0",
+  "name": "nats.ws",
+  "version": "0.7.0",
   "description": "WebSocket NATS client",
   "main": "index.js",
   "scripts": {
     "build": "tsc && npm run package",
     "clean": "rm -rf lib",
-    "test": "tsc && nyc ava --verbose -T 15000",
+    "test": "npm run build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",
-    "debugtest": "tsc && node $NODE_DEBUG_OPTION node_modules/.bin/ava --verbose -T 6500000 -m",
+    "debugtest": "tsc && node node_modules/.bin/ava --verbose -T 6500000 -m",
     "package": "webpack-cli"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com//aricart/ws-nats"
+    "url": "git@github.com:nats-io/nats.ws.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nats-io/nats.ws/issues"
   },
   "keywords": [
     "NATS",
     "websockets"
   ],
-  "author": "Alberto Ricart",
+  "author": {
+    "name": "The NATS Authors"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@types/node": "^12.12.15",
+    "@types/node": "^13.1.4",
     "@types/ws": "^6.0.4",
     "ajv": "^6.10.2",
-    "ava": "^1.4.1",
+    "ava": "^2.4.0",
     "awesome-typescript-loader": "^5.2.1",
     "browser-env": "^3.3.0",
-    "canvas": "^2.6.0",
-    "coveralls": "^3.0.1",
+    "canvas": "^2.6.1",
+    "coveralls": "^3.0.9",
     "fast-text-encoding": "^1.0.0",
     "jsdom": "^15.2.1",
-    "nyc": "^14.1.1",
-    "source-map-loader": "^0.2.3",
-    "ts-loader": "^4.3.1",
-    "typescript": "^3.5.1",
-    "webpack": "^4.41.2",
+    "nyc": "^15.0.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.4",
+    "webpack": "^4.41.5",
     "webpack-bundle-analyzer": "^3.6.0",
     "webpack-cli": "^3.3.10",
-    "ws": "latest"
+    "ws": "^7.2.1"
   },
   "ava": {
+    "failfast": true,
     "require": [
-      "./lib/test/helpers/setup-browser-env.js"
+      "./lib/test/helpers/setup-browser-env.js",
+      "./lib/test/helpers/ava_fix.js"
     ],
     "files": [
       "./lib/test/**/*.js",
@@ -56,7 +63,7 @@
   },
   "dependencies": {
     "js-nuid": "^1.0.6",
-    "npm": "^6.13.2"
+    "npm": "^6.13.4"
   },
   "nyc": {
     "extension": [
