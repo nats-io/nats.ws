@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
 import {Msg, NatsConnectionOptions, Payload, VERSION} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {ErrorCode, NatsError} from "./error";
-import {buildWSMessage, extend, extractProtocolMessage} from "./util";
+import {buildWSMessage, extend, extractProtocolMessage, settle} from "./util";
 import {Nuid} from "js-nuid/lib/src/nuid"
 import {DataBuffer} from "./databuffer";
 
@@ -105,6 +105,7 @@ export interface Base {
     received: number;
     timeout?: number | null;
     max?: number | undefined;
+    draining: boolean;
 }
 
 export interface Req extends Base {
@@ -113,7 +114,7 @@ export interface Req extends Base {
 
 export interface Sub extends Base {
     sid: number;
-    queueGroup?: string | null;
+    queue?: string | null;
 }
 
 export function defaultSub(): Sub {
@@ -186,6 +187,22 @@ export class Subscription {
             return sub.received;
         }
         return 0;
+    }
+
+    drain(): Promise<any> {
+        return this.protocol.drainSubscription(this.sid);
+    }
+
+    isDraining(): boolean {
+        let sub = this.protocol.subscriptions.get(this.sid);
+        if (sub) {
+            return sub.draining;
+        }
+        return false;
+    }
+
+    isCancelled(): boolean {
+        return this.protocol.subscriptions.get(this.sid) === null;
     }
 }
 
@@ -347,20 +364,20 @@ export class MsgBuffer {
 }
 
 export class ProtocolHandler implements TransportHandlers {
-    infoReceived: boolean = false;
-    subscriptions: Subscriptions;
-    muxSubscriptions: MuxSubscription;
+    clientHandlers: ClientHandlers;
+    connectError!: ErrorCallback | null;
     inbound: DataBuffer;
+    infoReceived: boolean = false;
+    muxSubscriptions: MuxSubscription;
+    options: NatsConnectionOptions;
     outbound: DataBuffer;
-    state: ParserState = ParserState.AWAITING_CONTROL;
+    payload: MsgBuffer | null = null;
     pongs: Array<Function | undefined> = [];
     pout: number = 0;
-    payload: MsgBuffer | null = null;
-    clientHandlers: ClientHandlers;
-    options: NatsConnectionOptions;
+    state: ParserState = ParserState.AWAITING_CONTROL;
+    subscriptions: Subscriptions;
     transport!: Transport;
-    connectError!: ErrorCallback | null;
-
+    noMorePublishing: boolean = false;
 
     constructor(options: NatsConnectionOptions, handlers: ClientHandlers) {
         this.options = options;
@@ -546,6 +563,12 @@ export class ProtocolHandler implements TransportHandlers {
     }
 
     publish(subject: string, data: ArrayBuffer, reply: string) {
+        if(this.isClosed()) {
+            throw NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED);
+        }
+        if (this.noMorePublishing) {
+            throw NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING);
+        }
         let len = Buffer.byteLength(data);
         reply = reply || "";
 
@@ -567,8 +590,8 @@ export class ProtocolHandler implements TransportHandlers {
 
     subscribe(s: Sub): Subscription {
         let sub = this.subscriptions.add(s) as Sub;
-        if (sub.queueGroup) {
-            this.sendCommand(`SUB ${sub.subject} ${sub.queueGroup} ${sub.sid}\r\n`);
+        if (sub.queue) {
+            this.sendCommand(`SUB ${sub.subject} ${sub.queue} ${sub.sid}\r\n`);
         } else {
             this.sendCommand(`SUB ${sub.subject} ${sub.sid}\r\n`);
         }
@@ -621,8 +644,8 @@ export class ProtocolHandler implements TransportHandlers {
     sendSubscriptions() {
         let cmds: string[] = [];
         this.subscriptions.all().forEach((s) => {
-            if (s.queueGroup) {
-                cmds.push(`SUB ${s.subject} ${s.queueGroup} ${s.sid} ${CR_LF}`);
+            if (s.queue) {
+                cmds.push(`SUB ${s.subject} ${s.queue} ${s.sid} ${CR_LF}`);
             } else {
                 cmds.push(`SUB ${s.subject} ${s.sid} ${CR_LF}`);
             }
@@ -660,6 +683,54 @@ export class ProtocolHandler implements TransportHandlers {
 
     isClosed(): boolean {
         return this.transport.isClosed();
+    }
+
+    drain(): Promise<any> {
+        let subs = this.subscriptions.all();
+        let promises: Promise<Sub>[] = [];
+        subs.forEach((sub: Sub) => {
+            let p = this.drainSubscription(sub.sid);
+            promises.push(p);
+        });
+        return new Promise((resolve) => {
+            settle(promises)
+                .then((a) => {
+                    this.noMorePublishing = true;
+                    setTimeout(() => {
+                        this.close();
+                        resolve(a);
+                    });
+                })
+                .catch(() => {
+                    // cannot happen
+                });
+        });
+    }
+
+    drainSubscription(sid: number): Promise<Sub> {
+        if (this.isClosed()) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+        }
+        if (!sid) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.SUB_CLOSED));
+        }
+        let s = this.subscriptions.get(sid);
+        if (!s) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.SUB_CLOSED));
+        }
+        if (s.draining) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.SUB_DRAINING));
+        }
+
+        let sub = s;
+        return new Promise((resolve) => {
+            sub.draining = true;
+            this.sendCommand(`UNSUB ${sub.sid}\r\n`);
+            this.flush(() => {
+                this.subscriptions.cancel(sub);
+                resolve(sub);
+            });
+        });
     }
 
     private flushPending() {

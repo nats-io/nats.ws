@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -91,7 +91,7 @@ export class WSTransport {
                     transport.close();
                 } else {
                     clearTimeout(resolveTimeout);
-                    reject(NatsError.errorForCode(ErrorCode.CLOSED));
+                    reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
                 }
             };
 
@@ -126,7 +126,7 @@ export class WSTransport {
                 }
             };
 
-            transport.stream.onopen = function (evt: Event) {
+            transport.stream.onopen = function () {
                 transport.trace('ws open');
                 // we cannot resolve immediately! we connected to
                 // a proxy which is establishing a connection to NATS,

@@ -85,7 +85,7 @@ let qsub = await nc.subscribe('urgent.help', (msg) => {
     if (msg.reply) {
         nc.publish(msg.reply, `I can help ${msg.data}`);
     }
-}, {queueGroup: "urgent"});
+}, {queue: "urgent"});
 ```
 
 ## Authentication

@@ -51,7 +51,7 @@ async function test() {
         if (msg.reply) {
             nc.publish(msg.reply, `I can help ${msg.data}`);
         }
-    }, {queueGroup: "urgent"});
+    }, {queue: "urgent"});
 
     // simple request
     let msg = await nc.request('help', 1000, 'nats request');

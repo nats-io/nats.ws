@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -86,7 +86,7 @@ test('subscribe and unsubscribe', async (t) => {
     let nc = await connect({url: sc.server.ws});
     let subject = nuid.next();
     let sub = await nc.subscribe(subject, () => {
-    }, {max: 1000, queueGroup: 'aaa'});
+    }, {max: 1000, queue: 'aaa'});
     t.is(sub.sid, 1);
     t.is(nc.protocol.subscriptions.length, 1);
     let s = nc.protocol.subscriptions.get(1);
@@ -95,7 +95,7 @@ test('subscribe and unsubscribe', async (t) => {
         t.is(s.subject, subject);
         t.truthy(s.callback);
         t.is(s.max, 1000);
-        t.is(s.queueGroup, 'aaa');
+        t.is(s.queue, 'aaa');
     }
     // change the expected max
     sub.unsubscribe(10);
@@ -116,7 +116,7 @@ test('subscriptions fire callbacks', async t => {
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
-    let sub = await nc.subscribe(s, (msg: Msg) => {
+    let sub = await nc.subscribe(s, () => {
         t.pass();
         lock.unlock();
     });

@@ -15,7 +15,6 @@
  */
 
 import * as ws from 'ws'
-import * as http from "http";
 
 export class WSEchoServer {
     server: ws.Server;
@@ -25,7 +24,7 @@ export class WSEchoServer {
         opts.port = port;
         this.server = new ws.Server(opts);
 
-        this.server.on('connection', (client: ws, req: http.IncomingMessage) => {
+        this.server.on('connection', (client: ws) => {
             client.on('message', (data) => {
                 this.server.clients.forEach((c) => {
                     c.send(data, (err) => {

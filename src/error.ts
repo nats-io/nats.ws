@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,14 +15,18 @@
 
 export enum ErrorCode {
     // emitted by the client
-    UNKNOWN = "UNKNOWN_ERROR",
-    CONNECTION_REFUSED = "CONNECTION_REFUSED",
-    CLOSED = "CLOSED",
-    BAD_SUBJECT = 'BAD_SUBJECT',
-    CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT",
     BAD_AUTHENTICATION = 'BAD_AUTHENTICATION',
+    BAD_SUBJECT = 'BAD_SUBJECT',
+    CONNECTION_CLOSED = "CONNECTION_CLOSED",
+    CONNECTION_DRAINING = 'CONNECTION_DRAINING',
+    CONNECTION_REFUSED = "CONNECTION_REFUSED",
+    CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT",
     INVALID_PAYLOAD_TYPE = 'INVALID_PAYLOAD',
+    UNKNOWN = "UNKNOWN_ERROR",
     WSS_REQUIRED = 'WSS_REQUIRED',
+
+    SUB_CLOSED = 'SUB_CLOSED',
+    SUB_DRAINING = 'SUB_DRAINING',
 
     // emitted by the server
     PERMISSIONS_VIOLATION = "PERMISSIONS_VIOLATION",
@@ -35,12 +39,18 @@ export class Messages {
     messages: { [key: string]: string } = {};
 
     private constructor() {
-        this.messages[ErrorCode.CONNECTION_REFUSED] = "Connection refused";
-        this.messages[ErrorCode.CLOSED] = "Connection closed";
-        this.messages[ErrorCode.BAD_SUBJECT] = "Subject must be supplied";
-        this.messages[ErrorCode.CONNECTION_TIMEOUT] = "Connection timeout";
         this.messages[ErrorCode.BAD_AUTHENTICATION] = "User and Token can not both be provided";
+        this.messages[ErrorCode.BAD_SUBJECT] = "Subject must be supplied";
+        this.messages[ErrorCode.CONNECTION_CLOSED] = "Connection closed";
+        this.messages[ErrorCode.CONNECTION_CLOSED] = "Connection closed";
+        this.messages[ErrorCode.CONNECTION_REFUSED] = "Connection refused";
+        this.messages[ErrorCode.CONNECTION_TIMEOUT] = "Connection timeout";
+        this.messages[ErrorCode.CONNECTION_DRAINING] = "Connection draining";
         this.messages[ErrorCode.INVALID_PAYLOAD_TYPE] = "Invalid payload type - payloads can be 'binary', 'string', or 'json'";
+
+        this.messages[ErrorCode.SUB_CLOSED] = 'Subscription closed';
+        this.messages[ErrorCode.SUB_DRAINING] = 'Subscription draining';
+
         this.messages[ErrorCode.WSS_REQUIRED] = "TLS is required, therefore a secure websocket connection is also required";
     }
 

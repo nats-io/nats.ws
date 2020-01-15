@@ -51,7 +51,7 @@ test('wsnats', (t) => {
         th.messageHandler = (me: MessageEvent) => {
             if (new TextDecoder("utf-8").decode(me.data).match(/^INFO/)) {
                 t.pass();
-                transport.write(Buffer.from("PING\r\n"));
+                transport.write("PING\r\n");
             }
             if (new TextDecoder("utf-8").decode(me.data).match(/^PONG/)) {
                 t.pass();

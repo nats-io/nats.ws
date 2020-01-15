@@ -17,7 +17,7 @@ import {PathLike, writeFileSync} from "fs";
 
 // TODO: add array support
 export function jsonToNatsConf(o: object, indent?: string): string {
-    let pad = arguments[1] !== undefined ? arguments[1] + '  ' : '';
+    let pad = indent !== undefined ? indent + '  ' : '';
     let buf = [];
     for (let k in o) {
         if (o.hasOwnProperty(k)) {

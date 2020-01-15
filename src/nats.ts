@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,9 @@
 
 const TextEncoder = window.TextEncoder;
 
-export const VERSION = "0.7.0";
+
+
+export const VERSION = "1.0.0-0";
 
 import {extend, isArrayBuffer} from "./util";
 import {
@@ -74,7 +76,7 @@ export interface ClientEventMap {
 }
 
 export interface SubscribeOptions {
-    queueGroup?: string;
+    queue?: string;
     max?: number;
 }
 
@@ -93,6 +95,7 @@ export class NatsConnection implements ClientHandlers {
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];
     errorListeners: ErrorCallback[] = [];
+    draining: boolean = false;
 
     private constructor(opts: NatsConnectionOptions) {
         this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
@@ -157,7 +160,10 @@ export class NatsConnection implements ClientHandlers {
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(ErrorCode.CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+            }
+            if (this.isDraining()) {
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING));
             }
 
             let s = defaultSub();
@@ -171,7 +177,10 @@ export class NatsConnection implements ClientHandlers {
     request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(ErrorCode.CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+            }
+            if (this.isDraining()) {
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING));
             }
             let r = defaultReq();
             let opts = {max: 1} as RequestOptions;
@@ -208,6 +217,17 @@ export class NatsConnection implements ClientHandlers {
         }
     }
 
+    drain(): Promise<any> {
+        if(this.isClosed()) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+        }
+        if(this.isDraining()) {
+            return Promise.reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING));
+        }
+        this.draining = true;
+        return this.protocol.drain();
+    }
+
     errorHandler(error: Error): void {
         this.errorListeners.forEach((cb) => {
             try {
@@ -238,6 +258,10 @@ export class NatsConnection implements ClientHandlers {
 
     isClosed(): boolean {
         return this.protocol.isClosed();
+    }
+
+    isDraining(): boolean {
+        return this.draining;
     }
 }
 

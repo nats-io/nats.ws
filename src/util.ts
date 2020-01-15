@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import {Buffer} from 'buffer';
 import {DataBuffer} from "./databuffer";
 
 let CRLF: ArrayBuffer = DataBuffer.fromAscii("\r\n");
@@ -64,4 +63,22 @@ export function buildWSMessage(protocol: string, a?: ArrayBuffer): ArrayBuffer {
         msg = DataBuffer.concat(msg, a, CRLF)
     }
     return msg;
+}
+
+export function settle(a: any[]): Promise<any[]> {
+    if (Array.isArray(a)) {
+        return Promise.resolve(a).then(_settle);
+    } else {
+        return Promise.reject(new TypeError('argument requires an array of promises'));
+    }
+}
+
+function _settle(a: any[]): Promise<any> {
+    return Promise.all(a.map((p) => {
+        return Promise.resolve(p).then(_resolve, _resolve);
+    }));
+}
+
+function _resolve(r: any): any {
+    return r;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,7 +42,7 @@ test('deliver to single queue', async (t) => {
     for (let i = 0; i < 5; i++) {
         let s = nc.subscribe(subj, () => {
             count++;
-        }, {queueGroup: "a"});
+        }, {queue: "a"});
         subs.push(s);
     }
 
@@ -66,7 +66,7 @@ test('deliver to multiple queues', async (t) => {
     for (let i = 0; i < 5; i++) {
         let s = nc.subscribe(subj, () => {
             queue1++;
-        }, {queueGroup: "a"});
+        }, {queue: "a"});
         subs.push(s);
     }
 
@@ -74,7 +74,7 @@ test('deliver to multiple queues', async (t) => {
     for (let i = 0; i < 5; i++) {
         let s = nc.subscribe(subj, () => {
             queue2++;
-        }, {queueGroup: "b"});
+        }, {queue: "b"});
         subs.push(s);
     }
 
@@ -99,7 +99,7 @@ test('queues and subs independent', async (t) => {
     for (let i = 0; i < 5; i++) {
         let s = nc.subscribe(subj, () => {
             queueCount++;
-        }, {queueGroup: "a"});
+        }, {queue: "a"});
         subs.push(s);
     }
 

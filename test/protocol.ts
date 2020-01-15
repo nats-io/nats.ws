@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -72,7 +72,7 @@ test('send subs', async (t) => {
     protocol.processMsg();
 
     protocol.subscribe({sid: 1, subject: "test"} as Sub);
-    protocol.subscribe({sid: 2, subject: "test", queueGroup: "a"} as Sub);
+    protocol.subscribe({sid: 2, subject: "test", queue: "a"} as Sub);
 
     let info = 'INFO {"server_id":"9yK5cBjrCQXW5ds4BAYmOs","version":"1.2.0-beta3","git_commit":"","go":"go1.10.1","host":"127.0.0.1","port":61258,"auth_required":false,"tls_required":false,"tls_verify":false,"max_payload":1048576}\r\n';
     protocol.inbound.fill(DataBuffer.fromAscii(info));
