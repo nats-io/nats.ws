@@ -65,10 +65,10 @@
     ],
     "include": [
       "src/**/*.ts",
-      "lib/src/**/*.js"
+      "build/src/**/*.js"
     ],
     "exclude": [
-      "lib/test/**",
+      "build/test/**",
       "examples/**"
     ],
     "sourceMap": true,

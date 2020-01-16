@@ -3,10 +3,10 @@
 A websocket client for the [NATS messaging system](https://nats.io).
 
 [![license](https://img.shields.io/github/license/nats-io/nats.ws.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Travis branch](https://img.shields.io/travis/nats-io/nats.ws/master.svg)]()
+[![Travis branch](https://travis-ci.com/nats-io/nats.ws.svg?token=pzQUKLXL98ZtApqYAHeK&branch=master)]()
 [![Coveralls github branch](https://img.shields.io/coveralls/github/nats-io/nats.ws/master.svg)]()
-[![npm](https://img.shields.io/npm/v/wsnats.svg)](https://www.npmjs.com/package/nats.ws)
-[![npm](https://img.shields.io/npm/dm/wsnats.svg)](https://www.npmjs.com/package/nats.ws)
+[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
+[![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
 # Installation
 
