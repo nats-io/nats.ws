@@ -2,7 +2,7 @@ language: node_js
 sudo: false
 
 node_js:
-- "13"
+  - "13"
 
 git:
   depth: false
@@ -14,10 +14,10 @@ env:
 
 before_script:
   - wget "https://github.com/aricart/wsgnatsd/releases/download/$WSGNATSD_VERSION/wsgnatsd-linux-amd64.zip" -O tmp.zip
-- unzip -d wsgnatsd tmp.zip
+  - unzip -d wsgnatsd tmp.zip
 
 script:
-- npm run test
+  - npm run test
 
 after_success:
   - if [[ "$TRAVIS_NODE_VERSION" == 13 ]]; then npm run coveralls; fi
