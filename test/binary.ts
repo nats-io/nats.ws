@@ -15,7 +15,7 @@
 
 import test from "ava";
 import {connect, Msg, Payload} from "../src/nats";
-import {Nuid} from "js-nuid/lib/src/nuid"
+import {Nuid} from "js-nuid"
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 

@@ -16,7 +16,7 @@
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import test from "ava";
 import {connect} from "../src/nats";
-import {Nuid} from "js-nuid/lib/src/nuid"
+import {Nuid} from "js-nuid"
 
 const nuid = new Nuid();
 

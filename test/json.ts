@@ -17,7 +17,7 @@ import test from "ava";
 import {connect, Msg, NatsConnection, Payload} from "../src/nats";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
-import {Nuid} from "js-nuid/lib/src/nuid"
+import {Nuid} from "js-nuid"
 
 const nuid = new Nuid();
 

@@ -97,5 +97,4 @@ export class DataBuffer {
     length(): number {
         return this.buffers.length;
     }
-
 }

@@ -18,7 +18,7 @@ import test from "ava";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";
 
-import {Nuid} from "js-nuid/lib/src/nuid"
+import {Nuid} from "js-nuid"
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {DataBuffer} from "../src/databuffer";
 import {ErrorCode, NatsError} from "../src/error";

@@ -6,13 +6,17 @@ const webpack = require('webpack')
 module.exports = {
     entry: path.resolve(__dirname, 'src/nats.ts'),
     devtool: 'source-map',
+    optimization: {
+        minimize: true
+    },
 
     mode: 'production',
     output: {
         path: path.resolve(__dirname),
         filename: 'index.js',
         library: 'nats',
-        libraryTarget: 'global',
+        libraryTarget: 'umd',
+        umdNamedDefine: true
     },
     resolve: {
         extensions: ['.ts', '.js']

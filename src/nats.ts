@@ -29,7 +29,7 @@ import {
     Subscription
 } from "./protocol";
 import {ErrorCode, NatsError} from "./error";
-import {Nuid} from "js-nuid/lib/src/nuid"
+import {Nuid} from "js-nuid"
 
 const nuid = new Nuid();
 
