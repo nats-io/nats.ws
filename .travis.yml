@@ -18,4 +18,9 @@ before_script:
 
 script:
 - npm run test
-#  - npm run coveralls
+
+after_success:
+  - if [[ "$TRAVIS_NODE_VERSION" == 13 ]]; then npm run coveralls; fi
+
+after_failure:
+  - cat nats-streaming-server/logs/*.log
