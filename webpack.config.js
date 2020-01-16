@@ -1,34 +1,21 @@
 const path = require('path')
-const webpack = require('webpack')
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-// const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
-    entry: path.resolve(__dirname, 'src/nats.ts'),
-    devtool: 'source-map',
-    optimization: {
-        minimize: true
-    },
-
-    mode: 'production',
+    mode: 'none',
+    entry: path.resolve(__dirname, "src/nats.ts"),
     output: {
         path: path.resolve(__dirname),
-        filename: 'index.js',
-        library: 'nats',
+        filename: "nats.js",
         libraryTarget: 'umd',
-        umdNamedDefine: true
+        library: 'nuid'
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts']
     },
     module: {
         rules: [
-            {
-                test: [/\.ts$/],
-                exclude: [/test/],
-                use: 'ts-loader'
-            },
-            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
+            { test: /\.ts$/, loader: "ts-loader", exclude:  /(node_modules|test)/}
         ]
-    }
+    },
+    devtool: "source-map"
 };

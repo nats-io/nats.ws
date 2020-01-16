@@ -16,7 +16,7 @@
 
 const TextEncoder = window.TextEncoder;
 
-export const VERSION = require('./package.json').version;
+export const VERSION = require('./version.json').version;
 
 import {extend, isArrayBuffer} from "./util";
 import {

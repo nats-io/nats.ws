@@ -2,9 +2,13 @@
 npm-debug.log*
 
 # generated files
-lib/
-index.d.ts
-index.js
+build/
+nats.js
+*.d.ts
+nats.js.map
+src/version.json
+
+
 .idea/
 
 # nyc test coverage
@@ -16,7 +20,6 @@ node_modules
 
 # Optional npm cache directory
 .npm
-
 
 # ide crud
 vcs.xml

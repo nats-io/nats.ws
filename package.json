@@ -2,15 +2,16 @@
   "name": "nats.ws",
   "version": "1.0.0-0",
   "description": "WebSocket NATS client",
-  "main": "lib/nats.js",
+  "main": "nats.js",
   "scripts": {
-    "build": "cp package.json src/ && tsc  && npm run package && rm src/package.json",
-    "clean": "rm -rf lib",
+    "sync_version": "node bin/version.js > src/version.json",
+    "build": "npm run sync_version && tsc && rm build/src/version.d.ts && cp build/src/*.d.ts . && npm run package",
+    "clean": "rm -rf build .nyc_output coverage && rm src/version.json ./nats.js ./nats.js.map ./*.d.ts",
     "test": "npm run build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",
     "debugtest": "tsc && node node_modules/.bin/ava --verbose -T 6500000 -m",
-    "package": "webpack-cli"
+    "package": "webpack-cli --display-modules"
   },
   "repository": {
     "type": "git",
@@ -30,36 +31,28 @@
   "devDependencies": {
     "@types/node": "^13.1.4",
     "@types/ws": "^6.0.4",
-    "ajv": "^6.10.2",
     "ava": "^2.4.0",
-    "awesome-typescript-loader": "^5.2.1",
     "browser-env": "^3.3.0",
-    "canvas": "^2.6.1",
     "coveralls": "^3.0.9",
     "fast-text-encoding": "^1.0.0",
-    "jsdom": "^15.2.1",
     "nyc": "^15.0.0",
-    "source-map-loader": "^0.2.4",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.4",
     "webpack": "^4.41.5",
-    "webpack-bundle-analyzer": "^3.6.0",
-    "webpack-cli": "^3.3.10",
-    "webpack-node-externals": "^1.7.2",
-    "ws": "^7.2.1"
+    "webpack-cli": "^3.3.10"
   },
   "ava": {
     "failfast": true,
     "require": [
-      "./lib/test/helpers/setup-browser-env.js",
-      "./lib/test/helpers/ava_fix.js"
+      "./build/test/helpers/setup-browser-env.js",
+      "./build/test/helpers/ava_fix.js"
     ],
     "files": [
-      "./lib/test/**/*.js",
-      "!./lib/test/helpers/**/*.js"
+      "./build/test/**/*.js",
+      "!./build/test/helpers/**/*.js"
     ],
     "sources": [
-      "**/*.js"
+      "build/**/*.js"
     ]
   },
   "dependencies": {
