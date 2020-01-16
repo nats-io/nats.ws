@@ -15,16 +15,16 @@
 
 import test from "ava";
 import {Connect} from "../src/protocol";
-import {connect, NatsConnection, NatsConnectionOptions, Payload} from "../src/nats";
+import {connect, NatsConnectionOptions, Payload, VERSION} from "../src/nats";
 
 test('VERSION is semver', (t) => {
-    t.regex(NatsConnection.VERSION, /[0-9]+\.[0-9]+\.[0-9]+/);
+    t.regex(VERSION, /[0-9]+\.[0-9]+\.[0-9]+/);
 });
 
 test('VERSION matches package.json', (t) => {
     // we are getting build in lib/test
     let pkg = require('../../package.json');
-    t.is(pkg.version, NatsConnection.VERSION);
+    t.is(pkg.version, VERSION);
 });
 
 test('connect is a function', (t) => {

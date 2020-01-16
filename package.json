@@ -2,9 +2,9 @@
   "name": "nats.ws",
   "version": "1.0.0-0",
   "description": "WebSocket NATS client",
-  "main": "index.js",
+  "main": "lib/nats.js",
   "scripts": {
-    "build": "tsc && npm run package",
+    "build": "cp package.json src/ && tsc && npm run package && rm src/package.json",
     "clean": "rm -rf lib",
     "test": "npm run build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
@@ -45,6 +45,7 @@
     "webpack": "^4.41.5",
     "webpack-bundle-analyzer": "^3.6.0",
     "webpack-cli": "^3.3.10",
+    "webpack-node-externals": "^1.7.2",
     "ws": "^7.2.1"
   },
   "ava": {
@@ -62,8 +63,7 @@
     ]
   },
   "dependencies": {
-    "js-nuid": "^1.0.6",
-    "npm": "^6.13.4"
+    "js-nuid": "^1.0.6"
   },
   "nyc": {
     "extension": [

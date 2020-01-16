@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
+
 const TextEncoder = window.TextEncoder;
 
-
-
-export const VERSION = "1.0.0-0";
+export const VERSION = require('./package.json').version;
 
 import {extend, isArrayBuffer} from "./util";
 import {

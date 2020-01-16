@@ -1,30 +1,30 @@
-const path = require('path');
-const webpack = require('webpack');
-// const wba = require('webpack-bundle-analyzer');
+const path = require('path')
+const webpack = require('webpack')
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+// const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
-    entry: path.resolve(__dirname, "src/nats.ts"),
-    devtool: "source-map",
+    entry: path.resolve(__dirname, 'src/nats.ts'),
+    devtool: 'source-map',
 
-    mode: "production",
+    mode: 'production',
     output: {
-        path: path.resolve(__dirname, "lib"),
-        filename: "nats.js",
-        library: "nats",
-        libraryTarget: "global",
-
+        path: path.resolve(__dirname),
+        filename: 'index.js',
+        library: 'nats',
+        libraryTarget: 'global',
     },
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: ['.ts', '.js']
     },
     module: {
         rules: [
             {
                 test: [/\.ts$/],
                 exclude: [/test/],
-                use: "ts-loader"
+                use: 'ts-loader'
             },
-            {enforce: "pre", test: /\.js$/, loader: "source-map-loader"}
+            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
         ]
     }
 };
