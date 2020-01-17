@@ -1,13 +1,13 @@
 const path = require('path')
 
 module.exports = {
-    mode: 'none',
-    entry: path.resolve(__dirname, "src/nats.ts"),
+    mode: 'production',
+    entry: path.resolve(__dirname, 'src/nats.ts'),
     output: {
         path: path.resolve(__dirname),
-        filename: "nats.js",
+        filename: 'nats.js',
         libraryTarget: 'umd',
-        library: 'nuid'
+        library: 'nats'
     },
     resolve: {
         extensions: ['.ts']
