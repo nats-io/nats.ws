@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-1",
+  "version": "1.0.0-7",
   "description": "WebSocket NATS client",
   "main": "nats.js",
   "scripts": {
@@ -56,7 +56,7 @@
     ]
   },
   "dependencies": {
-    "js-nuid": "^1.1.1-3"
+    "js-nuid": "^1.1.1-4"
   },
   "nyc": {
     "extension": [

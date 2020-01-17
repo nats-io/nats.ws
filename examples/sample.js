@@ -13,61 +13,70 @@
  * limitations under the License.
  */
 
-async function test() {
-    // if the connection fails an exception is thrown
-    let nc = await nats.connect({url: "{{WSURL}}", payload: nats.Payload.STRING});
+const test = async function () {
+  // if the connection fails an exception is thrown
+  const nc = await nats.connect({ url: '{{WSURL}}', payload: nats.Payload.STRING })
+  document.write('<pre>connected to {{WSURL}}</pre>')
 
-    // if the server returns an error, lets learn about it
-    nc.addEventListener('error', (ex) => {
-        console.log('server sent error: ', ex);
-    });
+  // if the server returns an error, lets learn about it
+  nc.addEventListener('error', (ex) => {
+    document.write(`<pre>server sent error: ${ex}</pre>`)
+  })
 
-    // if we disconnect from the server lets learn about it
-    nc.addEventListener('close', () => {
-        console.log('the connection closed');
-    });
+  // if we disconnect from the server lets learn about it
+  nc.addEventListener('close', () => {
+    document.write('<pre>the connection closed</pre>')
+  })
 
-    // publish a message
-    // <subject>, <body of the message>
-    nc.publish('hello', 'nats');
+  // publish a message
+  // <subject>, <body of the message>
+  nc.publish('hello', 'nats')
+  document.write('<pre>published hello</pre>')
 
+  // publish a request - need a subscription listening
+  // <subject>, <body of the message>, <reply subject>
+  nc.publish('hello', 'world', 'say.hi')
+  document.write('<pre>published a request for help</pre>')
 
-    // publish a request - need a subscription listening
-    // <subject>, <body of the message>, <reply subject>
-    nc.publish('hello', 'world', 'say.hi');
+  // simple subscription
+  const sub = await nc.subscribe('help', (msg) => {
+    if (msg.reply) {
+      nc.publish(msg.reply, `I can help ${msg.data}`)
+      document.write('<pre>got a request for help</pre>')
+    }
+  })
 
+  // subscriptions can be serviced by a member of a queue
+  // the options argument can also specify the 'max' number
+  // messages before the subscription auto-unsubscribes
+  const qsub = await nc.subscribe('urgent.help', (msg) => {
+    if (msg.reply) {
+      nc.publish(msg.reply, `I can help ${msg.data}`)
+      document.write('<pre>got an urgent request for help</pre>')
+    }
+  }, { queue: 'urgent' })
 
-    // simple subscription
-    let sub = await nc.subscribe('help', (msg) => {
-        if (msg.reply) {
-            nc.publish(msg.reply, `I can help ${msg.data}`);
-        }
-    });
+  // simple request
+  const msg = await nc.request('help', 1000, 'nats request')
+  document.write(`<pre>I got a response: ${msg.data}</pre>`)
 
-    // subscriptions can be serviced by a member of a queue
-    // the options argument can also specify the 'max' number
-    // messages before the subscription auto-unsubscribes
-    let qsub = await nc.subscribe('urgent.help', (msg) => {
-        if (msg.reply) {
-            nc.publish(msg.reply, `I can help ${msg.data}`);
-        }
-    }, {queue: "urgent"});
+  await nc.request('urgent.help', 1000, 'urgent nats request')
+  document.write(`<pre>I got a response to my urgent request: ${msg.data}</pre>`)
 
-    // simple request
-    let msg = await nc.request('help', 1000, 'nats request');
-    console.log(`I got a response: ${msg.data}`);
+  // flushing
+  await nc.flush()
 
-    // flushing
-    await nc.flush();
+  // stop listening for 'help' messages - you optionally specify
+  // the number of messages you want before the unsubscribed
+  // if the count has passed, the unsubscribe happens immediately
+  sub.unsubscribe()
+  document.write('<pre>unsubscribed from help</pre>')
+  qsub.unsubscribe()
+  document.write('<pre>unsubscribed from urgent.help</pre>')
 
-    // stop listening for 'help' messages - you optionally specify
-    // the number of messages you want before the unsubscribed
-    // if the count has passed, the unsubscribe happens immediately
-    sub.unsubscribe();
-    qsub.unsubscribe();
-
-    // close the connection
-    nc.close();
+  // close the connection
+  nc.close()
+  document.write('<pre>closed connection</pre>')
 }
 
-test();
+test()
