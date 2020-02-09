@@ -98,7 +98,7 @@ const qsub = await nc.subscribe('urgent.help', (msg) => {
 ```javascript
 // if the websocket server requires authentication, 
 // provide it in the URL. NATS credentials are specified
-// in the `user`, `pass` or `token` options in the NatsConnectionOptions
+// in the `user`, `pass` or `token` options in the ConnectionOptions
 
 let nc = nats.connect({url: "ws://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
 let nc1 = nats.connect({url: "ws://localhost:8080", user: "jenny", token: "867-5309"})

@@ -16,10 +16,10 @@
 
 import test from 'ava';
 import {SC, startServer, stopServer} from './helpers/nats_server_control';
-import {connect, Msg} from '../src/nats';
+import {connect} from '../src/nats';
 import {Lock} from './helpers/latch';
 import {Nuid} from 'js-nuid'
-import {Sub} from '../src/protocol';
+import {Msg, Sub} from '../src/types';
 import {ErrorCode} from "../src/error";
 
 const nuid = new Nuid();

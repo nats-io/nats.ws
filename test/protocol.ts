@@ -14,8 +14,8 @@
  */
 
 import test from "ava";
-import {ClientHandlers, defaultReq, MuxSubscription, ProtocolHandler, Sub, Subscriptions} from "../src/protocol";
-import {Msg, NatsConnectionOptions} from "../src/nats";
+import {defaultReq, MuxSubscription, ProtocolHandler, Subscriptions} from "../src/protocol";
+import {ClientHandlers, ConnectionOptions, Msg, Sub} from "../src/types";
 import {Lock} from "./helpers/latch";
 import {TransportHandlers, WSTransport} from "../src/transport";
 import {DataBuffer} from "../src/databuffer";
@@ -24,7 +24,7 @@ test('partial messages correctly', async (t) => {
     t.plan(3);
     let lock = new Lock(3);
 
-    let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
+    let protocol = new ProtocolHandler({} as ConnectionOptions, {} as ClientHandlers);
     protocol.infoReceived = true;
 
     // feed the inbound with arrays of 1 byte at a time
@@ -64,7 +64,7 @@ test('partial messages correctly', async (t) => {
 // a connection is resolved.
 test('send subs', async (t) => {
     t.plan(1);
-    let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
+    let protocol = new ProtocolHandler({} as ConnectionOptions, {} as ClientHandlers);
     // not connected!
     protocol.transport = new WSTransport({} as TransportHandlers);
     //@ts-ignore

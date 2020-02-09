@@ -14,7 +14,8 @@
  */
 
 import test from "ava";
-import {connect, Msg, NatsConnection, Payload} from "../src/nats";
+import {connect, Connection} from "../src/nats";
+import {Msg, Payload} from "../src/types";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {Nuid} from "js-nuid"
@@ -24,7 +25,7 @@ const nuid = new Nuid();
 
 test.before(async (t) => {
     let server = await startServer();
-    let nc = await NatsConnection.connect({url: server.ws, payload: Payload.JSON});
+    let nc = await Connection.connect({url: server.ws, payload: Payload.JSON});
     t.context = {server: server, nc: nc};
 });
 

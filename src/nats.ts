@@ -13,19 +13,23 @@
  * limitations under the License.
  */
 
-
-const TextEncoder = window.TextEncoder;
-
-export const VERSION = require('./version.json').version;
-
-import {extend, isArrayBuffer} from "./util";
 import {
+    ClientEventMap,
     ClientHandlers,
+    ConnectionOptions,
+    Callback,
+    ErrorCallback,
+    Msg,
+    MsgCallback,
+    Payload,
+    RequestOptions,
+    SubscribeOptions
+} from "./types";
+import {extend, isArrayBuffer, stringToUint8Array} from "./util";
+import {
     defaultReq,
     defaultSub,
-    MsgCallback,
     ProtocolHandler,
-    RequestOptions,
     Subscription
 } from "./protocol";
 import {ErrorCode, NatsError} from "./error";
@@ -33,71 +37,19 @@ import {Nuid} from "js-nuid"
 
 const nuid = new Nuid();
 
-export enum Payload {
-    STRING = "string",
-    JSON = "json",
-    BINARY = "binary"
+export function connect(opts: ConnectionOptions): Promise<Connection> {
+    return Connection.connect(opts);
 }
 
-export interface Msg {
-    subject: string;
-    sid: number;
-    reply?: string;
-    size: number;
-    data?: any;
-}
-
-export interface NatsConnectionOptions {
-    connectTimeout?: number;
-    name?: string;
-    noEcho?: boolean;
-    pass?: string;
-    payload?: Payload;
-    pedantic?: boolean;
-    token?: string;
-    url: string;
-    user?: string;
-    userJWT?: string | JWTProvider;
-    verbose?: boolean;
-}
-
-export interface Callback {
-    (): void;
-}
-
-export interface ErrorCallback {
-    (error: Error): void;
-}
-
-export interface ClientEventMap {
-    close: Callback;
-    error: ErrorCallback;
-}
-
-export interface SubscribeOptions {
-    queue?: string;
-    max?: number;
-}
-
-export interface JWTProvider {
-    (): string;
-}
-
-export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
-    return NatsConnection.connect(opts);
-}
-
-
-export class NatsConnection implements ClientHandlers {
-    static VERSION = VERSION;
-    options: NatsConnectionOptions;
+export class Connection implements ClientHandlers {
+    options: ConnectionOptions;
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];
     errorListeners: ErrorCallback[] = [];
     draining: boolean = false;
 
-    private constructor(opts: NatsConnectionOptions) {
-        this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
+    private constructor(opts: ConnectionOptions) {
+        this.options = {url: "ws://localhost:4222"} as ConnectionOptions;
         if (opts.payload === undefined) {
             opts.payload = Payload.STRING;
         }
@@ -113,9 +65,9 @@ export class NatsConnection implements ClientHandlers {
         extend(this.options, opts);
     }
 
-    public static connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
-        return new Promise<NatsConnection>((resolve, reject) => {
-            let nc = new NatsConnection(opts);
+    public static connect(opts: ConnectionOptions): Promise<Connection> {
+        return new Promise<Connection>((resolve, reject) => {
+            let nc = new Connection(opts);
             ProtocolHandler.connect(opts, nc)
                 .then((ph) => {
                     nc.protocol = ph;
@@ -131,7 +83,7 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
+    publish(subject: string, data: any = undefined, reply: string = ""): Connection {
         subject = subject || "";
         if (subject.length === 0) {
             this.errorHandler(NatsError.errorForCode(ErrorCode.BAD_SUBJECT));
@@ -147,7 +99,7 @@ export class NatsConnection implements ClientHandlers {
                 data = JSON.stringify(data);
             }
             // here we are a string
-            data = new TextEncoder().encode(data);
+            data = stringToUint8Array(data);
         }
 
         this.protocol.publish(subject, data, reply);
@@ -245,7 +197,7 @@ export class NatsConnection implements ClientHandlers {
         });
     }
 
-    addEventListener<K extends keyof ClientEventMap>(type: K, listener: (this: NatsConnection, ev: ClientEventMap[K][]) => void): void {
+    addEventListener<K extends keyof ClientEventMap>(type: K, listener: (this: Connection, ev: ClientEventMap[K][]) => void): void {
         if (type === "close") {
             //@ts-ignore
             this.closeListeners.push(listener);
@@ -263,9 +215,3 @@ export class NatsConnection implements ClientHandlers {
         return this.draining;
     }
 }
-
-
-
-
-
-

@@ -73,6 +73,15 @@ export function settle(a: any[]): Promise<any[]> {
     }
 }
 
+export function stringToUint8Array(str: string) {
+    const chars = str.split('');
+    const uintArray = [];
+    for (var i = 0; i < chars.length; i++) {
+        uintArray.push(chars[i].charCodeAt(0));
+    }
+    return new Uint8Array(uintArray);
+}
+
 function _settle(a: any[]): Promise<any> {
     return Promise.all(a.map((p) => {
         return Promise.resolve(p).then(_resolve, _resolve);

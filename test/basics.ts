@@ -13,7 +13,8 @@
  * limitations under the License.
  */
 
-import {connect, Msg, Payload, SubscribeOptions} from "../src/nats";
+import {connect} from "../src/nats";
+import {Msg, Payload, SubscribeOptions} from "../src/types";
 import test from "ava";
 import {WSTransport} from "../src/transport";
 import {Lock} from "./helpers/latch";

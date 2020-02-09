@@ -1,4 +1,4 @@
-reviewers:
+reviewers
 - aricart
 - derekcollison
 - kozlovic

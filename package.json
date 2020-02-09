@@ -1,13 +1,12 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-7",
-  "description": "WebSocket NATS client",
-  "main": "nats.js",
+  "version": "1.0.0-8",
+  "description": "NATS websocket client",
+  "main": "dist/index.js",
   "scripts": {
-    "sync_version": "node bin/version.js > src/version.json",
-    "build": "npm run sync_version && tsc && rm build/src/version.d.ts && cp build/src/*.d.ts . && npm run package",
-    "clean": "rm -rf build .nyc_output coverage && rm src/version.json ./nats.js ./nats.js.map ./*.d.ts",
-    "test": "npm run build && nyc ava --verbose -T 15000",
+    "build": "tsc && yarn run package",
+    "clean": "rm -rf dist .nyc_output coverage",
+    "test": "yarn build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",
     "debugtest": "tsc && node node_modules/.bin/ava --verbose -T 6500000 -m",
@@ -44,15 +43,15 @@
   "ava": {
     "failfast": true,
     "require": [
-      "./build/test/helpers/setup-browser-env.js",
-      "./build/test/helpers/ava_fix.js"
+      "./dist/test/helpers/setup-browser-env.js",
+      "./dist/test/helpers/ava_fix.js"
     ],
     "files": [
-      "./build/test/**/*.js",
-      "!./build/test/helpers/**/*.js"
+      "./dist/test/**/*.js",
+      "!./dist/test/helpers/**/*.js"
     ],
     "sources": [
-      "build/**/*.js"
+      "dist/**/*.js"
     ]
   },
   "dependencies": {
@@ -65,10 +64,10 @@
     ],
     "include": [
       "src/**/*.ts",
-      "build/src/**/*.js"
+      "dist/src/**/*.js"
     ],
     "exclude": [
-      "build/test/**",
+      "dist/test/**",
       "examples/**"
     ],
     "sourceMap": true,

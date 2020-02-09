@@ -3,11 +3,10 @@ npm-debug.log*
 
 # generated files
 build/
+dist/
 nats.js
 *.d.ts
 nats.js.map
-src/version.json
-
 
 .idea/
 
@@ -26,4 +25,3 @@ vcs.xml
 
 # we copy package.json to read the version so ts, webpack, etc are happy
 src/package.json
-

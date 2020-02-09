@@ -13,23 +13,20 @@
  * limitations under the License.
  */
 
-import {NatsConnectionOptions} from "./nats";
 import {ErrorCode, NatsError} from "./error";
+import {ConnectionOptions} from "./types";
 
 const ARRAY_BUFFER = "arraybuffer";
 
+// TODO: migrate the following to src/types.ts
+
 export interface Transport {
-    isConnected(): boolean;
-
-    isClosed(): boolean;
-
-    write(data: any): void;
-
-    destroy(): void;
-
     close(): void;
-
+    destroy(): void;
+    isClosed(): boolean;
+    isConnected(): boolean;
     isSecure(): boolean;
+    write(data: any): void;
 }
 
 export interface CloseHandler {
@@ -43,7 +40,6 @@ export interface EventHandler {
 export interface MessageHandler {
     (evt: MessageEvent): void;
 }
-
 
 export interface TransportHandlers {
     openHandler: EventHandler;
@@ -63,7 +59,7 @@ export class WSTransport {
         this.handlers = handlers;
     }
 
-    static connect(options: NatsConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
+    static connect(options: ConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
         return new Promise((resolve, reject) => {
             let transport = new WSTransport(handlers);
             transport.debug = debug;
