@@ -1,12 +1,11 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-7",
+  "version": "1.0.0-8",
   "description": "WebSocket NATS client",
-  "main": "nats.js",
+  "main": "build/nats.js",
   "scripts": {
-    "sync_version": "node bin/version.js > src/version.json",
-    "build": "npm run sync_version && tsc && rm build/src/version.d.ts && cp build/src/*.d.ts . && npm run package",
-    "clean": "rm -rf build .nyc_output coverage && rm src/version.json ./nats.js ./nats.js.map ./*.d.ts",
+    "build": "tsc && npm run package",
+    "clean": "rm -rf build .nyc_output coverage",
     "test": "npm run build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",

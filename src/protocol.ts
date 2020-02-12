@@ -13,10 +13,11 @@
  * limitations under the License.
  */
 
-import {Msg, NatsConnectionOptions, Payload, VERSION} from "./nats";
+import * as pkg from "../package.json";
+import {Msg, NatsConnectionOptions, Payload} from "./nats";
 import {Transport, TransportHandlers, WSTransport} from "./transport";
 import {ErrorCode, NatsError} from "./error";
-import {buildWSMessage, extend, extractProtocolMessage, settle} from "./util";
+import {buildWSMessage, extend, extractProtocolMessage, settle, stringToUint8Array} from "./util";
 import {Nuid} from "js-nuid"
 import {DataBuffer} from "./databuffer";
 
@@ -56,7 +57,7 @@ export class Connect {
     protocol: number = 1;
     user?: string;
     verbose: boolean = false;
-    version: string = VERSION;
+    version: string = pkg.version;
 
     constructor(opts?: NatsConnectionOptions) {
         opts = opts || {} as NatsConnectionOptions;
@@ -545,7 +546,7 @@ export class ProtocolHandler implements TransportHandlers {
     sendCommand(cmd: string | ArrayBuffer) {
         let buf: ArrayBuffer;
         if (typeof cmd === 'string') {
-            buf = new TextEncoder().encode(cmd).buffer;
+            buf = stringToUint8Array(cmd);
         } else {
             buf = cmd as ArrayBuffer;
         }

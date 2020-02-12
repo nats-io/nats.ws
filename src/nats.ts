@@ -13,12 +13,7 @@
  * limitations under the License.
  */
 
-
-const TextEncoder = window.TextEncoder;
-
-export const VERSION = require('./version.json').version;
-
-import {extend, isArrayBuffer} from "./util";
+import {extend, isArrayBuffer, stringToUint8Array} from "./util";
 import {
     ClientHandlers,
     defaultReq,
@@ -87,9 +82,7 @@ export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
     return NatsConnection.connect(opts);
 }
 
-
 export class NatsConnection implements ClientHandlers {
-    static VERSION = VERSION;
     options: NatsConnectionOptions;
     protocol!: ProtocolHandler;
     closeListeners: Callback[] = [];
@@ -147,7 +140,7 @@ export class NatsConnection implements ClientHandlers {
                 data = JSON.stringify(data);
             }
             // here we are a string
-            data = new TextEncoder().encode(data);
+            data = stringToUint8Array(data);
         }
 
         this.protocol.publish(subject, data, reply);
@@ -263,9 +256,3 @@ export class NatsConnection implements ClientHandlers {
         return this.draining;
     }
 }
-
-
-
-
-
-
