@@ -19,7 +19,7 @@ import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 
 
 test.before(async (t) => {
-    let server = await startServer("", ['--', '-p', '-1', '--auth', 'tokenxxxx']);
+    let server = await startServer({authorization: {token: 'tokenxxxx'}});
     t.context = {server: server};
 });
 

@@ -19,9 +19,12 @@ import * as net from 'net';
 import {Socket} from 'net';
 import path from 'path'
 import fs from 'fs'
+import {Nuid} from "js-nuid"
+import {jsonToNatsConf, writeFile} from "./nats_conf_utils";
 import Timer = NodeJS.Timer;
 
-let SERVER = (process.env.TRAVIS) ? 'wsgnatsd/wsgnatsd' : 'wsgnatsd';
+
+let SERVER = (process.env.TRAVIS) ? 'nats-server/nats-server' : 'nats-server';
 let PID_DIR = (process.env.TRAVIS) ? process.env.TRAVIS_BUILD_DIR : process.env.TMPDIR;
 
 // context for tests
@@ -35,39 +38,33 @@ export interface Server extends ChildProcess {
     nats: string;
 }
 
-export function natsURL(s: Server): string {
-    return s.nats;
-}
-
-export function wsURL(s: Server): string {
-    return s.nats;
-}
-
 export function getPort(urlString: string): number {
     let u = new URL(urlString);
     return parseInt(u.port, 10);
 }
 
-export function startServer(hostport?: string, opt_flags?: string[]): Promise<Server> {
+export function startServer(conf?: any): Promise<Server> {
+    let port: number;
     return new Promise((resolve, reject) => {
-
-        let flags = ['-pid', PID_DIR] as string[];
-        if (hostport) {
-            flags.concat(['-hp', hostport]);
+        if (conf === undefined) {
+            conf = {};
         }
+        conf.ports_file_dir = PID_DIR;
+        conf.port = conf.port || -1;
+        conf.websocket = conf.websocket || {};
+        conf.websocket.port = conf.websocket.port || -1;
 
-        if (opt_flags) {
-            flags = flags.concat(opt_flags);
-        }
+        let CONF_DIR = (process.env.TRAVIS) ? process.env.TRAVIS_BUILD_DIR : process.env.TMPDIR;
+        let fp = CONF_DIR + '/' + new Nuid().next() + '.conf';
+        writeFile(fp, jsonToNatsConf(conf));
 
-        let port = -1;
+        const args = ['-c', fp];
+        let server = spawn(SERVER, args) as Server;
+        server.args = args;
 
         if (process.env.PRINT_LAUNCH_CMD) {
-            console.log(flags.join(" "));
+            console.log('server using configuration file', fp);
         }
-
-        let server = spawn(SERVER, flags) as Server;
-        server.args = flags;
 
         let start = Date.now();
         let wait: number = 0;
@@ -115,17 +112,16 @@ export function startServer(hostport?: string, opt_flags?: string[]): Promise<Se
                     x('Unable to find the pid');
                 }
                 //@ts-ignore
-                let pidFile = path.join(PID_DIR, `wsgnatsd_${server.pid}.pid`);
-                if (fs.existsSync(pidFile)) {
-                    fs.readFileSync(pidFile).toString().split("\n").forEach((s) => {
-                        if (s.startsWith('ws://') || s.startsWith('wss://')) {
-                            (server as Server).ws = s;
-                        } else {
-                            (server as Server).nats = s;
-                        }
-                    });
-
-                    port = getPort(server.nats);
+                let portsFile = path.join(PID_DIR, `nats-server_${server.pid}.ports`);
+                if (fs.existsSync(portsFile)) {
+                    const ports = JSON.parse(fs.readFileSync(portsFile).toString());
+                    if (ports.nats && ports.nats.length) {
+                        (server as Server).nats = ports.nats[0];
+                    }
+                    if (ports.websocket && ports.websocket.length) {
+                        (server as Server).ws = ports.websocket[0];
+                    }
+                    port = getPort(server.ws);
                     clearInterval(t);
                     r();
                 }

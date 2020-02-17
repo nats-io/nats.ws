@@ -17,14 +17,7 @@ import {connect} from "../src/nats";
 import test from "ava";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {ErrorCode, NatsError} from "../src/error";
-import {jsonToNatsConf, writeFile} from "./helpers/nats_conf_utils";
-import {Nuid} from "js-nuid"
 import {Lock} from "./helpers/latch";
-
-const nuid = new Nuid();
-
-let CONF_DIR = (process.env.TRAVIS) ? process.env.TRAVIS_BUILD_DIR : process.env.TMPDIR;
-
 
 test.before(async (t) => {
     let conf = {
@@ -42,9 +35,7 @@ test.before(async (t) => {
         }
     };
 
-    let fp = CONF_DIR + '/' + nuid.next() + ".conf";
-    writeFile(fp, jsonToNatsConf(conf));
-    let server = await startServer("localhost:0", ['--', '-c', fp]);
+    let server = await startServer(conf);
     t.context = {server: server}
 });
 
