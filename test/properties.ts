@@ -13,20 +13,19 @@
  * limitations under the License.
  */
 
-import * as pkg from '../package.json';
-import test from "ava";
-import {Connect} from "../src/protocol";
-import {connect, NatsConnectionOptions, Payload} from "../src/nats";
+import test from "ava"
+import {Connect, VERSION} from "../src/protocol"
+import {connect, NatsConnectionOptions, Payload} from "../src/nats"
 
 test('VERSION is semver', (t) => {
-    t.regex(pkg.version, /[0-9]+\.[0-9]+\.[0-9]+/);
-});
+    t.regex(VERSION, /[0-9]+\.[0-9]+\.[0-9]+/)
+})
 
 test('VERSION matches package.json', (t) => {
     // we are getting build in lib/test
-    let pkgcontrol = require('../../package.json');
-    t.is(pkgcontrol.version, pkg.version);
-});
+    let v = require('../../package.json').version
+    t.is(v, VERSION)
+})
 
 test('connect is a function', (t) => {
     t.is(typeof connect, 'function');

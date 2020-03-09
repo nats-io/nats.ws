@@ -6,7 +6,7 @@ module.exports = {
     entry: path.resolve(__dirname, 'src/nats.ts'),
     output: {
         path: path.resolve(__dirname),
-        filename: 'build/nats.js',
+        filename: 'nats.js',
         libraryTarget: 'umd',
         library: 'nats'
     },

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {extend, isArrayBuffer, stringToUint8Array} from "./util";
+import {extend, isArrayBuffer} from "./util"
 import {
     ClientHandlers,
     defaultReq,
@@ -22,11 +22,11 @@ import {
     ProtocolHandler,
     RequestOptions,
     Subscription
-} from "./protocol";
-import {ErrorCode, NatsError} from "./error";
+} from "./protocol"
+import {ErrorCode, NatsError} from "./error"
 import {Nuid} from "js-nuid"
 
-const nuid = new Nuid();
+const nuid = new Nuid()
 
 export enum Payload {
     STRING = "string",
@@ -140,7 +140,7 @@ export class NatsConnection implements ClientHandlers {
                 data = JSON.stringify(data);
             }
             // here we are a string
-            data = stringToUint8Array(data);
+            data = new TextEncoder().encode(data)
         }
 
         this.protocol.publish(subject, data, reply);

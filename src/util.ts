@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {DataBuffer} from "./databuffer";
+import {DataBuffer} from "./databuffer"
 
 let CRLF: ArrayBuffer = DataBuffer.fromAscii("\r\n");
 let CR = new Uint8Array(CRLF)[0]; // 13
@@ -71,15 +71,6 @@ export function settle(a: any[]): Promise<any[]> {
     } else {
         return Promise.reject(new TypeError('argument requires an array of promises'));
     }
-}
-
-export function stringToUint8Array(str: string) {
-    const chars = str.split('');
-    const uintArray = [];
-    for (var i = 0; i < chars.length; i++) {
-        uintArray.push(chars[i].charCodeAt(0));
-    }
-    return new Uint8Array(uintArray);
 }
 
 function _settle(a: any[]): Promise<any> {
