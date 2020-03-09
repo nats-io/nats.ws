@@ -13,16 +13,19 @@
  * limitations under the License.
  */
 
-import {Msg, NatsConnectionOptions, Payload, VERSION} from "./nats";
-import {Transport, TransportHandlers, WSTransport} from "./transport";
-import {ErrorCode, NatsError} from "./error";
-import {buildWSMessage, extend, extractProtocolMessage, settle} from "./util";
+import * as pkg from "../package.json"
+import {Msg, NatsConnectionOptions, Payload} from "./nats"
+import {Transport, TransportHandlers, WSTransport} from "./transport"
+import {ErrorCode, NatsError} from "./error"
+import {buildWSMessage, extend, extractProtocolMessage, settle} from "./util"
 import {Nuid} from "js-nuid"
-import {DataBuffer} from "./databuffer";
+import {DataBuffer} from "./databuffer"
 
-const nuid = new Nuid();
+const nuid = new Nuid()
 
-const FLUSH_THRESHOLD = 1024 * 8;
+const FLUSH_THRESHOLD = 1024 * 8
+
+export const VERSION = pkg.version
 
 
 export enum ParserState {
@@ -31,8 +34,8 @@ export enum ParserState {
     AWAITING_MSG_PAYLOAD = 1
 }
 
-const MSG = /^MSG\s+([^\s\r\n]+)\s+([^\s\r\n]+)\s+(([^\s\r\n]+)[^\S\r\n]+)?(\d+)\r\n/i;
-const OK = /^\+OK\s*\r\n/i;
+const MSG = /^MSG\s+([^\s\r\n]+)\s+([^\s\r\n]+)\s+(([^\s\r\n]+)[^\S\r\n]+)?(\d+)\r\n/i
+const OK = /^\+OK\s*\r\n/i
 const ERR = /^-ERR\s+('.+')?\r\n/i;
 const PING = /^PING\r\n/i;
 const PONG = /^PONG\r\n/i;
@@ -55,8 +58,8 @@ export class Connect {
     pedantic: boolean = false;
     protocol: number = 1;
     user?: string;
-    verbose: boolean = false;
-    version: string = VERSION;
+    verbose: boolean = false
+    version: string = VERSION
 
     constructor(opts?: NatsConnectionOptions) {
         opts = opts || {} as NatsConnectionOptions;
@@ -545,7 +548,7 @@ export class ProtocolHandler implements TransportHandlers {
     sendCommand(cmd: string | ArrayBuffer) {
         let buf: ArrayBuffer;
         if (typeof cmd === 'string') {
-            buf = new TextEncoder().encode(cmd).buffer;
+            buf = new TextEncoder().encode(cmd).buffer
         } else {
             buf = cmd as ArrayBuffer;
         }

@@ -1,4 +1,5 @@
 const path = require('path')
+const webpack = require('webpack');
 
 module.exports = {
     mode: 'production',
@@ -10,12 +11,21 @@ module.exports = {
         library: 'nats'
     },
     resolve: {
-        extensions: ['.ts']
+        extensions: ['.ts'],
     },
     module: {
         rules: [
-            { test: /\.ts$/, loader: "ts-loader", exclude:  /(node_modules|test)/}
-        ]
+            {
+                test: /\.ts$/,
+                loader: "ts-loader",
+                exclude:  /(node_modules|test)/,
+            },
+        ],
     },
+    plugins: [
+        new webpack.DefinePlugin({
+            pkg: require("./package.json"),
+        }),
+    ],
     devtool: "source-map"
 };

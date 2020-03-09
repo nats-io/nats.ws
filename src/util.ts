@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {DataBuffer} from "./databuffer";
+import {DataBuffer} from "./databuffer"
 
 let CRLF: ArrayBuffer = DataBuffer.fromAscii("\r\n");
 let CR = new Uint8Array(CRLF)[0]; // 13
