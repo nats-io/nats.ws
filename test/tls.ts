@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,24 +23,16 @@ import * as path from 'path'
 test.before(async (t) => {
     let serverCert = path.join(__dirname, "../../test/helpers/certs/server.pem");
     let serverKey = path.join(__dirname, "../../test/helpers/certs/key.pem");
+    let ca = path.join(__dirname, "../../test/helpers/certs/ca.pem");
 
-    let wsonly = await startServer("", ["--", "--tlscert", serverCert,
-        "--tlskey", serverKey]);
-
-    let wssonly = await startServer("", ["-cert", serverCert, "-key", serverKey]);
-
-    let both = await startServer("", ["-cert", serverCert, "-key", serverKey, "--", "--tlscert", serverCert,
-        "--tlskey", serverKey]);
-    t.context = {server: both, wsonly: wsonly, wssonly: wssonly};
+    let server = await startServer({tls: {cert_file: serverCert, key_file: serverKey, ca_file: ca}});
+    t.context = {server: server};
 
 });
 
 test.after.always((t) => {
     //@ts-ignore
-    stopServer((t.context as SC).wsonly);
     stopServer((t.context as SC).server);
-    //@ts-ignore
-    stopServer((t.context as SC).wssonly);
 });
 
 
@@ -50,7 +42,7 @@ test('wsonly', async (t) => {
     let sc = t.context as SC;
     try {
         //@ts-ignore
-        await connect({url: sc.wsonly.ws});
+        await connect({url: sc.server.ws});
     } catch (ex) {
         //@ts-ignore
         let nex = ex as NatsError;
@@ -60,19 +52,5 @@ test('wsonly', async (t) => {
     return lock.latch;
 });
 
-test('wssonly', async (t) => {
-    t.plan(1);
-    let sc = t.context as SC;
-    //@ts-ignore
-    await connect({url: sc.wssonly.ws});
-    t.pass();
-});
-
-test('tls required', async (t) => {
-    t.plan(1);
-    let sc = t.context as SC;
-    await connect({url: sc.server.ws});
-    t.pass();
-});
 
 

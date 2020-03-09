@@ -25,12 +25,12 @@ import {ErrorCode, NatsError} from "../src/error";
 
 const nuid = new Nuid();
 
-test.before(async (t) => {
+test.beforeEach(async (t) => {
     let server = await startServer();
     t.context = {server: server};
 });
 
-test.after.always((t) => {
+test.afterEach((t) => {
     //@ts-ignore
     stopServer(t.context.server);
 });
@@ -380,10 +380,7 @@ test('close listener is called', async (t) => {
         lock.unlock();
     });
 
-    let stream = (nc.protocol.transport as WSTransport).stream;
-    if (stream) {
-        stream.close();
-    }
+    stopServer(sc.server);
     await lock.latch;
 });
 
