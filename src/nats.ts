@@ -38,7 +38,6 @@ export interface Msg {
     subject: string;
     sid: number;
     reply?: string;
-    size: number;
     data?: any;
 }
 

@@ -334,10 +334,9 @@ export class MsgBuffer {
         this.msg = {} as Msg;
         this.msg.subject = chunks[1];
         this.msg.sid = parseInt(chunks[2], 10);
-        this.msg.reply = chunks[4];
-        this.msg.size = parseInt(chunks[5], 10);
-        this.length = this.msg.size + CR_LF_LEN;
-        this.payload = payload;
+        this.msg.reply = chunks[4]
+        this.length = parseInt(chunks[5], 10) + CR_LF_LEN
+        this.payload = payload
     }
 
     fill(data: ArrayBuffer) {
