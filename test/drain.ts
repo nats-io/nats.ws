@@ -14,20 +14,20 @@
  *
  */
 
-import test from 'ava';
-import {SC, startServer, stopServer} from './helpers/nats_server_control';
-import {connect, Msg} from '../src/nats';
-import {Lock} from './helpers/latch';
+import test from 'ava'
+import {SC, startServer, stopServer} from './helpers/nats_server_control'
+import {connect, Msg} from '../src/nats'
+import {Lock} from './helpers/latch'
 import {Nuid} from 'js-nuid'
-import {Sub} from '../src/protocol';
-import {ErrorCode} from "../src/error";
+import {Sub} from '../src/protocol'
+import {ErrorCode} from "../src/error"
 
-const nuid = new Nuid();
+const nuid = new Nuid()
 
 test.before(async (t) => {
-    let server = await startServer();
-    t.context = {server: server};
-});
+    let server = await startServer()
+    t.context = {server: server}
+})
 
 test.after.always((t) => {
     // @ts-ignore
@@ -210,7 +210,7 @@ test('reject reqrep during connection drain', async (t) => {
     let nc1 = await connect({url: sc.server.ws});
     await nc1.subscribe(subj + 'a', (msg: Msg) => {
         if (msg.reply) {
-            nc1.publish(msg.reply, 'ok');
+            msg.respond('ok')
         }
     });
     nc1.flush();

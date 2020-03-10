@@ -88,7 +88,11 @@ export interface ErrorCallback {
     (error: Error): void;
 }
 
-export interface ClientHandlers {
+export interface Publisher {
+    publish(subject: string, data: any, reply: string): void
+}
+
+export interface ClientHandlers extends Publisher {
     closeHandler: Callback;
     errorHandler: ErrorCallback;
 }
@@ -313,27 +317,44 @@ export class Subscriptions {
 
     cancel(s: Sub): void {
         if (s && s.timeout) {
-            clearTimeout(s.timeout);
-            s.timeout = null;
+            clearTimeout(s.timeout)
+            s.timeout = null
         }
         if (s.sid in this.subs) {
-            delete this.subs[s.sid];
-            this.length--;
+            delete this.subs[s.sid]
+            this.length--
         }
+    }
+}
+
+class msg implements Msg {
+    publisher: Publisher
+    subject!: string
+    sid!: number
+    reply?: string
+    data?: any
+
+    constructor(publisher: Publisher) {
+        this.publisher = publisher
+    }
+
+    respond(data?: any): void {
+        const reply = this.reply || ""
+        this.publisher.publish(reply, data, '')
     }
 }
 
 
 export class MsgBuffer {
-    msg: Msg;
-    length: number;
-    buf?: ArrayBuffer | null;
-    payload: string;
+    msg: Msg
+    length: number
+    buf?: ArrayBuffer | null
+    payload: string
 
-    constructor(chunks: RegExpExecArray, payload: "string" | "json" | "binary" = "string") {
-        this.msg = {} as Msg;
-        this.msg.subject = chunks[1];
-        this.msg.sid = parseInt(chunks[2], 10);
+    constructor(publisher: Publisher, chunks: RegExpExecArray, payload: "string" | "json" | "binary" = "string") {
+        this.msg = new msg(publisher)
+        this.msg.subject = chunks[1]
+        this.msg.sid = parseInt(chunks[2], 10)
         this.msg.reply = chunks[4]
         this.length = parseInt(chunks[5], 10) + CR_LF_LEN
         this.payload = payload
@@ -341,7 +362,7 @@ export class MsgBuffer {
 
     fill(data: ArrayBuffer) {
         if (!this.buf) {
-            this.buf = data;
+            this.buf = data
         } else {
             this.buf = DataBuffer.concat(this.buf, data);
         }
@@ -447,8 +468,8 @@ export class ProtocolHandler implements TransportHandlers {
                     let buf = extractProtocolMessage(raw);
 
                     if ((m = MSG.exec(buf))) {
-                        this.payload = new MsgBuffer(m, this.options.payload);
-                        this.state = ParserState.AWAITING_MSG_PAYLOAD;
+                        this.payload = new MsgBuffer(this.clientHandlers, m, this.options.payload)
+                        this.state = ParserState.AWAITING_MSG_PAYLOAD
                     } else if ((m = OK.exec(buf))) {
                         // ignored
                     } else if ((m = ERR.exec(buf))) {

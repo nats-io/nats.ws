@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-import {connect, Msg, Payload, SubscribeOptions} from "../src/nats";
-import test from "ava";
-import {WSTransport} from "../src/transport";
-import {Lock} from "./helpers/latch";
+import {connect, Msg, Payload, SubscribeOptions} from "../src/nats"
+import test from "ava"
+import {WSTransport} from "../src/transport"
+import {Lock} from "./helpers/latch"
 
 import {Nuid} from "js-nuid"
-import {SC, startServer, stopServer} from "./helpers/nats_server_control";
-import {DataBuffer} from "../src/databuffer";
-import {ErrorCode, NatsError} from "../src/error";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control"
+import {DataBuffer} from "../src/databuffer"
+import {ErrorCode, NatsError} from "../src/error"
 
-const nuid = new Nuid();
+const nuid = new Nuid()
 
 test.beforeEach(async (t) => {
-    let server = await startServer();
-    t.context = {server: server};
-});
+    let server = await startServer()
+    t.context = {server: server}
+})
 
 test.afterEach((t) => {
     //@ts-ignore
@@ -66,18 +66,13 @@ test('publish', async (t) => {
 });
 
 test('no publish without subject', async (t) => {
-    t.plan(1);
-    let lock = new Lock();
-    let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws});
-    nc.addEventListener('error', (ex) => {
-        //@ts-ignore
-        let nex = ex as NatsError;
-        t.is(nex.code, ErrorCode.BAD_SUBJECT);
-        lock.unlock();
-    });
-    nc.publish("");
-    return lock.latch;
+    t.plan(1)
+    let sc = t.context as SC
+    let nc = await connect({url: sc.server.ws})
+    t.throws(() => {
+        nc.publish("")
+    }, {code: ErrorCode.BAD_SUBJECT})
+    nc.close()
 });
 
 test('subscribe and unsubscribe', async (t) => {
@@ -239,21 +234,41 @@ test('correct reply in message', async (t) => {
     let lock = new Lock();
     let sub = await nc.subscribe(s, (m) => {
         t.is(m.subject, s);
-        t.is(m.reply, r);
-        lock.unlock();
+        t.is(m.reply, r)
+        lock.unlock()
     }, {max: 1});
 
-    nc.publish(s, '', r);
-    await lock.latch;
-    sub.unsubscribe();
-    nc.close();
+    nc.publish(s, '', r)
+    await lock.latch
+    sub.unsubscribe()
+    nc.close()
 });
 
+test('respond throws if no reply subject set', async (t) => {
+    t.plan(1)
+    let sc = t.context as SC
+    let nc = await connect({url: sc.server.ws})
+    let s = nuid.next()
+
+    let lock = new Lock()
+    await nc.subscribe(s, (m) => {
+        t.throws(() => {
+            m.respond()
+        }, {code: ErrorCode.BAD_SUBJECT})
+        lock.unlock()
+    }, {max: 1})
+
+    nc.publish(s, '')
+    await lock.latch
+    nc.close()
+})
+
+
 test('closed cannot subscribe', async (t) => {
-    t.plan(1);
-    let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws});
-    nc.close();
+    t.plan(1)
+    let sc = t.context as SC
+    let nc = await connect({url: sc.server.ws})
+    nc.close()
     try {
         await nc.subscribe('foo', () => {
         })
@@ -346,7 +361,7 @@ test('request', async t => {
     let s = nuid.next();
     let sub = await nc.subscribe(s, (msg: Msg) => {
         if (msg.reply) {
-            nc.publish(msg.reply, "foo");
+            msg.respond("foo")
         }
     });
     let msg = await nc.request(s, 1000, "test");
@@ -397,27 +412,6 @@ test('error listener is called', async (t) => {
     // make the server angry
     (nc.protocol.transport as WSTransport).write(DataBuffer.fromAscii('HelloWorld'));
     await lock.latch;
-});
-
-test('chaining', async (t) => {
-    t.plan(3);
-    let lock = new Lock(2);
-    let sc = t.context as SC;
-    let nc = await connect({url: sc.server.ws});
-    let subjects = [];
-    subjects.push(nuid.next());
-    subjects.push(nuid.next());
-    nc.subscribe(subjects[0], () => {
-        t.pass();
-        lock.unlock();
-    });
-    nc.subscribe(subjects[1], () => {
-        t.pass();
-        lock.unlock();
-    });
-    nc.publish(subjects[0]).publish(subjects[1]).flush();
-    t.pass();
-    return lock.latch;
 });
 
 test('subscription with timeout', async (t) => {

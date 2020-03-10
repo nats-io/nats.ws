@@ -39,6 +39,8 @@ export interface Msg {
     sid: number;
     reply?: string;
     data?: any;
+
+    respond(data?: any): void
 }
 
 export interface ConnectionOptions {
@@ -123,17 +125,16 @@ export class NatsConnection implements ClientHandlers {
         this.protocol.close();
     }
 
-    publish(subject: string, data: any = undefined, reply: string = ""): NatsConnection {
-        subject = subject || "";
+    publish(subject: string, data: any = undefined, reply: string = ""): void {
+        subject = subject || ""
         if (subject.length === 0) {
-            this.errorHandler(NatsError.errorForCode(ErrorCode.BAD_SUBJECT));
-            return this;
+            throw(NatsError.errorForCode(ErrorCode.BAD_SUBJECT))
         }
         // we take string, object to JSON and ArrayBuffer - if argument is not
         // ArrayBuffer, then process the payload
         if (!isArrayBuffer(data)) {
             if (this.options.payload !== Payload.JSON) {
-                data = data || "";
+                data = data || ""
             } else {
                 data = data === undefined ? null : data;
                 data = JSON.stringify(data);
@@ -143,45 +144,52 @@ export class NatsConnection implements ClientHandlers {
         }
 
         this.protocol.publish(subject, data, reply);
-
-        return this;
     }
 
 
     subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED))
             }
             if (this.isDraining()) {
-                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING))
+            }
+            subject = subject || ""
+            if (subject.length === 0) {
+                reject(NatsError.errorForCode(ErrorCode.BAD_SUBJECT))
             }
 
-            let s = defaultSub();
-            extend(s, opts);
-            s.subject = subject;
-            s.callback = cb;
-            resolve(this.protocol.subscribe(s));
+            let s = defaultSub()
+            extend(s, opts)
+            s.subject = subject
+            s.callback = cb
+            resolve(this.protocol.subscribe(s))
         });
     }
 
     request(subject: string, timeout: number = 1000, data: any = undefined): Promise<Msg> {
         return new Promise<Msg>((resolve, reject) => {
             if (this.isClosed()) {
-                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED))
             }
             if (this.isDraining()) {
-                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING));
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_DRAINING))
             }
-            let r = defaultReq();
-            let opts = {max: 1} as RequestOptions;
-            extend(r, opts);
-            r.token = nuid.next();
+            subject = subject || ""
+            if (subject.length === 0) {
+                reject(NatsError.errorForCode(ErrorCode.BAD_SUBJECT))
+            }
+
+            let r = defaultReq()
+            let opts = {max: 1} as RequestOptions
+            extend(r, opts)
+            r.token = nuid.next()
             //@ts-ignore
             r.timeout = setTimeout(() => {
-                request.cancel();
-                reject('timeout');
-            }, timeout);
+                request.cancel()
+                reject(NatsError.errorForCode(ErrorCode.CONNECTION_TIMEOUT))
+            }, timeout)
             r.callback = (msg: Msg) => {
                 resolve(msg);
             };

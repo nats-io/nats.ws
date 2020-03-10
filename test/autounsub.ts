@@ -13,17 +13,18 @@
  * limitations under the License.
  */
 
-import {SC, startServer, stopServer} from "./helpers/nats_server_control";
-import test from "ava";
-import {connect} from "../src/nats";
+import {SC, startServer, stopServer} from "./helpers/nats_server_control"
+import test from "ava"
+import {connect} from "../src/nats"
 import {Nuid} from "js-nuid"
+import {ErrorCode} from '../src/error'
 
-const nuid = new Nuid();
+const nuid = new Nuid()
 
 test.before(async (t) => {
-    let server = await startServer();
-    t.context = {server: server};
-});
+    let server = await startServer()
+    t.context = {server: server}
+})
 
 test.after.always((t) => {
     stopServer((t.context as SC).server);
@@ -160,8 +161,8 @@ test('request receives expected count with multiple helpers', async (t) => {
         for (let i = 0; i < 5; i++) {
             let p = nc.subscribe(subj, (msg) => {
                 if (msg.reply) {
-                    nc.publish(msg.reply);
-                    answers++;
+                    msg.respond()
+                    answers++
                 }
             });
             promises.push(p);
@@ -203,8 +204,8 @@ test('manual request receives expected count with multiple helpers', async (t) =
             (function (id: number) {
                 let p = nc.subscribe(requestSubject, (msg) => {
                     if (msg.reply) {
-                        nc.publish(msg.reply);
-                        resolvers[id]();
+                        msg.respond()
+                        resolvers[id]()
                         t.pass();
                     }
                 });
@@ -213,22 +214,23 @@ test('manual request receives expected count with multiple helpers', async (t) =
         }
 
         let replySubj = nuid.next();
-        let count = 0;
+        let count = 0
         let s = await nc.subscribe(replySubj, () => {
-            count++;
-        }, {max: 1});
-        subs.push(s);
+            count++
+        }, {max: 1})
+        subs.push(s)
 
         // wait for all subscriptions
-        await Promise.all(subs);
+        await Promise.all(subs)
 
         // publish the request
-        await nc.publish(requestSubject, "", replySubj).flush();
+        nc.publish(requestSubject, "", replySubj)
+        await nc.flush()
         // wait for all responders to resolve
-        await Promise.all(answers);
+        await Promise.all(answers)
         // finally wait for the pong - by then request response is received
-        await nc.flush();
-        t.is(count, 1);
+        await nc.flush()
+        t.is(count, 1)
         nc.close()
     } catch (err) {
         t.fail("got exception" + err);
@@ -263,7 +265,7 @@ test('check request leaks', async (t) => {
 
         let sub = await nc.subscribe(subj, (msg) => {
             if (msg.reply) {
-                nc.publish(msg.reply);
+                msg.respond()
             }
         });
 
@@ -310,7 +312,7 @@ test('check cancelled request leaks', async (t) => {
 
         // the rejection should be timeout
         rp.catch((rej) => {
-            t.is(rej, 'timeout');
+            t.is(rej?.code, ErrorCode.CONNECTION_TIMEOUT)
         });
 
         // wait for it

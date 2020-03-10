@@ -82,7 +82,7 @@ export class WSTransport {
             let connected: boolean;
             let resolveTimeout: number;
             transport.stream.onclose = function (evt: CloseEvent) {
-                transport.trace('ws closed', evt);
+                // transport.trace('ws closed', evt);
                 if (transport.closed) {
                     return;
                 }
@@ -112,7 +112,7 @@ export class WSTransport {
                         }
                     }
                 }
-                transport.trace('ws error', err);
+                // transport.trace('ws error', err);
                 if (transport.closed) {
                     return;
                 }
@@ -127,7 +127,7 @@ export class WSTransport {
             };
 
             transport.stream.onopen = function () {
-                transport.trace('ws open');
+                // transport.trace('ws open');
                 // we cannot resolve immediately! we connected to
                 // a proxy which is establishing a connection to NATS,
                 // that can fail - wait for data to arrive.
@@ -136,7 +136,7 @@ export class WSTransport {
             transport.stream.onmessage = function (me: MessageEvent) {
                 // transport will resolve as soon as we get data as the
                 // proxy has connected to a server
-                transport.trace('>', [me.data]);
+                // transport.trace('>', [me.data]);
                 if (connected) {
                     transport.handlers.messageHandler(me);
                 } else {
@@ -162,8 +162,7 @@ export class WSTransport {
         if (!this.stream || !this.isConnected()) {
             return;
         }
-        this.trace('<', [data]);
-
+        // this.trace('<', [data]);
         this.stream.send(data);
 
     }
