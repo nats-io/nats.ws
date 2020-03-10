@@ -14,7 +14,7 @@
  */
 
 import * as pkg from "../package.json"
-import {Msg, NatsConnectionOptions, Payload} from "./nats"
+import {ConnectionOptions, Msg, Payload} from "./nats"
 import {Transport, TransportHandlers, WSTransport} from "./transport"
 import {ErrorCode, NatsError} from "./error"
 import {buildWSMessage, extend, extractProtocolMessage, settle} from "./util"
@@ -51,27 +51,27 @@ export function createInbox(): string {
 export class Connect {
     auth_token?: string;
     echo?: boolean;
-    jwt?: string;
-    lang: string = "javascript";
-    name?: string;
-    pass?: string;
-    pedantic: boolean = false;
-    protocol: number = 1;
-    user?: string;
+    jwt?: string
+    lang: string = "javascript"
+    name?: string
+    pass?: string
+    pedantic: boolean = false
+    protocol: number = 1
+    user?: string
     verbose: boolean = false
     version: string = VERSION
 
-    constructor(opts?: NatsConnectionOptions) {
-        opts = opts || {} as NatsConnectionOptions;
+    constructor(opts?: ConnectionOptions) {
+        opts = opts || {} as ConnectionOptions
         if (opts.token) {
-            this.auth_token = opts.token;
+            this.auth_token = opts.token
         }
         if (opts.noEcho) {
-            this.echo = false;
+            this.echo = false
         }
         if (opts.userJWT) {
             if (typeof opts.userJWT === 'function') {
-                this.jwt = opts.userJWT();
+                this.jwt = opts.userJWT()
             } else {
                 this.jwt = opts.userJWT;
             }
@@ -371,9 +371,9 @@ export class ProtocolHandler implements TransportHandlers {
     connectError!: ErrorCallback | null;
     inbound: DataBuffer;
     infoReceived: boolean = false;
-    muxSubscriptions: MuxSubscription;
-    options: NatsConnectionOptions;
-    outbound: DataBuffer;
+    muxSubscriptions: MuxSubscription
+    options: ConnectionOptions
+    outbound: DataBuffer
     payload: MsgBuffer | null = null;
     pongs: Array<Function | undefined> = [];
     pout: number = 0;
@@ -382,29 +382,29 @@ export class ProtocolHandler implements TransportHandlers {
     transport!: Transport;
     noMorePublishing: boolean = false;
 
-    constructor(options: NatsConnectionOptions, handlers: ClientHandlers) {
-        this.options = options;
-        this.clientHandlers = handlers;
-        this.subscriptions = new Subscriptions();
-        this.muxSubscriptions = new MuxSubscription();
-        this.inbound = new DataBuffer();
-        this.outbound = new DataBuffer();
+    constructor(options: ConnectionOptions, handlers: ClientHandlers) {
+        this.options = options
+        this.clientHandlers = handlers
+        this.subscriptions = new Subscriptions()
+        this.muxSubscriptions = new MuxSubscription()
+        this.inbound = new DataBuffer()
+        this.outbound = new DataBuffer()
     }
 
-    public static connect(options: NatsConnectionOptions, handlers: ClientHandlers): Promise<ProtocolHandler> {
+    public static connect(options: ConnectionOptions, handlers: ClientHandlers): Promise<ProtocolHandler> {
         return new Promise<ProtocolHandler>((resolve, reject) => {
-            let ph = new ProtocolHandler(options, handlers);
-            ph.connectError = reject;
-            let connectTimeout = options.connectTimeout || 10000;
+            let ph = new ProtocolHandler(options, handlers)
+            ph.connectError = reject
+            let connectTimeout = options.timeout || 10000
             let pongPromise = new Promise<boolean>((ok, fail) => {
                 let timer = setTimeout(() => {
-                    fail(NatsError.errorForCode(ErrorCode.CONNECTION_TIMEOUT));
-                }, connectTimeout);
+                    fail(NatsError.errorForCode(ErrorCode.CONNECTION_TIMEOUT))
+                }, connectTimeout)
                 ph.pongs.push(() => {
-                    clearTimeout(timer);
-                    ok(true);
-                });
-            });
+                    clearTimeout(timer)
+                    ok(true)
+                })
+            })
 
             //@ts-ignore
             WSTransport.connect(options, ph, options.debug)

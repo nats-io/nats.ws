@@ -14,21 +14,21 @@
  */
 
 
-import test from 'ava';
-import {Transport, TransportHandlers, WSTransport} from '../src/transport';
-import 'assert';
-import {SC, startServer, stopServer} from "./helpers/nats_server_control";
-import {NatsConnectionOptions} from "../src/nats";
+import test from 'ava'
+import {Transport, TransportHandlers, WSTransport} from '../src/transport'
+import 'assert'
+import {SC, startServer, stopServer} from "./helpers/nats_server_control"
+import {ConnectionOptions} from "../src/nats"
 
 
 test.before((t) => {
     return new Promise((resolve, reject) => {
         startServer()
-            .then((server) => {
-                t.context = {server: server};
-                resolve();
-            })
-            .catch((err) => {
+        .then((server) => {
+            t.context = {server: server}
+            resolve()
+        })
+        .catch((err) => {
                 reject(err);
             });
     });
@@ -60,8 +60,8 @@ test('wsnats', (t) => {
             }
         };
         let transport: Transport;
-        let sc = t.context as SC;
-        let opts = {url: sc.server.ws} as NatsConnectionOptions;
+        let sc = t.context as SC
+        let opts = {url: sc.server.ws} as ConnectionOptions
         WSTransport.connect(opts, th)
             .then(nt => {
                 transport = nt;

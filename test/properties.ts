@@ -15,7 +15,7 @@
 
 import test from "ava"
 import {Connect, VERSION} from "../src/protocol"
-import {connect, NatsConnectionOptions, Payload} from "../src/nats"
+import {connect, ConnectionOptions, Payload} from "../src/nats"
 
 test('VERSION is semver', (t) => {
     t.regex(VERSION, /[0-9]+\.[0-9]+\.[0-9]+/)
@@ -45,7 +45,7 @@ test('default connect properties', (t) => {
 });
 
 test('configured options', (t) => {
-    let nco = {} as NatsConnectionOptions;
+    let nco = {} as ConnectionOptions
     nco.payload = Payload.BINARY;
     nco.name = "test";
     nco.pass = "secret";

@@ -42,13 +42,13 @@ export interface Msg {
     data?: any;
 }
 
-export interface NatsConnectionOptions {
-    connectTimeout?: number;
+export interface ConnectionOptions {
     name?: string;
     noEcho?: boolean;
     pass?: string;
     payload?: Payload;
     pedantic?: boolean;
+    timeout?: number;
     token?: string;
     url: string;
     user?: string;
@@ -78,26 +78,26 @@ export interface JWTProvider {
     (): string;
 }
 
-export function connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
-    return NatsConnection.connect(opts);
+export function connect(opts: ConnectionOptions): Promise<NatsConnection> {
+    return NatsConnection.connect(opts)
 }
 
 export class NatsConnection implements ClientHandlers {
-    options: NatsConnectionOptions;
-    protocol!: ProtocolHandler;
-    closeListeners: Callback[] = [];
-    errorListeners: ErrorCallback[] = [];
-    draining: boolean = false;
+    options: ConnectionOptions
+    protocol!: ProtocolHandler
+    closeListeners: Callback[] = []
+    errorListeners: ErrorCallback[] = []
+    draining: boolean = false
 
-    private constructor(opts: NatsConnectionOptions) {
-        this.options = {url: "ws://localhost:4222"} as NatsConnectionOptions;
+    private constructor(opts: ConnectionOptions) {
+        this.options = {url: "ws://localhost:4222"} as ConnectionOptions
         if (opts.payload === undefined) {
-            opts.payload = Payload.STRING;
+            opts.payload = Payload.STRING
         }
 
-        let payloadTypes = ["json", "string", "binary"];
+        let payloadTypes = ["json", "string", "binary"]
         if (!payloadTypes.includes(opts.payload)) {
-            throw NatsError.errorForCode(ErrorCode.INVALID_PAYLOAD_TYPE);
+            throw NatsError.errorForCode(ErrorCode.INVALID_PAYLOAD_TYPE)
         }
 
         if (opts.user && opts.token) {
@@ -106,17 +106,17 @@ export class NatsConnection implements ClientHandlers {
         extend(this.options, opts);
     }
 
-    public static connect(opts: NatsConnectionOptions): Promise<NatsConnection> {
+    public static connect(opts: ConnectionOptions): Promise<NatsConnection> {
         return new Promise<NatsConnection>((resolve, reject) => {
-            let nc = new NatsConnection(opts);
+            let nc = new NatsConnection(opts)
             ProtocolHandler.connect(opts, nc)
-                .then((ph) => {
-                    nc.protocol = ph;
-                    resolve(nc);
-                })
-                .catch((err) => {
-                    reject(err);
-                });
+            .then((ph) => {
+                nc.protocol = ph
+                resolve(nc)
+            })
+            .catch((err) => {
+                reject(err)
+            })
         });
     }
 

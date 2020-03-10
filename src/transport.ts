@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-import {NatsConnectionOptions} from "./nats";
-import {ErrorCode, NatsError} from "./error";
+import {ConnectionOptions} from "./nats"
+import {ErrorCode, NatsError} from "./error"
 
-const ARRAY_BUFFER = "arraybuffer";
+const ARRAY_BUFFER = "arraybuffer"
 
 export interface Transport {
     isConnected(): boolean;
@@ -63,17 +63,17 @@ export class WSTransport {
         this.handlers = handlers;
     }
 
-    static connect(options: NatsConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
+    static connect(options: ConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
         return new Promise((resolve, reject) => {
-            let transport = new WSTransport(handlers);
-            transport.debug = debug;
+            let transport = new WSTransport(handlers)
+            transport.debug = debug
 
             // on browsers, new WebSocket will fail with an exception
             // no catch will get the error, just a console error message
             // tests are more amazing and provide nothing.
-            transport.stream = new WebSocket(options.url);
-            transport.stream.binaryType = ARRAY_BUFFER;
-            transport.listeners = {} as TransportHandlers;
+            transport.stream = new WebSocket(options.url)
+            transport.stream.binaryType = ARRAY_BUFFER
+            transport.listeners = {} as TransportHandlers
 
             // while the promise resolves, we need to trap any errors/close
             // related to the connection process and handle via the

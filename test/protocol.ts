@@ -13,22 +13,22 @@
  * limitations under the License.
  */
 
-import test from "ava";
-import {ClientHandlers, defaultReq, MuxSubscription, ProtocolHandler, Sub, Subscriptions} from "../src/protocol";
-import {Msg, NatsConnectionOptions} from "../src/nats";
-import {Lock} from "./helpers/latch";
-import {TransportHandlers, WSTransport} from "../src/transport";
-import {DataBuffer} from "../src/databuffer";
+import test from "ava"
+import {ClientHandlers, defaultReq, MuxSubscription, ProtocolHandler, Sub, Subscriptions} from "../src/protocol"
+import {ConnectionOptions, Msg} from "../src/nats"
+import {Lock} from "./helpers/latch"
+import {TransportHandlers, WSTransport} from "../src/transport"
+import {DataBuffer} from "../src/databuffer"
 
 test('partial messages correctly', async (t) => {
-    t.plan(3);
-    let lock = new Lock(3);
+    t.plan(3)
+    let lock = new Lock(3)
 
-    let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
-    protocol.infoReceived = true;
+    let protocol = new ProtocolHandler({} as ConnectionOptions, {} as ClientHandlers)
+    protocol.infoReceived = true
 
     // feed the inbound with arrays of 1 byte at a time
-    let data = 'MSG test.foo 1 11\r\nHello World\r\nMSG test.bar 1 11\r\nHello World\r\nMSG test.baz 1 11\r\nHello World\r\nPONG\r\n';
+    let data = 'MSG test.foo 1 11\r\nHello World\r\nMSG test.bar 1 11\r\nHello World\r\nMSG test.baz 1 11\r\nHello World\r\nPONG\r\n'
     let chunks: ArrayBuffer[] = [];
     let te = new TextEncoder();
     for (let i = 0; i < data.length; i++) {
@@ -64,7 +64,7 @@ test('partial messages correctly', async (t) => {
 // a connection is resolved.
 test('send subs', async (t) => {
     t.plan(1);
-    let protocol = new ProtocolHandler({} as NatsConnectionOptions, {} as ClientHandlers);
+    let protocol = new ProtocolHandler({} as ConnectionOptions, {} as ClientHandlers)
     // not connected!
     protocol.transport = new WSTransport({} as TransportHandlers);
     //@ts-ignore
