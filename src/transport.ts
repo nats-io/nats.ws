@@ -141,10 +141,8 @@ export class WSTransport {
                     transport.handlers.messageHandler(me);
                 } else {
                     connected = true;
-                    resolve(transport);
-                    setTimeout(function () {
-                        transport.handlers.messageHandler(me);
-                    }, 0);
+                    resolve(transport)
+                    transport.handlers.messageHandler(me)
                 }
             };
         });
