@@ -50,6 +50,7 @@ export interface TransportHandlers {
     closeHandler: CloseHandler;
     errorHandler: EventHandler;
     messageHandler: MessageHandler;
+    transport: Transport;
 }
 
 export class WSTransport {
@@ -66,6 +67,7 @@ export class WSTransport {
     static connect(options: ConnectionOptions, handlers: TransportHandlers, debug: boolean = false): Promise<Transport> {
         return new Promise((resolve, reject) => {
             let transport = new WSTransport(handlers)
+            handlers.transport = transport
             transport.debug = debug
 
             // on browsers, new WebSocket will fail with an exception
@@ -128,29 +130,13 @@ export class WSTransport {
 
             transport.stream.onopen = function () {
                 // transport.trace('ws open');
-                // we cannot resolve immediately! we connected to
-                // a proxy which is establishing a connection to NATS,
-                // that can fail - wait for data to arrive.
+                connected = true
+                resolve(transport)
             };
 
             transport.stream.onmessage = function (me: MessageEvent) {
-                // transport will resolve as soon as we get data as the
-                // proxy has connected to a server
                 // transport.trace('>', [me.data]);
-                if (connected) {
-                    transport.handlers.messageHandler(me);
-                } else {
-                    connected = true
-                    resolve(transport)
-                    if (typeof module !== 'undefined' && module.exports) {
-                        // we are running under node, so we handle the resolution differently
-                        setTimeout(() => {
-                            transport.handlers.messageHandler(me)
-                        }, 0)
-                    } else {
-                        transport.handlers.messageHandler(me)
-                    }
-                }
+                transport.handlers.messageHandler(me)
             };
         });
     };
