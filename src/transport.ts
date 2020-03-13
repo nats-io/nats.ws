@@ -140,9 +140,16 @@ export class WSTransport {
                 if (connected) {
                     transport.handlers.messageHandler(me);
                 } else {
-                    connected = true;
+                    connected = true
                     resolve(transport)
-                    transport.handlers.messageHandler(me)
+                    if (typeof module !== 'undefined' && module.exports) {
+                        // we are running under node, so we handle the resolution differently
+                        setTimeout(() => {
+                            transport.handlers.messageHandler(me)
+                        }, 0)
+                    } else {
+                        transport.handlers.messageHandler(me)
+                    }
                 }
             };
         });
