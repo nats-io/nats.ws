@@ -1,11 +1,19 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-8",
+  "version": "1.0.0-11",
   "description": "WebSocket NATS client",
-  "main": "build/nats.js",
+  "main": "nats.js",
+  "files": [
+    "nats.js.map",
+    "src/",
+    "OWNERS.md",
+    "CODE-OF-CONDUCT.md"
+  ],
   "scripts": {
-    "build": "tsc && npm run package",
-    "clean": "rm -rf build .nyc_output coverage",
+    "prepare": "npm run clean && tsc && npm run package",
+    "copycerts": "mkdir -p ./build/test/helpers/certs && cp -R ./test/helpers/certs/*.pem ./build/test/helpers/certs",
+    "build": "npm run clean && tsc && npm run copycerts && npm run package",
+    "clean": "rm -rf build .nyc_output coverage nats.js nats.js.map",
     "test": "npm run build && nyc ava --verbose -T 15000",
     "coveralls": "nyc report --reporter=lcovonly && cat ./coverage/lcov.info | coveralls",
     "cover": "nyc report --reporter=html && open coverage/index.html",

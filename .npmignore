@@ -1,0 +1,5 @@
+test/
+build/
+examples/
+tsconfig.json
+webpack.config.js
