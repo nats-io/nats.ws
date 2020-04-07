@@ -26,7 +26,7 @@ import {
 import {ErrorCode, NatsError} from "./error"
 import {Nuid} from "js-nuid"
 
-const nuid = new Nuid()
+export const nuid = new Nuid()
 
 export enum Payload {
     STRING = "string",
