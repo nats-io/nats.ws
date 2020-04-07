@@ -1,17 +1,9 @@
 # Examples
 
-These are the canonical examples for using nats.ws on the browser. The pages 
-embed the directive `{{WSURL}}`, which should be replaced by the URL to the WS server.
-If using the [`wsgnatsd`](https://github.com/aricart/wsgnatsd) example proxy server, 
-the server automatically processes these directives and replaces them with the URL 
-to the server automatically.
+These are the canonical examples for using nats.ws on the browser. An example server configuration is included. You'll need to modify the location of the TLS certificates as necessary.
 
-To run `wsgnatsd` cd to the root directory of the project so that examples, and lib have
-the same parent directory
+The nats-server websocket implementation only supports WSS, this means that you have to provide 
+TLS certificates that are trusted by a browser in order to test and try the functionality.
 
-```bash
-wsgnatsd -p 80
-```
-
-Then on your browser enter the URL http://localhost/examples/{example file}.
+For a instructions on how to create TLS certificates, [see this tutorial](https://docs.nats.io/nats-server/configuration/securing_nats/tls#creating-self-signed-certificates-for-testing).
 

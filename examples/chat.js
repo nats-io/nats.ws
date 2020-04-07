@@ -20,7 +20,7 @@ const me = Date.now()
 const init = async function () {
   // if the connection doesn't resolve, an exception is thrown
   // a real app would allow configuring the URL
-  const conn = await nats.connect({ url: '{{WSURL}}', payload: Payload.JSON })
+  const conn = await nats.connect({ url: 'wss://localhost:9222', payload: Payload.JSON })
 
   // handle errors sent by the gnatsd - permissions errors, etc.
   conn.addEventListener('error', (ex) => {
