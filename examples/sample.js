@@ -15,8 +15,8 @@
 
 const test = async function () {
   // if the connection fails an exception is thrown
-  const nc = await nats.connect({ url: '{{WSURL}}', payload: nats.Payload.STRING })
-  document.write('<pre>connected to {{WSURL}}</pre>')
+  const nc = await nats.connect({ url: 'wss://localhost:9222', payload: nats.Payload.STRING })
+  document.write('<pre>connected</pre>')
 
   // if the server returns an error, lets learn about it
   nc.addEventListener('error', (ex) => {
