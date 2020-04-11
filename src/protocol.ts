@@ -373,7 +373,12 @@ export class MsgBuffer {
             switch (this.payload) {
                 case Payload.JSON:
                     this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
-                    this.msg.data = JSON.parse(this.msg.data);
+                    try {
+                        this.msg.data = JSON.parse(this.msg.data);
+                    } catch (err) {
+                        console.log('error parsing json: ', err, 'with data', this.msg.data)
+
+                    }
                     break;
                 case Payload.STRING:
                     this.msg.data = new TextDecoder("utf-8").decode(this.msg.data);
