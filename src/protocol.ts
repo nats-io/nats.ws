@@ -376,8 +376,7 @@ export class MsgBuffer {
                     try {
                         this.msg.data = JSON.parse(this.msg.data);
                     } catch (err) {
-                        console.log('error parsing json: ', err, 'with data', this.msg.data)
-
+                        console.log("error parsing json: '" + this.msg.data + "'")
                     }
                     break;
                 case Payload.STRING:
