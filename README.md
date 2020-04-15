@@ -1,20 +1,22 @@
-# NATS - Websocket Javascript Client
+# NATS - Websocket Javascript Client for the Browser
 
 A websocket client for the [NATS messaging system](https://nats.io).
 
-[![license](https://img.shields.io/github/license/nats-io/nats.ws.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Travis branch](https://travis-ci.com/nats-io/nats.ws.svg?token=pzQUKLXL98ZtApqYAHeK&branch=master)]()
-[![Coveralls github branch](https://img.shields.io/coveralls/github/nats-io/nats.ws/master.svg)]()
-[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
+[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.txt)
+[![Travis branch](https://img.shields.io/travis/nats-io/nats.ws/master.svg)]()
+[![Coverage Status](https://coveralls.io/repos/github/nats-io/nats.ws/badge.svg?branch=master)](https://coveralls.io/github/nats-io/nats.ws?branch=master)[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
 # Installation
 
+**NATS.ws is pre-release** you can get the current development version by:
+
 ```bash
-npm install nats.ws
+npm install nats.ws@next
 ```
 
-Ws-nats requires a websocket proxy, if the NATS server requires LTS, the websocket must be a secure websocket.
+Nats.ws requires a nats-server with websocket support. The nats-server implementation only supports WSS, so you'll need
+ some TLS certificates.
 
 # Basic Usage
 nats.ws supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
