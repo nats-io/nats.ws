@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,7 +38,7 @@ async function macro(t: any, input: any): Promise<any> {
     let subj = nuid.next();
     let nc = await connect({url: sc.server.ws, payload: Payload.BINARY});
     //
-    nc.subscribe(subj, (msg: Msg) => {
+    nc.subscribe(subj, (_, msg: Msg) => {
         t.deepEqual(msg.data, input);
         lock.unlock();
     }, {max: 1});

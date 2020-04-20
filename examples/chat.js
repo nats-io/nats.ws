@@ -33,19 +33,19 @@ const init = async function () {
   })
 
   // the chat application listens for messages sent under the subject 'chat'
-  conn.subscribe('chat', (msg) => {
+  conn.subscribe('chat', (_, msg) => {
     addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`)
   })
 
   // when a new browser joins, the joining browser publishes an 'enter' message
-  conn.subscribe('enter', (msg) => {
+  conn.subscribe('enter', (_, msg) => {
     if (msg.data.id !== me) {
       addEntry(`${msg.data.id} entered.`)
     }
   })
 
   // when a browser closes, the leaving browser publishes an 'exit' message
-  conn.subscribe('exit', (msg) => {
+  conn.subscribe('exit', (_, msg) => {
     if (msg.data.id !== me) {
       addEntry(`${msg.data.id} exited.`)
     }

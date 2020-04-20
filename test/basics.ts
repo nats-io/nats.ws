@@ -134,7 +134,7 @@ test('subscriptions pass exact subjects to cb', async (t) => {
     let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
     let subj = `${s}.foo.bar.baz`;
-    let sub = await nc.subscribe(`${s}.*.*.*`, (msg: Msg) => {
+    let sub = await nc.subscribe(`${s}.*.*.*`, (_, msg: Msg) => {
         t.is(msg.subject, subj);
         lock.unlock();
     });
@@ -210,7 +210,7 @@ test('correct data in message', async (t) => {
     let subj = nuid.next();
 
     let lock = new Lock();
-    let sub = await nc.subscribe(subj, (m) => {
+    let sub = await nc.subscribe(subj, (_, m) => {
         t.is(m.subject, subj);
         //@ts-ignore
         t.is(m.data, '0xFEEDFACE');
@@ -232,7 +232,7 @@ test('correct reply in message', async (t) => {
     let r = nuid.next();
 
     let lock = new Lock();
-    let sub = await nc.subscribe(s, (m) => {
+    let sub = await nc.subscribe(s, (_, m) => {
         t.is(m.subject, s);
         t.is(m.reply, r)
         lock.unlock()
@@ -251,7 +251,7 @@ test('respond throws if no reply subject set', async (t) => {
     let s = nuid.next()
 
     let lock = new Lock()
-    await nc.subscribe(s, (m) => {
+    await nc.subscribe(s, (_, m) => {
         t.throws(() => {
             m.respond()
         }, {code: ErrorCode.BAD_SUBJECT})
@@ -359,7 +359,7 @@ test('request', async t => {
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws});
     let s = nuid.next();
-    let sub = await nc.subscribe(s, (msg: Msg) => {
+    let sub = await nc.subscribe(s, (_, msg: Msg) => {
         if (msg.reply) {
             msg.respond("foo")
         }

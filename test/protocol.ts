@@ -38,7 +38,7 @@ test('partial messages correctly', async (t) => {
     let s = {} as Sub;
     s.sid = 1;
     s.subject = "test.*";
-    s.callback = (msg => {
+    s.callback = ((_, msg) => {
         t.is(msg.data, "Hello World");
         lock.unlock();
     });
@@ -106,7 +106,7 @@ test('mux subscription unknown return null', (t) => {
 test('bad dispatch is noop', (t) => {
     let mux = new MuxSubscription();
     mux.init();
-    mux.dispatcher()({subject: "foo"} as Msg);
+    mux.dispatcher()(null, {subject: "foo"} as Msg);
     t.pass();
 });
 
@@ -128,7 +128,7 @@ test('dispatch without max', async (t) => {
     let m = {} as Msg;
     m.subject = mux.baseInbox + "foo";
     let f = mux.dispatcher();
-    f(m);
+    f(null, m);
     return lock.latch;
 });
 

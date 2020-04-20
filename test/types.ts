@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,7 +39,7 @@ test('json types', async (t) => {
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws, payload: Payload.JSON});
     let subj = nuid.next();
-    nc.subscribe(subj, (msg: Msg) => {
+    nc.subscribe(subj, (_, msg: Msg) => {
         t.is(typeof msg.data, 'number');
         t.is(msg.data, 6691);
         lock.unlock();
@@ -56,7 +56,7 @@ test('string types', async (t) => {
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws, payload: Payload.STRING});
     let subj = nuid.next();
-    nc.subscribe(subj, (msg: Msg) => {
+    nc.subscribe(subj, (_, msg: Msg) => {
         t.is(typeof msg.data, "string");
         t.is(msg.data, "hello world");
         lock.unlock();
@@ -73,7 +73,7 @@ test('binary types', async (t) => {
     let sc = t.context as SC;
     let nc = await connect({url: sc.server.ws, payload: Payload.BINARY});
     let subj = nuid.next();
-    nc.subscribe(subj, (msg: Msg) => {
+    nc.subscribe(subj, (_, msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);
         t.is(DataBuffer.toAscii(msg.data), "hello world");
         lock.unlock();
@@ -92,13 +92,13 @@ test('binary encoded per client', async (t) => {
     let nc1 = await connect({url: sc.server.ws, payload: Payload.BINARY});
     let nc2 = await connect({url: sc.server.ws, payload: Payload.STRING});
     let subj = nuid.next();
-    nc1.subscribe(subj, (msg: Msg) => {
+    nc1.subscribe(subj, (_, msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);
         t.is(DataBuffer.toAscii(msg.data), "hello world");
         lock.unlock();
     }, {max: 1});
 
-    nc2.subscribe(subj, (msg: Msg) => {
+    nc2.subscribe(subj, (_, msg: Msg) => {
         t.is(typeof msg.data, "string");
         t.is(msg.data, "hello world");
         lock.unlock();
@@ -117,7 +117,7 @@ test('binary client gets binary', async (t) => {
     let sc = t.context as SC;
     let nc1 = await connect({url: sc.server.ws, payload: Payload.BINARY});
     let subj = nuid.next();
-    nc1.subscribe(subj, (msg: Msg) => {
+    nc1.subscribe(subj, (_, msg: Msg) => {
         t.truthy(msg.data instanceof ArrayBuffer);
         t.is(DataBuffer.toAscii(msg.data), "hello world");
         lock.unlock();

@@ -177,7 +177,7 @@ async function reqrep () {
       console.error(err)
     })
 
-    await nc.subscribe(opts.subject, (m) => {
+    await nc.subscribe(opts.subject, (_, m) => {
       nc.publish(m.reply)
     }, { max: opts.count })
     await nc.flush()

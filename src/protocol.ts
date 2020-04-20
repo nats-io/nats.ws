@@ -99,7 +99,7 @@ export interface ClientHandlers extends Publisher {
 
 
 export interface MsgCallback {
-    (msg: Msg): void;
+    (error: NatsError|null, msg: Msg): void;
 }
 
 export interface RequestOptions {
@@ -259,13 +259,13 @@ export class MuxSubscription {
 
     dispatcher() {
         let mux = this;
-        return function (m: Msg) {
+        return function (err: NatsError| null, m: Msg) {
             let token = mux.getToken(m);
             if (token) {
                 let r = mux.get(token);
                 if (r) {
                     r.received++;
-                    r.callback(m);
+                    r.callback(err, m);
                     if (r.max && r.received >= r.max) {
                         mux.cancel(r);
                     }
@@ -350,6 +350,7 @@ export class MsgBuffer {
     length: number
     buf?: ArrayBuffer | null
     payload: string
+    err: NatsError | null = null
 
     constructor(publisher: Publisher, chunks: RegExpExecArray, payload: "string" | "json" | "binary" = "string") {
         this.msg = new msg(publisher)
@@ -376,7 +377,7 @@ export class MsgBuffer {
                     try {
                         this.msg.data = JSON.parse(this.msg.data);
                     } catch (err) {
-                        console.log("error parsing json: '" + this.msg.data + "'")
+                        this.err = NatsError.errorForCode(ErrorCode.BAD_JSON, err)
                     }
                     break;
                 case Payload.STRING:
@@ -561,7 +562,7 @@ export class ProtocolHandler implements TransportHandlers {
         }
 
         if (sub.callback) {
-            sub.callback(m.msg);
+            sub.callback(m.err, m.msg);
         }
 
         if (sub.max !== undefined && sub.received >= sub.max) {

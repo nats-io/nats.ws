@@ -24,6 +24,7 @@ export enum ErrorCode {
     INVALID_PAYLOAD_TYPE = 'INVALID_PAYLOAD',
     UNKNOWN = "UNKNOWN_ERROR",
     WSS_REQUIRED = 'WSS_REQUIRED',
+    BAD_JSON = "BAD_JSON",
 
     SUB_CLOSED = 'SUB_CLOSED',
     SUB_DRAINING = 'SUB_DRAINING',
@@ -47,6 +48,7 @@ export class Messages {
         this.messages[ErrorCode.CONNECTION_TIMEOUT] = "Connection timeout";
         this.messages[ErrorCode.CONNECTION_DRAINING] = "Connection draining";
         this.messages[ErrorCode.INVALID_PAYLOAD_TYPE] = "Invalid payload type - payloads can be 'binary', 'string', or 'json'";
+        this.messages[ErrorCode.BAD_JSON] = "Bad JSON";
 
         this.messages[ErrorCode.SUB_CLOSED] = 'Subscription closed';
         this.messages[ErrorCode.SUB_DRAINING] = 'Subscription draining';

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import {connect, Msg, NatsConnection, Payload} from "../src/nats";
 import {Lock} from "./helpers/latch";
 import {SC, startServer, stopServer} from "./helpers/nats_server_control";
 import {Nuid} from "js-nuid"
+import { ErrorCode, NatsError } from '../src/error'
 
 const nuid = new Nuid();
 
@@ -52,13 +53,34 @@ test('connect json propagates options', async (t) => {
     nc.close();
 });
 
-function macro(t: any, input: any): Promise<any> {
+test('bad json error in callback', async (t) => {
     t.plan(1);
+    let sc = t.context as SC;
+    let o = {};
+    //@ts-ignore
+    o.a = o;
+    let jc = await connect({url: sc.server.ws, payload: Payload.JSON});
+    jc.subscribe("bad_json", (err) => {
+        t.is(err?.code, ErrorCode.BAD_JSON)
+    })
+    await jc.flush()
+
+    let nc = await connect({url: sc.server.ws})
+    nc.publish("bad_json", "")
+    await nc.flush()
+    await jc.flush()
+    jc.close()
+    nc.close()
+});
+
+function macro(t: any, input: any): Promise<any> {
+    t.plan(2);
     let lock = new Lock();
     try {
         let subj = nuid.next();
         let nc = t.context.nc;
-        nc.subscribe(subj, (msg: Msg) => {
+        nc.subscribe(subj, (err: NatsError|null, msg: Msg) => {
+            t.is(null, err)
             // in JSON undefined is translated to null
             if (input === undefined) {
                 input = null;

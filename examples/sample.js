@@ -39,8 +39,11 @@ const test = async function () {
   document.write('<pre>published a request for help</pre>')
 
   // simple subscription
-  const sub = await nc.subscribe('help', (msg) => {
-    if (msg.reply) {
+  const sub = await nc.subscribe('help', (err, msg) => {
+    if (err) {
+      // handle the error
+    }
+    else if (msg.reply) {
       nc.publish(msg.reply, `I can help ${msg.data}`)
       document.write('<pre>got a request for help</pre>')
     }
@@ -49,7 +52,7 @@ const test = async function () {
   // subscriptions can be serviced by a member of a queue
   // the options argument can also specify the 'max' number
   // messages before the subscription auto-unsubscribes
-  const qsub = await nc.subscribe('urgent.help', (msg) => {
+  const qsub = await nc.subscribe('urgent.help', (_, msg) => {
     if (msg.reply) {
       nc.publish(msg.reply, `I can help ${msg.data}`)
       document.write('<pre>got an urgent request for help</pre>')
