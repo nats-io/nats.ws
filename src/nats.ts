@@ -190,8 +190,12 @@ export class NatsConnection implements ClientHandlers {
                 request.cancel()
                 reject(NatsError.errorForCode(ErrorCode.CONNECTION_TIMEOUT))
             }, timeout)
-            r.callback = (msg: Msg) => {
-                resolve(msg);
+            r.callback = (err: Error|null, msg: Msg) => {
+                if (err) {
+                    reject(msg);
+                } else {
+                    resolve(msg);
+                }
             };
             let request = this.protocol.request(r);
             this.publish(subject, data, `${this.protocol.muxSubscriptions.baseInbox}${r.token}`);

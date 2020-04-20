@@ -208,7 +208,7 @@ test('reject reqrep during connection drain', async (t) => {
 
     // start a service for replies
     let nc1 = await connect({url: sc.server.ws});
-    await nc1.subscribe(subj + 'a', (msg: Msg) => {
+    await nc1.subscribe(subj + 'a', (_, msg: Msg) => {
         if (msg.reply) {
             msg.respond('ok')
         }

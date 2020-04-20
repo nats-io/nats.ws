@@ -1,5 +1,6 @@
 # NATS - Websocket Javascript Client for the Browser
 
+
 A websocket client for the [NATS messaging system](https://nats.io).
 
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.txt)
@@ -9,7 +10,14 @@ A websocket client for the [NATS messaging system](https://nats.io).
 
 # Installation
 
-**NATS.ws is pre-release** you can get the current development version by:
+> :warning: If you have used a preview version of nats.ws, the API for message callbacks has changed.
+> Previous versions of the API simply required a message argument. The current version of the API 
+> normalizes against v2 branches for nats.js and nats.ts. The message handler signature is 
+> `(err: NatsError|null, m: Msg)`, where an error will be set if there was a problem.
+> This change enables the opportunity to associate errors related to the subscription such as
+> JSON decoding errors, and others.
+
+** :warning: NATS.ws is a preview** you can get the current development version by:
 
 ```bash
 npm install nats.ws@next
@@ -36,8 +44,11 @@ nc.publish('hello', 'nats')
 
 // simple subscriber, if the message has a reply subject
 // send a reply
-const sub = await nc.subscribe('help', (msg) => {
-  if (msg.reply) {
+const sub = await nc.subscribe('help', (err, msg) => {
+  if (err) {
+    // handle error
+  }
+  else if (msg.reply) {
     nc.publish(msg.reply, `I can help ${msg.data}`)
   }
 })
@@ -63,21 +74,21 @@ nc.close()
 ## Wildcard Subscriptions
 ```javascript
 // the `*` matches any string in the subject token
-const sub = await nc.subscribe('help.*.system', (msg) => {
+const sub = await nc.subscribe('help.*.system', (_, msg) => {
     if (msg.reply) {
         nc.publish(msg.reply, `I can help ${msg.data}`)
     }
 })
 sub.unsubscribe()
 
-const sub2 = await nc.subscribe('help.me.*', (msg) => {
+const sub2 = await nc.subscribe('help.me.*', (_, msg) => {
   if (msg.reply) {
     nc.publish(msg.reply, `I can help ${msg.data}`)
   }
 })
 
 // the `>` matches any tokens, can only be at the last token
-const sub3 = await nc.subscribe('help.>', (msg) => {
+const sub3 = await nc.subscribe('help.>', (_, msg) => {
   if (msg.reply) {
     nc.publish(msg.reply, `I can help ${msg.data}`)
   }
@@ -89,7 +100,7 @@ const sub3 = await nc.subscribe('help.>', (msg) => {
 // All subscriptions with the same queue name form a queue group.
 // The server will select a single subscriber in each queue group
 // matching the subscription to receive the message.
-const qsub = await nc.subscribe('urgent.help', (msg) => {
+const qsub = await nc.subscribe('urgent.help', (_, msg) => {
   if (msg.reply) {
      nc.publish(msg.reply, `I can help ${msg.data}`)
   }
@@ -220,19 +231,19 @@ const init = async function () {
   })
 
   // the chat application listens for messages sent under the subject 'chat'
-  conn.subscribe('chat', (msg) => {
+  conn.subscribe('chat', (_, msg) => {
     addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`)
   })
 
   // when a new browser joins, the joining browser publishes an 'enter' message
-  conn.subscribe('enter', (msg) => {
+  conn.subscribe('enter', (_, msg) => {
     if (msg.data.id !== me) {
       addEntry(`${msg.data.id} entered.`)
     }
   })
 
   // when a browser closes, the leaving browser publishes an 'exit' message
-  conn.subscribe('exit', (msg) => {
+  conn.subscribe('exit', (_, msg) => {
     if (msg.data.id !== me) {
       addEntry(`${msg.data.id} exited.`)
     }
