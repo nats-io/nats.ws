@@ -305,3 +305,49 @@ function addEntry (s) {
 </body>
 </html>
 ```
+
+## NATS in the React components
+
+```javascript
+import React, { Component } from 'react';
+import { NatsConnection, Payload } from 'nats.ws'
+
+
+class ChatHistory extends Component {
+
+    constructor() {
+        super();
+
+        this.state = {
+            messages: []
+        }
+    }
+
+    async componentDidMount() {
+
+        let conn = await NatsConnection.connect({ url: 'wss://localhost:9222', payload: Payload.JSON })
+
+        conn.subscribe('newMessages', (err, msg) => {
+            console.log(msg.data);
+            this.setState({messages: [...this.state.messages, msg.data]})
+        });
+    }
+
+    render() {
+        return (
+            <div>
+                    {
+                        this.state.messages &&
+                        this.state.messages.map((msg,i) => 
+                            <div key={i}>{msg.text}</div>
+                        )
+
+                    }
+            </div>
+        )
+    }
+
+}
+
+export default ChatHistory
+```
