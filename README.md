@@ -38,7 +38,7 @@ In another script block, reference the 'nats' global:
 ```javascript
 const init = async function () {
 // create a connection
-  const nc = await nats.connect({ url: 'ws://localhost:8080', payload: nats.Payload.STRING })
+  const nc = await nats.connect({ url: 'wss://localhost:8080', payload: nats.Payload.STRING })
 
   // simple publisher
   nc.publish('hello', 'nats')
@@ -118,9 +118,9 @@ const qsub = await nc.subscribe('urgent.help', (_, msg) => {
 // provide it in the URL. NATS credentials are specified
 // in the `user`, `pass` or `token` options in the NatsConnectionOptions
 
-let nc = nats.connect({url: "ws://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
-let nc1 = nats.connect({url: "ws://localhost:8080", user: "jenny", token: "867-5309"})
-let nc3 = nats.connect({url: "ws://localhost:8080", token: "t0pS3cret!"})
+let nc = nats.connect({url: "wss://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
+let nc1 = nats.connect({url: "wss://localhost:8080", user: "jenny", token: "867-5309"})
+let nc3 = nats.connect({url: "wss://localhost:8080", token: "t0pS3cret!"})
 ```
 
 ## Advanced Usage
