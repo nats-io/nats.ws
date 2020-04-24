@@ -31,7 +31,7 @@ nats.ws supports Promises, depending on the browser/runtime environment you can 
 
 Load the library:
 ```html
-<script src='./nats.js'></script>
+<script src='node_modules/nats.ws/nats.js'></script>
 ```
 
 In another script block, reference the 'nats' global:
