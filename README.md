@@ -29,46 +29,51 @@ Nats.ws requires a nats-server with websocket support. The nats-server implement
 # Basic Usage
 nats.ws supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
 
-Load the library:
+Copy the nats.js library from node_modules, and place it where you can reference it, then load the library:
 ```html
 <script src='./nats.js'></script>
 ```
 
 In another script block, reference the 'nats' global:
 ```javascript
+const init = async function () {
 // create a connection
-const nc = await nats.connect({ url: 'ws://localhost:8080', payload: nats.Payload.STRING })
+  const nc = await nats.connect({ url: 'wss://localhost:8080', payload: nats.Payload.STRING })
 
-// simple publisher
-nc.publish('hello', 'nats')
+  // simple publisher
+  nc.publish('hello', 'nats')
 
-// simple subscriber, if the message has a reply subject
-// send a reply
-const sub = await nc.subscribe('help', (err, msg) => {
-  if (err) {
-    // handle error
-  }
-  else if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-})
+  // simple subscriber, if the message has a reply subject
+  // send a reply
+  const sub = await nc.subscribe('help', (err, msg) => {
+    if (err) {
+      // handle error
+    }
+    else if (msg.reply) {
+      nc.publish(msg.reply, `I can help ${msg.data}`)
+    }
+  })
 
-// unsubscribe
-sub.unsubscribe()
+  // unsubscribe
+  sub.unsubscribe()
 
-// request data - requests only receive one message
-// to receive multiple messages, create a subscription
-const msg = await nc.request('help', 1000, 'nats request')
-console.log(msg.data)
+  // request data - requests only receive one message
+  // to receive multiple messages, create a subscription
+  const msg = await nc.request('help', 1000, 'nats request')
+  console.log(msg.data)
 
-// publishing a request, is similar to publishing. You must have
-// a subscription ready to handle the reply subject. Requests
-// sent this way can get multiple replies
-nc.publish('help', '', 'replysubject')
+  // publishing a request, is similar to publishing. You must have
+  // a subscription ready to handle the reply subject. Requests
+  // sent this way can get multiple replies
+  nc.publish('help', '', 'replysubject')
 
 
-// close the connection
-nc.close()
+  // close the connection
+  nc.close()
+
+}
+
+init()
 ```
 
 ## Wildcard Subscriptions
@@ -113,9 +118,9 @@ const qsub = await nc.subscribe('urgent.help', (_, msg) => {
 // provide it in the URL. NATS credentials are specified
 // in the `user`, `pass` or `token` options in the NatsConnectionOptions
 
-let nc = nats.connect({url: "ws://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
-let nc1 = nats.connect({url: "ws://localhost:8080", user: "jenny", token: "867-5309"})
-let nc3 = nats.connect({url: "ws://localhost:8080", token: "t0pS3cret!"})
+let nc = nats.connect({url: "wss://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
+let nc1 = nats.connect({url: "wss://localhost:8080", user: "jenny", token: "867-5309"})
+let nc3 = nats.connect({url: "wss://localhost:8080", token: "t0pS3cret!"})
 ```
 
 ## Advanced Usage
@@ -300,3 +305,4 @@ function addEntry (s) {
 </body>
 </html>
 ```
+
