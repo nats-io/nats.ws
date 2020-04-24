@@ -308,6 +308,8 @@ function addEntry (s) {
 
 ## NATS in the React components
 
+Here is an example how to use it in React components:
+
 ```javascript
 import React, { Component } from 'react';
 import { NatsConnection, Payload } from 'nats.ws'
