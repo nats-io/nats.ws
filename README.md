@@ -29,9 +29,9 @@ Nats.ws requires a nats-server with websocket support. The nats-server implement
 # Basic Usage
 nats.ws supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
 
-Load the library:
+Copy the nats.js library from node_modules, and place it where you can reference it, then load the library:
 ```html
-<script src='node_modules/nats.ws/nats.js'></script>
+<script src='./nats.js'></script>
 ```
 
 In another script block, reference the 'nats' global:
