@@ -36,39 +36,44 @@ Load the library:
 
 In another script block, reference the 'nats' global:
 ```javascript
+const init = async function () {
 // create a connection
-const nc = await nats.connect({ url: 'ws://localhost:8080', payload: nats.Payload.STRING })
+  const nc = await nats.connect({ url: 'ws://localhost:8080', payload: nats.Payload.STRING })
 
-// simple publisher
-nc.publish('hello', 'nats')
+  // simple publisher
+  nc.publish('hello', 'nats')
 
-// simple subscriber, if the message has a reply subject
-// send a reply
-const sub = await nc.subscribe('help', (err, msg) => {
-  if (err) {
-    // handle error
-  }
-  else if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-})
+  // simple subscriber, if the message has a reply subject
+  // send a reply
+  const sub = await nc.subscribe('help', (err, msg) => {
+    if (err) {
+      // handle error
+    }
+    else if (msg.reply) {
+      nc.publish(msg.reply, `I can help ${msg.data}`)
+    }
+  })
 
-// unsubscribe
-sub.unsubscribe()
+  // unsubscribe
+  sub.unsubscribe()
 
-// request data - requests only receive one message
-// to receive multiple messages, create a subscription
-const msg = await nc.request('help', 1000, 'nats request')
-console.log(msg.data)
+  // request data - requests only receive one message
+  // to receive multiple messages, create a subscription
+  const msg = await nc.request('help', 1000, 'nats request')
+  console.log(msg.data)
 
-// publishing a request, is similar to publishing. You must have
-// a subscription ready to handle the reply subject. Requests
-// sent this way can get multiple replies
-nc.publish('help', '', 'replysubject')
+  // publishing a request, is similar to publishing. You must have
+  // a subscription ready to handle the reply subject. Requests
+  // sent this way can get multiple replies
+  nc.publish('help', '', 'replysubject')
 
 
-// close the connection
-nc.close()
+  // close the connection
+  nc.close()
+
+}
+
+init()
 ```
 
 ## Wildcard Subscriptions
