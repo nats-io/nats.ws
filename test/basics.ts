@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {connect, Msg, Payload, SubscribeOptions} from "../src/nats"
+import {connect, Msg, Payload, SubscriptionOptions} from "../src/nats"
 import test from "ava"
 import {WSTransport} from "../src/transport"
 import {Lock} from "./helpers/latch"
@@ -456,7 +456,7 @@ test('subscription timeout with count is autocancel', async (t) => {
 
     let subj = nuid.next();
     let sub = await nc.subscribe(subj, () => {
-    }, {max: 2} as SubscribeOptions);
+    }, {max: 2} as SubscriptionOptions);
     sub.setTimeout(500, () => {
         t.fail("didn't get expected message count");
     });
@@ -481,7 +481,7 @@ test('subscription cancel timeout', async (t) => {
         if (sub.hasTimeout()) {
             sub.cancelTimeout();
         }
-    }, {max: 2} as SubscribeOptions);
+    }, {max: 2} as SubscriptionOptions);
     sub.setTimeout(500, () => {
         t.fail('timeout fired');
     });
