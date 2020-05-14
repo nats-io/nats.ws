@@ -70,7 +70,7 @@ export interface ClientEventMap {
     error: ErrorCallback;
 }
 
-export interface SubscribeOptions {
+export interface SubscriptionOptions {
     queue?: string;
     max?: number;
 }
@@ -147,7 +147,7 @@ export class NatsConnection implements ClientHandlers {
     }
 
 
-    subscribe(subject: string, cb: MsgCallback, opts: SubscribeOptions = {}): Promise<Subscription> {
+    subscribe(subject: string, cb: MsgCallback, opts: SubscriptionOptions = {}): Promise<Subscription> {
         return new Promise<Subscription>((resolve, reject) => {
             if (this.isClosed()) {
                 reject(NatsError.errorForCode(ErrorCode.CONNECTION_CLOSED))
