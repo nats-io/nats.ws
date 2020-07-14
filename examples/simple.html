@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          crossorigin="anonymous">
+</head>
+<body>
+<!-- load a script -->
+<script type="module">
+  import { connect } from './nats.mjs'
+
+  const init = async function () {
+    // create a connection
+    const nc = await connect({ url: 'wss://localhost:9222' })
+    document.write('connected to NATS!<br>');
+
+    // simple publisher
+    nc.publish('hello', 'nats')
+    document.write('published a message to `hello`<br>');
+
+    // simple subscriber, if the message has a reply subject
+    // send a reply
+    const sub = await nc.subscribe('help');
+    (async () => {
+      document.write('listening for request on `help`<br>');
+      for await (const m of sub) {
+        m.respond(`I can help ${m.data}`)
+      }
+    })().then()
+
+    // request data - requests only receive one message
+    // to receive multiple messages, create a subscription
+    document.write('making a request to `help`<br>');
+    const msg = await nc.request('help', 1000, 'nats request')
+    document.write(`got response ${msg.data}<br>`);
+
+    // close the connection
+    nc.close();
+    document.write(`closed the connection<br>`);
+
+  }
+  init();
+</script>
+</body>
+</html>

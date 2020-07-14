@@ -7,22 +7,19 @@
           crossorigin="anonymous">
 </head>
 <!-- when the browser exits, we publish a message -->
-<body onunload="exiting()">
+<body onunload="chat.exiting()">
 
 <!-- a form for entering messages -->
 <div class="container">
     <h1>ws-nats chat</h1>
     <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
-    <button id="send" onclick="send()" class="btn btn-primary">Send</button>
+    <button id="send" onclick="chat.send()" class="btn btn-primary">Send</button>
 </div>
 <br/>
 
 <!-- a place to record messages -->
 <div id="chats" class="container"></div>
 
-<!-- load the nats library -->
-<script src="../nats.js"></script>
-
-<script src="chat.js"></script>
+<script type="module" src="chat.js"></script>
 </body>
 </html>

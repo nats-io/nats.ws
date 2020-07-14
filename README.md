@@ -4,305 +4,481 @@
 A websocket client for the [NATS messaging system](https://nats.io).
 
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.txt)
-[![Travis branch](https://img.shields.io/travis/nats-io/nats.ws/master.svg)]()
-[![Coverage Status](https://coveralls.io/repos/github/nats-io/nats.ws/badge.svg?branch=master)](https://coveralls.io/github/nats-io/nats.ws?branch=master)[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
 # Installation
 
-> :warning: If you have used a preview version of nats.ws, the API for message callbacks has changed.
-> Previous versions of the API simply required a message argument. The current version of the API 
-> normalizes against v2 branches for nats.js and nats.ts. The message handler signature is 
-> `(err: NatsError|null, m: Msg)`, where an error will be set if there was a problem.
-> This change enables the opportunity to associate errors related to the subscription such as
-> JSON decoding errors, and others.
+> :warning: The API for the NATS.ws library has evolved since its initial preview.
+> The current changes modify how the library delivers messages and notifications, so if you had
+> developed with the initial preview, you'll need to modify your code.
+>
+> - The library is packaged as an ES Module
+> - `subscribe()` now returns a `Subscription`.
+> - `Subscription` objects are async iterators, callbacks are no longer supported.
+> - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
+> - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise resolves to an error, the error is the reason for the close.
 
 ** :warning: NATS.ws is a preview** you can get the current development version by:
 
 ```bash
-npm install nats.ws@next
+npm install nats.ws@beta
 ```
 
 Nats.ws requires a nats-server with websocket support. The nats-server implementation only supports WSS, so you'll need
- some TLS certificates.
+ TLS certificates. The easiest way to get started with nats.ws, is to fork [natsws-sandbox](https://github.com/aricart/natsws-sandbox);
+The sandbox has tooling for OS X/Linux platforms to generate test certificates, install a nats-server with websocket
+support, and a simple node webserver to serve content. If you are on windows, and would like to help on making the
+npm scripts portable to windows, would love a contribution.
 
-# Basic Usage
-nats.ws supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
 
-Copy the nats.js library from node_modules, and place it where you can reference it, then load the library:
+## Basics
+
+### Setup
+nats.ws is an async nats client. The library a standard es module. Copy the nats.mjs 
+library from node_modules, and place it where you can reference it from your code:
+
 ```html
-<script src='./nats.js'></script>
+<script type="module">
+  // load the library
+  import { connect } from './nats.mjs'
+  // do something with it...
+</script>
 ```
 
-In another script block, reference the 'nats' global:
+### Connecting to a nats-server
+
+To connect to a server you use the `connect()` function. It returns
+a connection that you can use to interact with the server.
+
+By default, a connection will attempt to auto-reconnect when dropped
+due to some networking type error. Messages that have not been
+sent to the server when a disconnect happens are lost. A client can queue
+new messages to be sent when the connection resumes. If the connection
+cannot be re-established the client will give up and `close` the connection.
+
+To learn when a connection closes, wait for the promise returned by the `closed()`
+function. If the close was due to an error, it will resolve to an error.
+
+To disconnect from the nats-server, you call `close()` on the connection.
+Connections can also be closed if there's an error. For example, the
+server returns some run-time error.
+
+This first example looks a bit complex, because it shows all the things
+discussed above. The example attempts to connect a nats-server by specifying
+different connect options. At least two of them should work if your
+internet is working.
+
+```typescript
+// import the connect function
+import { connect, NatsConnection } from "./nats.mjs";
+
+// the connection is configured by a set of ConnectionOptions
+// if none is set, the client will connect to 127.0.0.1:4222.
+// common options that you could pass look like:
+const localhostAtStandardPort = {};
+const localPort = { port: 4222 };
+const hostAtStdPort = { url: "demo.nats.io" };
+const hostPort = { url: "demo.nats.io:4222" };
+
+// let's try to connect to all the above, some may fail
+const dials: Promise<NatsConnection>[] = [];
+[localhostAtStandardPort, localPort, hostAtStdPort, hostPort].forEach((v) => {
+  dials.push(connect(v));
+});
+
+const conns: NatsConnection[] = [];
+// wait until all the dialed connections resolve or fail
+// allSettled returns a tupple with `closed` and `value`:
+await Promise.allSettled(dials)
+  .then((a) => {
+    // filter all the ones that succeeded
+    const fulfilled = a.filter((v) => {
+      return v.status === "fulfilled";
+    });
+    // and now extract all the connections
+    //@ts-ignore
+    const values = fulfilled.map((v) => v.value);
+    conns.push(...values);
+  });
+
+// Print where we connected, and register a close handler
+conns.forEach((nc) => {
+  console.log(`connected to ${nc.getServer()}`);
+  // you can get notified when the client exits by getting `closed()`.
+  // closed resolves void or with an error if the connection
+  // closed because of an error
+  nc.closed()
+    .then((err) => {
+      let m = `connection to ${nc.getServer()} closed`;
+      if (err) {
+        m = `${m} with an error: ${err.message}`;
+      }
+      console.log(m);
+    });
+});
+
+// now close all the connections, and wait for the close to finish
+const closed = conns.map((nc) => nc.close());
+await Promise.all(closed);
+```
+
+### Publish and Subscribe
+The basic client operations are to `subscribe` to receive messages,
+and publish to `send` messages. A subscription works as an async
+iterator where you process messages in a loop until the subscription
+closes.
+
+```typescript
+import { connect } from "./nats.mjs";
+const nc = await connect({ url: "demo.nats.io:4222" });
+
+// create a simple subscriber and iterate over messages
+// matching the subscription
+const sub = nc.subscribe("hello");
+(async () => {
+  for await (const m of sub) {
+    console.log(`[${sub.getProcessed()}]: ${m.data}`);
+  }
+  console.log("subscription closed");
+})();
+
+nc.publish("hello", "world");
+nc.publish("hello", "again");
+
+// we want to insure that messages that are in flight
+// get processed, so we are going to drain the
+// connection. Drain is the same as close, but makes
+// sure that all messages in flight get seen
+// by the iterator. After calling drain on the connection
+// the connection closes.
+await nc.drain();
+```
+
+### Streams
+Streams are messages that are published at regular intervals.
+To get the messages, you simply subscribe to them. To stop
+getting the messages you unsubscribe.
+
+```typescript
+import { connect } from "./nats.mjs";
+const nc = await connect({ url: "demo.nats.io" });
+
+console.info("enter the following command to get messages from the stream");
+console.info(
+  "deno run --allow-all --unstable examples/nats-sub.ts stream.demo",
+);
+
+const start = Date.now();
+let sequence = 0;
+setInterval(() => {
+  sequence++;
+  const uptime = Date.now() - start;
+  console.info(`publishing #${sequence}`)
+  nc.publish("stream.demo", JSON.stringify({ sequence, uptime }));
+}, 1000);
+```
+
+### Wildcard Subscriptions
+Sometimes you want to process an event (message), based on the
+subject that was used to send it. In NATS this is accomplished
+by specifying wildcards in the subscription. Subjects that match
+the wildcards, are sent to the client.
+
+In the example below, I am using 3 different subscription
+to highlight that each subscription is independent. And if
+the subject you use matches one or more of them, they all
+will get a chance at processing the message.
+
 ```javascript
-const init = async function () {
-// create a connection
-  const nc = await nats.connect({ url: 'wss://localhost:8080', payload: nats.Payload.STRING })
+import { connect, Subscription } from "./nats.mjs";
+const nc = await connect({ url: "demo.nats.io:4222" });
 
-  // simple publisher
-  nc.publish('hello', 'nats')
+// subscriptions can have wildcard subjects
+// the '*' matches any string in the specified token position
+const s1 = nc.subscribe("help.*.system");
+const s2 = nc.subscribe("help.me.*");
+// the '>' matches any tokens in that position or following
+// '>' can only be specified at the end
+const s3 = nc.subscribe("help.>");
 
-  // simple subscriber, if the message has a reply subject
-  // send a reply
-  const sub = await nc.subscribe('help', (err, msg) => {
-    if (err) {
-      // handle error
-    }
-    else if (msg.reply) {
-      nc.publish(msg.reply, `I can help ${msg.data}`)
-    }
-  })
-
-  // unsubscribe
-  sub.unsubscribe()
-
-  // request data - requests only receive one message
-  // to receive multiple messages, create a subscription
-  const msg = await nc.request('help', 1000, 'nats request')
-  console.log(msg.data)
-
-  // publishing a request, is similar to publishing. You must have
-  // a subscription ready to handle the reply subject. Requests
-  // sent this way can get multiple replies
-  nc.publish('help', '', 'replysubject')
-
-
-  // close the connection
-  nc.close()
-
+async function printMsgs(s: Subscription) {
+  console.log(`listening for ${s.subject}`);
+  const c = (13 - s.subject.length);
+  const pad = "".padEnd(c);
+  for await (const m of s) {
+    console.log(
+      `[${s.subject}]${pad} #${s.getProcessed()} - ${m.subject} ${
+        m.data ? " " + m.data : ""
+      }`,
+    );
+  }
 }
 
-init()
+printMsgs(s1);
+printMsgs(s2);
+printMsgs(s3);
+
+// don't exit until the client closes
+await nc.closed();
 ```
 
-## Wildcard Subscriptions
-```javascript
-// the `*` matches any string in the subject token
-const sub = await nc.subscribe('help.*.system', (_, msg) => {
-    if (msg.reply) {
-        nc.publish(msg.reply, `I can help ${msg.data}`)
+
+### Services
+A service is a client that responds to requests from other clients.
+Now that you know how to create subscriptions, and know about wildcards,
+it is time to develop a service that mocks something useful.
+
+This example is a bit complicated, because we are going to use NATS
+not only to provide a service, but also to control the service.
+
+```typescript
+import { connect, Subscription } from "./nats.mjs";
+const nc = await connect({ url: "demo.nats.io" });
+
+// A service is a subscriber that listens for requests
+// for the current time and responds
+const started = Date.now();
+const sub = nc.subscribe("time");
+// this function will handle requests for time
+requestHandler(sub);
+
+// If you wanted to manage a service - well NATS is awesome
+// for just that - setup another subscription where admin
+// messages can be sent
+const msub = nc.subscribe("admin.*");
+// this function will handle management requests
+adminHandler(msub);
+
+// wait for the client to close here.
+await nc.closed().then((err?: void | Error) => {
+  let m = `connection to ${nc.getServer()} closed`;
+  if (err) {
+    m = `${m} with an error: ${err.message}`;
+  }
+  console.log(m);
+});
+
+// this implements the handler for time requests
+async function requestHandler(sub: Subscription) {
+  console.log(`listening for ${sub.subject} requests...`);
+  let serviced = 0;
+  for await (const m of sub) {
+    serviced++;
+    if (m.respond(new Date().toISOString())) {
+      console.info(
+        `[${serviced}] handled ${m.data ? "- " + m.data : ""}`,
+      );
+    } else {
+      console.log(`[${serviced}] ignored - no reply subject`);
     }
-})
-sub.unsubscribe()
-
-const sub2 = await nc.subscribe('help.me.*', (_, msg) => {
-  if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
   }
-})
+}
 
-// the `>` matches any tokens, can only be at the last token
-const sub3 = await nc.subscribe('help.>', (_, msg) => {
-  if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
+// this implements the admin service, I use wildcards to handle
+// the requests consicely here
+async function adminHandler(sub: Subscription) {
+  console.log(`listening for ${sub.subject} requests [uptime | stop]`);
+  // it would be very good to verify the origin of the
+  // request - before implementing something that allows your service
+  // to be managed.
+  for await (const m of sub) {
+    const chunks = m.subject.split(".");
+    console.info(`[admin] handling ${chunks[1]}`);
+    switch (chunks[1]) {
+      case "uptime":
+        // send the number of millis since the service started
+        const uptime = Date.now() - started
+        m.respond(JSON.stringify({uptime}));
+        break;
+      case "stop":
+        m.respond("stopping....");
+        // finish requests by draining the subscription
+        await sub.drain();
+        // close the connection
+        const _ = nc.close();
+        break;
+      default:
+        console.log(`ignoring request`);
+    }
   }
-})
+}
 ```
 
-## Queue Groups
-```javascript
-// All subscriptions with the same queue name form a queue group.
-// The server will select a single subscriber in each queue group
-// matching the subscription to receive the message.
-const qsub = await nc.subscribe('urgent.help', (_, msg) => {
-  if (msg.reply) {
-     nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-}, {queue: "urgent"})
+### Making Requests
+```typescript
+import { connect } from "./nats.mjs";
+const nc = await connect({ url: "demo.nats.io:4222" });
+
+// a client makes a request and receives a promise for a message
+// by default the request times out after 1s (1000 millis) and has
+// no payload.
+await nc.request("time", 1000, "hello!")
+  .then((m) => {
+    console.log(`got response: ${m.data}`);
+  })
+  .catch((err) => {
+    console.log(`problem with request: ${err.message}`);
+  });
+
+await nc.close();
 ```
 
-## Authentication
-```javascript
-// if the websocket server requires authentication, 
-// provide it in the URL. NATS credentials are specified
-// in the `user`, `pass` or `token` options in the NatsConnectionOptions
+### Queue Groups
+Queue groups allow scaling of services horizontally. Subscriptions for members of a 
+queue group are treated as a single service, that means when you send a message
+only a single client in a queue group will receive it. There can be multiple queue 
+groups, and each is treated as an independent group. Non-queue subscriptions are
+also independent.
+```typescript
+import { connect, NatsConnection, Subscription } from "./nats.mjs";
 
-let nc = nats.connect({url: "wss://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
-let nc1 = nats.connect({url: "wss://localhost:8080", user: "jenny", token: "867-5309"})
-let nc3 = nats.connect({url: "wss://localhost:8080", token: "t0pS3cret!"})
+async function createService(
+  name: string,
+  count: number = 1,
+  queue: string = "",
+): Promise<NatsConnection[]> {
+  const conns: NatsConnection[] = [];
+  for (let i = 1; i <= count; i++) {
+    const n = queue ? `${name}-${i}` : name;
+    const nc = await connect(
+      { url: "demo.nats.io:4222", name: `${n}` },
+    );
+    nc.closed()
+      .then((err) => {
+        if (err) {
+          console.error(
+            `service ${n} exited because of error: ${err.message}`,
+          );
+        }
+      });
+    // create a subscription - note the option for a queue, if set
+    // any client with the same queue will be the queue group.
+    const sub = nc.subscribe("echo", { queue: queue });
+    const _ = handleRequest(n, sub);
+    console.log(`${nc.options.name} is listening for 'echo' requests...`);
+    conns.push(nc);
+  }
+  return conns;
+}
+
+// simple handler for service requests
+async function handleRequest(name: string, s: Subscription) {
+  const p = 12 - name.length;
+  const pad = "".padEnd(p);
+  for await (const m of s) {
+    // respond returns true if the message had a reply subject, thus it could respond
+    if (m.respond(m.data)) {
+      console.log(`[${name}]:${pad} #${s.getProcessed()} echoed ${m.data}`);
+    } else {
+      console.log(
+        `[${name}]:${pad} #${s.getProcessed()} ignoring request - no reply subject`,
+      );
+    }
+  }
+}
+
+// let's create two queue groups and a standalone subscriber
+const conns: NatsConnection[] = [];
+conns.push(...await createService("echo", 3, "echo"));
+conns.push(...await createService("other-echo", 2, "other-echo"));
+conns.push(...await createService("standalone"));
+
+const a: Promise<void | Error>[] = [];
+conns.forEach((c) => {
+  a.push(c.closed());
+});
+await Promise.all(a);
 ```
 
 ## Advanced Usage
 
-### Flush
-```javascript
-// flush does a round trip to the server. When it
-// returns the the server saw it
-await nc.flush()
+### Authentication
+```typescript
+// if the connection requires authentication, provide `user` and `pass` or 
+// `token` options in the NatsConnectionOptions
+import { connect } from "./nats.mjs";
 
-// or with a custom callback
-nc.flush(()=>{
-  console.log('sent!')
-});
-
-// or publish a few things, and wait for the flush
-await nc.publish('foo').publish('bar').flush()
+const nc1 = await connect({url: "nats://127.0.0.1:4222", user: "me", pass: "secret"});
+const nc2 = await connect({url: "localhost:8080", user: "jenny", token: "867-5309"});
+const nc3 = await connect({port: 4222, token: "t0pS3cret!"});
 ```
 
-### Auto unsubscribe
+### Flush
+```javascript
+// flush sends a PING request to the server and returns a promise
+// when the server responds with a PONG. The flush guarantees that
+// things you published have been delivered to the server. Typically
+// it is not necessary to use flush, but on tests it can be invaluable.
+nc.publish('foo');
+nc.publish('bar');
+await nc.flush();
+```
+
+### Auto Unsubscribe
 ```javascript
 // subscriptions can auto unsubscribe after a certain number of messages
-const sub = await nc.subscribe('foo', ()=> {}, {max:10})
-
-// the number can be changed or set afterwards
-// if the number is less than the number of received
-// messages it cancels immediately
-let next = sub.getReceived() + 1
-sub.unsubscribe(next)
+nc.subscribe('foo', {max:10});
 ```
 
 ### Timeout Subscriptions
 ```javascript
 // subscriptions can specify attach a timeout
 // timeout will clear with first message
-const sub = await nc.subscribe('foo', ()=> {})
+const sub = nc.subscribe('foo', ()=> {})
 sub.setTimeout(300, ()=> {
   console.log('no messages received')
 })
 
 // if 10 messages are not received, timeout fires
-const sub = await nc.subscribe('foo', ()=> {}, {max:10})
+const sub = nc.subscribe('foo', ()=> {}, {max:10})
 sub.setTimeout(300, ()=> {
-    console.log(`got ${sub.getReceived()} messages. Was expecting 10`)
+  console.log(`got ${sub.getReceived()} messages. Was expecting 10`)
 })
 
 // timeout can be cancelled
 sub.clearTimeout()
 ```
 
-### Error Handling
+### Lifecycle/Informational Events
+Clients can get notification on various event types:
+- `Events.DISCONNECT`
+- `Events.RECONNECT`
+- `Events.UPDATE`
+
+The first two fire when a client disconnects and reconnects respectively.
+The payload will be the server where the event took place.
+
+The `UPDATE` event notifies whenever the client receives a cluster configuration
+update. The `ServersChanged` interface provides two arrays: `added` and `deleted`
+listing the servers that were added or removed. 
+
 ```javascript
-// when server returns an error, you are notified asynchronously
-nc.addEventListener('error', (ex)=> {
-  console.log('server sent error: ', ex)
-});
+const nc = await connect(opts);
+(async () => {
+  console.info(`connected ${nc.getServer()}`);
+  for await (const s of nc.status()) {
+    console.info(`${s.type}: ${s.data}`);
+  }
+})().then();
 
-// when disconnected from the server, the 'close' event is sent
-nc.addEventListener('close', ()=> {
-  console.log('the connection closed')
-})
 ```
 
-## NATS in the Browser
+To be aware of when a client closes, wait for the `closed()` promise to resolve.
+When it resolves, the client has finished and won't reconnect.
 
-Here's an example (check `examples/chat.html` for the latest version) of 
-a chat application using ws-nats.
+## Web Application Examples
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ws-nats chat</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-          crossorigin="anonymous">
-</head>
-<!-- when the browser exits, we publish a message -->
-<body onunload="exiting()">
+For various examples of using NATS in the browser, checkout [examples](examples).
 
-<!-- a form for entering messages -->
-<div class="container">
-    <h1>ws-nats chat</h1>
-    <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
-    <button id="send" onclick="send()" class="btn btn-primary">Send</button>
-</div>
-<br/>
+## Contributing
 
-<!-- a place to record messages -->
-<div id="chats" class="container"></div>
+NATS.ws uses [deno](https://deno.land) to build and package the ES Module for the library.
+The library shares client functionality with [NATS.deno](https://github.com/nats-io/nats.deno).
+This means that both the NATS.deno and NATS.ws use the same exact code base, only differing
+on the implementation of the `Transport`. This strategy greatly reduces the amount of work 
+required to develop and maintain the clients.
 
-<!-- load the nats library -->
-<script src="../nats.js"></script>
+Currently, the base client code is referenced from the deno implementation. You can take
+a look at it [here](https://github.com/nats-io/nats.deno/tree/main/nats-base-client).
 
-<script>
-const Payload = nats.Payload
-const me = Date.now()
-
-// create a connection, and register listeners
-const init = async function () {
-  // if the connection doesn't resolve, an exception is thrown
-  // a real app would allow configuring the URL
-  const conn = await nats.connect({ url: '{{WSURL}}', payload: Payload.JSON })
-
-  // handle errors sent by the gnatsd - permissions errors, etc.
-  conn.addEventListener('error', (ex) => {
-    addEntry(`Received error from NATS: ${ex}`)
-  })
-
-  // handle connection to the server is closed - should disable the ui
-  conn.addEventListener('close', () => {
-    addEntry('NATS connection closed')
-  })
-
-  // the chat application listens for messages sent under the subject 'chat'
-  conn.subscribe('chat', (_, msg) => {
-    addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`)
-  })
-
-  // when a new browser joins, the joining browser publishes an 'enter' message
-  conn.subscribe('enter', (_, msg) => {
-    if (msg.data.id !== me) {
-      addEntry(`${msg.data.id} entered.`)
-    }
-  })
-
-  // when a browser closes, the leaving browser publishes an 'exit' message
-  conn.subscribe('exit', (_, msg) => {
-    if (msg.data.id !== me) {
-      addEntry(`${msg.data.id} exited.`)
-    }
-  })
-
-  // we connected, and we publish our enter message
-  conn.publish('enter', { id: me })
-  return conn
-}
-
-init().then(conn => {
-  window.nc = conn
-}).catch(ex => {
-  addEntry(`Error connecting to NATS: ${ex}`)
-})
-
-// this is the input field
-let input = document.getElementById('data')
-
-// add a listener to detect edits. If they hit Enter, we publish it
-input.addEventListener('keyup', (e) => {
-  if (e.key === 'Enter') {
-    document.getElementById('send').click()
-  } else {
-    e.preventDefault()
-  }
-})
-
-// send a message if user typed one
-function send () {
-  input = document.getElementById('data')
-  const m = input.value
-  if (m !== '' && window.nc) {
-    window.nc.publish('chat', { id: me, m: m })
-    input.value = ''
-  }
-  return false
-}
-
-// send the exit message
-function exiting () {
-  if (window.nc) {
-    window.nc.publish('exit', { id: me })
-  }
-}
-
-// add an entry to the document
-function addEntry (s) {
-  const p = document.createElement('pre')
-  p.appendChild(document.createTextNode(s))
-  document.getElementById('chats').appendChild(p)
-}
-</script>
-</body>
-</html>
-```
 

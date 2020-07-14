@@ -3,14 +3,6 @@ npm-debug.log*
 
 # generated files
 build/
-nats.js
-*.d.ts
-nats.js.map
-src/version.json
-
-examples/certs/
-
-
 .idea/
 
 # nyc test coverage
@@ -26,5 +18,3 @@ node_modules
 # ide crud
 vcs.xml
 
-# we copy package.json to read the version so ts, webpack, etc are happy
-src/package.json
