@@ -17,7 +17,7 @@ import { connect, Payload } from "./nats.mjs";
 const test = async function () {
   // if the connection fails an exception is thrown
   const nc = await connect(
-    { url: "wss://localhost:9222", payload: Payload.STRING },
+    { url: "wss://localhost:9222", payload: Payload.STRING, debug: true },
   );
   document.write("<pre>connected</pre>");
 
@@ -33,7 +33,7 @@ const test = async function () {
 
   // publish a request - need a subscription listening
   // <subject>, <body of the message>, <reply subject>
-  nc.publish("hello", "world", "say.hi");
+  nc.publish("hello", "world", { reply: "say.hi" });
   document.write("<pre>published a request for help</pre>");
 
   // simple subscription

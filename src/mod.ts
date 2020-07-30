@@ -12,16 +12,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export {
-  ConnectionOptions,
-  ErrorCode,
-  Msg,
-  NatsConnection,
-  NatsError,
-  Nuid,
-  Payload,
-  ServersChanged,
-  Subscription,
-  Events,
-} from "https://deno.land/x/nats/nats-base-client/mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/mod.ts";
 export { connect } from "./connect.ts";

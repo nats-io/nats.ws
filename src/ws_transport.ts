@@ -20,7 +20,7 @@ import {
   Transport,
   Deferred,
   deferred,
-} from "https://deno.land/x/nats/nats-base-client/mod.ts";
+} from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
 
 const VERSION = "1.0.0-50";
 const LANG = "nats.ws";
@@ -130,7 +130,8 @@ export class WsTransport implements Transport {
     }
     this.done = true;
     try {
-      this.socket.close();
+      // 1002 endpoint error, 1000 is clean
+      this.socket.close(err ? 1002 : 1000, err ? err.message : undefined);
     } catch (err) {
     }
     if (internal) {
