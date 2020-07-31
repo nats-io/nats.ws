@@ -1,4 +1,4 @@
 # NATS.ws TODO
 
-[ ] Subscription timers.
-[ ] Restoring of the tests
+- [ ] Subscription timers.
+- [ ] Restoring of the tests

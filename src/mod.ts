@@ -12,5 +12,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/mod.ts";
+export * from "https://deno.land/x/nats@v0.1.1-19/nats-base-client/mod.ts";
 export { connect } from "./connect.ts";

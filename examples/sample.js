@@ -59,10 +59,10 @@ const test = async function () {
   })().then();
 
   // simple request
-  const msg = await nc.request("help", 1000, "nats request");
+  const msg = await nc.request("help", "nats request");
   document.write(`<pre>I got a response: ${msg.data}</pre>`);
 
-  const msg2 = await nc.request("urgent.help", 1000, "urgent nats request");
+  const msg2 = await nc.request("urgent.help", "urgent nats request");
   document.write(
     `<pre>I got a response to my urgent request: ${msg2.data}</pre>`,
   );

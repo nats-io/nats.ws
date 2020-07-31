@@ -30,5 +30,7 @@
     "name": "The NATS Authors"
   },
   "license": "Apache-2.0",
-  "devDependencies": {}
+  "devDependencies": {
+    "babel-preset-minify": "^0.5.1"
+  }
 }

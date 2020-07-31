@@ -217,7 +217,7 @@ async function reqrep() {
     const futures = [];
     opts.start = Date.now();
     for (let i = 0; i < opts.count; i++) {
-      const f = nc.request(opts.subject, 200000);
+      const f = nc.request(opts.subject, "", { timeout: 200000 });
       futures.push(f);
     }
     await Promise.all(futures);

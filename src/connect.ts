@@ -17,7 +17,7 @@ import {
   ConnectionOptions,
   setTransportFactory,
   Transport,
-} from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+} from "https://deno.land/x/nats@v0.1.1-19/nats-base-client/internal_mod.ts";
 import { WsTransport } from "./ws_transport.ts";
 
 export function connect(opts: ConnectionOptions = {}): Promise<NatsConnection> {

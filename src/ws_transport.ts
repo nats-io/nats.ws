@@ -20,7 +20,7 @@ import {
   Transport,
   Deferred,
   deferred,
-} from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+} from "https://deno.land/x/nats@v0.1.1-19/nats-base-client/internal_mod.ts";
 
 const VERSION = "1.0.0-50";
 const LANG = "nats.ws";
@@ -120,6 +120,10 @@ export class WsTransport implements Transport {
       this.sendQueue.shift();
       this.dequeue();
     }
+  }
+
+  disconnect(): void {
+    this._closed(undefined, true);
   }
 
   private async _closed(err?: Error, internal: boolean = true): Promise<void> {

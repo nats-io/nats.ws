@@ -45,9 +45,7 @@ const init = async function () {
     const chat = conn.subscribe("chat");
     for await (const m of chat) {
       addEntry(
-        m.data.id === me
-          ? `(me): ${m.data.m}`
-          : `(${m.data.id}): ${m.data.m}`,
+        m.data.id === me ? `(me): ${m.data.m}` : `(${m.data.id}): ${m.data.m}`,
       );
     }
   })().then();
