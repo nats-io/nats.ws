@@ -7,7 +7,8 @@
   "files": [
     "examples/",
     "OWNERS.md",
-    "CODE-OF-CONDUCT.md"
+    "CODE-OF-CONDUCT.md",
+    "nats.d.ts"
   ],
   "scripts": {
     "setup": "curl -fsSL https://deno.land/x/install/install.sh | sh",
