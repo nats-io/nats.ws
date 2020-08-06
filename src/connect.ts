@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -11,18 +11,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
+import {
+  NatsConnection,
+  ConnectionOptions,
+  setTransportFactory,
+  Transport,
+} from "./nats-base-client.ts";
 
-import * as proxy from './nats-wsproxy'
+import { WsTransport } from "./ws_transport.ts";
 
-console.log(process.argv);
+export function connect(opts: ConnectionOptions = {}): Promise<NatsConnection> {
+  setTransportFactory((): Transport => {
+    return new WsTransport();
+  });
 
-//@ts-ignore
-if (process.argv.length == 3 && !isNaN(process.argv[2])) {
-    new proxy.NatsWsProxy(parseInt(process.argv[2], 10));
-} else {
-    console.log('usage: ts-node wsecho-cli <port>');
-    process.exit(1);
+  return NatsConnection.connect(opts);
 }
-

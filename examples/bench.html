@@ -12,7 +12,9 @@
     <h1 id="title">WS NATS Browser Performance</h1>
     <label for="server">NATS Websocket Server</label>
     <input type="text" class="form-control" id="server" placeholder="server" autocomplete="off"
-           value="wss://localhost:9222"><br/>
+           value="localhost:9222"><br/>
+    <label for="ws">Use ws:// (uncheck for wss://)</label>
+    <input type="checkbox" class="form-check-input" id="ws" value="true" checked><br/>
     <label for="subject">Subject</label>
     <input type="text" class="form-control" id="subject" placeholder="subject" autocomplete="off" value="foo"><br/>
     <label for="count">Count</label>
@@ -38,16 +40,14 @@
     </div>
 
     <br/><br/>
-    <button id="send" onclick="run()" class="btn btn-primary">Start</button>
+    <button id="send" onclick="benchapp.run()" class="btn btn-primary">Start</button>
 </div>
 <br/>
 <div class="container">
     <pre id="results"></pre>
 </div>
 
-<script src="../nats.js"></script>
-
-<script src="bench.js"></script>
+<script type="module" src="./bench.js"></script>
 
 </body>
 </html>

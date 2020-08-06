@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          crossorigin="anonymous">
+</head>
+<body>
+<!-- a place to record messages -->
+<div id="messages" class="container"></div>
+<!-- load a script -->
+<script type="module">
+  import { connect, StringCodec } from '../nats.mjs'
+
+  // add an entry to the document
+  function addEntry(s) {
+    const p = document.createElement("pre");
+    p.appendChild(document.createTextNode(s));
+    document.getElementById("messages").appendChild(p);
+  }
+
+  const sc = StringCodec();
+
+  const init = async function () {
+    // create a connection
+    const nc = await connect({ url: 'localhost:9222', ws: true })
+    addEntry('connected to NATS!');
+
+    // simple publisher
+    nc.publish('hello', sc.encode('nats'))
+    addEntry('published a message to `hello`');
+
+    // simple subscriber, if the message has a reply subject
+    // send a reply
+    const sub = await nc.subscribe('help');
+    (async () => {
+      addEntry('listening for request on `help`');
+      for await (const m of sub) {
+        m.respond(sc.encode(`I can help ${sc.decode(m.data)}`));
+      }
+    })().then()
+
+    // request data - requests only receive one message
+    // to receive multiple messages, create a subscription
+    addEntry('making a request to `help`');
+    const msg = await nc.request('help', sc.encode('nats request'))
+
+    addEntry(`got response '${sc.decode(msg.data)}'`);
+
+    // close the connection
+    nc.close();
+    addEntry('closed the connection');
+  }
+  init();
+</script>
+</body>
+</html>

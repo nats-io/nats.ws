@@ -3,306 +3,132 @@
 
 A websocket client for the [NATS messaging system](https://nats.io).
 
-[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](./LICENSE.txt)
-[![Travis branch](https://img.shields.io/travis/nats-io/nats.ws/master.svg)]()
-[![Coverage Status](https://coveralls.io/repos/github/nats-io/nats.ws/badge.svg?branch=master)](https://coveralls.io/github/nats-io/nats.ws?branch=master)[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
+[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
-# Installation
 
-> :warning: If you have used a preview version of nats.ws, the API for message callbacks has changed.
-> Previous versions of the API simply required a message argument. The current version of the API 
-> normalizes against v2 branches for nats.js and nats.ts. The message handler signature is 
-> `(err: NatsError|null, m: Msg)`, where an error will be set if there was a problem.
-> This change enables the opportunity to associate errors related to the subscription such as
-> JSON decoding errors, and others.
+## Changes since original preview
 
-** :warning: NATS.ws is a preview** you can get the current development version by:
+> :warning: The API for the NATS.ws library has evolved since its initial preview.
+> The current changes modify how the library delivers messages and notifications, so if you had
+> developed with the initial preview, you'll need to update your code.
+
+ - Packaging is now an ES Module
+ - `subscribe()` returns a Subscription
+ - Subscription objects are async iterators, callbacks are no longer supported.
+ - Lifecycle notifications are via async iterator `status()`
+ - Close notification is now in the form of a promise provided by `closed()`
+ - Message payloads are always `Uint8Arrays`, to encode/decode to strings or JSON use `StringCodec` or `JSONCodec`, alternatively use `TextEncoder/Decoder`
+ - Publisher signatures have changed to `publish(subject: string, data?: Uint8Array, options?: {reply?: string, headers?: MsgHdrs})`
+ - [Request signatures have changed to `request(subject: string, data?: Uint8Array, options?: {timeout: number, headers?: MsgHdrs})`
+ - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
+ - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise _resolves_ to an error, the error is the reason for the close.
+
+## Installation
+
+>** :warning: NATS.ws is a preview** you can get the current development version by:
 
 ```bash
-npm install nats.ws@next
+npm install nats.ws@beta2
 ```
 
-Nats.ws requires a nats-server with websocket support. The nats-server implementation only supports WSS, so you'll need
- some TLS certificates.
+Getting started with NATS.ws requires a little of preparation:
 
-# Basic Usage
-nats.ws supports Promises, depending on the browser/runtime environment you can also use async-await constructs.
+- You'll need a recent NATS server that supports websockets
+- An HTTP server to serve HTML and the nats library
 
-Copy the nats.js library from node_modules, and place it where you can reference it, then load the library:
-```html
-<script src='./nats.js'></script>
+To make it easy, the nats.ws github repo aids you with this setup, however you'll need a few simple requirements installed.
+If you are on windows, you'll need to look at the package.json for hints on what to do.
+
+Here are the steps:
+
+
+```bash
+# clone the nats.ws repository:
+git clone https://github.com/nats-io/nats.ws.git
+
+# install [deno](https://deno.land):
+npm run setup
+
+# build the library
+npm run build
+
+# install the master of nats-server, if you have 
+# [Go](https://golang.org/doc/install) installed,
+# you can easily clone and build the latest from
+# master:
+npm run install-ns
+
+# start the built nats-server:
+npm run start-nats
+
+# start an http server to serve the content in
+# the examples directory:
+npm run start-http
+
+# point your browser to: http://localhost:4507/examples
+# click on one of the HTML files
+
 ```
 
-In another script block, reference the 'nats' global:
-```javascript
-const init = async function () {
-// create a connection
-  const nc = await nats.connect({ url: 'wss://localhost:8080', payload: nats.Payload.STRING })
+## Documentation
 
-  // simple publisher
-  nc.publish('hello', 'nats')
-
-  // simple subscriber, if the message has a reply subject
-  // send a reply
-  const sub = await nc.subscribe('help', (err, msg) => {
-    if (err) {
-      // handle error
-    }
-    else if (msg.reply) {
-      nc.publish(msg.reply, `I can help ${msg.data}`)
-    }
-  })
-
-  // unsubscribe
-  sub.unsubscribe()
-
-  // request data - requests only receive one message
-  // to receive multiple messages, create a subscription
-  const msg = await nc.request('help', 1000, 'nats request')
-  console.log(msg.data)
-
-  // publishing a request, is similar to publishing. You must have
-  // a subscription ready to handle the reply subject. Requests
-  // sent this way can get multiple replies
-  nc.publish('help', '', 'replysubject')
+NATS.ws shares all client API and examples with 
+[nats.deno repo](https://github.com/nats-io/nats.deno)
 
 
-  // close the connection
-  nc.close()
-
-}
-
-init()
-```
-
-## Wildcard Subscriptions
-```javascript
-// the `*` matches any string in the subject token
-const sub = await nc.subscribe('help.*.system', (_, msg) => {
-    if (msg.reply) {
-        nc.publish(msg.reply, `I can help ${msg.data}`)
-    }
-})
-sub.unsubscribe()
-
-const sub2 = await nc.subscribe('help.me.*', (_, msg) => {
-  if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-})
-
-// the `>` matches any tokens, can only be at the last token
-const sub3 = await nc.subscribe('help.>', (_, msg) => {
-  if (msg.reply) {
-    nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-})
-```
-
-## Queue Groups
-```javascript
-// All subscriptions with the same queue name form a queue group.
-// The server will select a single subscriber in each queue group
-// matching the subscription to receive the message.
-const qsub = await nc.subscribe('urgent.help', (_, msg) => {
-  if (msg.reply) {
-     nc.publish(msg.reply, `I can help ${msg.data}`)
-  }
-}, {queue: "urgent"})
-```
-
-## Authentication
-```javascript
-// if the websocket server requires authentication, 
-// provide it in the URL. NATS credentials are specified
-// in the `user`, `pass` or `token` options in the NatsConnectionOptions
-
-let nc = nats.connect({url: "wss://wsuser:wsuserpass@localhost:8080", user: "me", pass: "secret"})
-let nc1 = nats.connect({url: "wss://localhost:8080", user: "jenny", token: "867-5309"})
-let nc3 = nats.connect({url: "wss://localhost:8080", token: "t0pS3cret!"})
-```
-
-## Advanced Usage
-
-### Flush
-```javascript
-// flush does a round trip to the server. When it
-// returns the the server saw it
-await nc.flush()
-
-// or with a custom callback
-nc.flush(()=>{
-  console.log('sent!')
-});
-
-// or publish a few things, and wait for the flush
-await nc.publish('foo').publish('bar').flush()
-```
-
-### Auto unsubscribe
-```javascript
-// subscriptions can auto unsubscribe after a certain number of messages
-const sub = await nc.subscribe('foo', ()=> {}, {max:10})
-
-// the number can be changed or set afterwards
-// if the number is less than the number of received
-// messages it cancels immediately
-let next = sub.getReceived() + 1
-sub.unsubscribe(next)
-```
-
-### Timeout Subscriptions
-```javascript
-// subscriptions can specify attach a timeout
-// timeout will clear with first message
-const sub = await nc.subscribe('foo', ()=> {})
-sub.setTimeout(300, ()=> {
-  console.log('no messages received')
-})
-
-// if 10 messages are not received, timeout fires
-const sub = await nc.subscribe('foo', ()=> {}, {max:10})
-sub.setTimeout(300, ()=> {
-    console.log(`got ${sub.getReceived()} messages. Was expecting 10`)
-})
-
-// timeout can be cancelled
-sub.clearTimeout()
-```
-
-### Error Handling
-```javascript
-// when server returns an error, you are notified asynchronously
-nc.addEventListener('error', (ex)=> {
-  console.log('server sent error: ', ex)
-});
-
-// when disconnected from the server, the 'close' event is sent
-nc.addEventListener('close', ()=> {
-  console.log('the connection closed')
-})
-```
-
-## NATS in the Browser
-
-Here's an example (check `examples/chat.html` for the latest version) of 
-a chat application using ws-nats.
+## Importing the Module
+nats.ws is an async nats client. The model a standard ES Module. Copy the nats.mjs 
+module from node_modules (if you didn't build it yourself), and place it where you 
+can reference it from your code:
 
 ```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ws-nats chat</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-          crossorigin="anonymous">
-</head>
-<!-- when the browser exits, we publish a message -->
-<body onunload="exiting()">
-
-<!-- a form for entering messages -->
-<div class="container">
-    <h1>ws-nats chat</h1>
-    <input type="text" class="form-control" id="data" placeholder="Message" autocomplete="off"><br/>
-    <button id="send" onclick="send()" class="btn btn-primary">Send</button>
-</div>
-<br/>
-
-<!-- a place to record messages -->
-<div id="chats" class="container"></div>
-
-<!-- load the nats library -->
-<script src="../nats.js"></script>
-
-<script>
-const Payload = nats.Payload
-const me = Date.now()
-
-// create a connection, and register listeners
-const init = async function () {
-  // if the connection doesn't resolve, an exception is thrown
-  // a real app would allow configuring the URL
-  const conn = await nats.connect({ url: '{{WSURL}}', payload: Payload.JSON })
-
-  // handle errors sent by the gnatsd - permissions errors, etc.
-  conn.addEventListener('error', (ex) => {
-    addEntry(`Received error from NATS: ${ex}`)
-  })
-
-  // handle connection to the server is closed - should disable the ui
-  conn.addEventListener('close', () => {
-    addEntry('NATS connection closed')
-  })
-
-  // the chat application listens for messages sent under the subject 'chat'
-  conn.subscribe('chat', (_, msg) => {
-    addEntry(msg.data.id === me ? `(me): ${msg.data.m}` : `(${msg.data.id}): ${msg.data.m}`)
-  })
-
-  // when a new browser joins, the joining browser publishes an 'enter' message
-  conn.subscribe('enter', (_, msg) => {
-    if (msg.data.id !== me) {
-      addEntry(`${msg.data.id} entered.`)
-    }
-  })
-
-  // when a browser closes, the leaving browser publishes an 'exit' message
-  conn.subscribe('exit', (_, msg) => {
-    if (msg.data.id !== me) {
-      addEntry(`${msg.data.id} exited.`)
-    }
-  })
-
-  // we connected, and we publish our enter message
-  conn.publish('enter', { id: me })
-  return conn
-}
-
-init().then(conn => {
-  window.nc = conn
-}).catch(ex => {
-  addEntry(`Error connecting to NATS: ${ex}`)
-})
-
-// this is the input field
-let input = document.getElementById('data')
-
-// add a listener to detect edits. If they hit Enter, we publish it
-input.addEventListener('keyup', (e) => {
-  if (e.key === 'Enter') {
-    document.getElementById('send').click()
-  } else {
-    e.preventDefault()
-  }
-})
-
-// send a message if user typed one
-function send () {
-  input = document.getElementById('data')
-  const m = input.value
-  if (m !== '' && window.nc) {
-    window.nc.publish('chat', { id: me, m: m })
-    input.value = ''
-  }
-  return false
-}
-
-// send the exit message
-function exiting () {
-  if (window.nc) {
-    window.nc.publish('exit', { id: me })
-  }
-}
-
-// add an entry to the document
-function addEntry (s) {
-  const p = document.createElement('pre')
-  p.appendChild(document.createTextNode(s))
-  document.getElementById('chats').appendChild(p)
-}
+<script type="module">
+  // load the library
+  import { connect } from './nats.mjs'
+  // do something with it...
 </script>
-</body>
-</html>
 ```
+
+## Connection Options Specific to nats.ws
+
+By default, the nats-server will serve WSS connections only.
+The current architecture of nats.deno and nats.ws will soon be
+removing the `url` connection field in favor of `servers`.
+
+There are two reasons for this change. First, URL embedded authentication
+credentials are not globally supported in non HTTP/S protocols.
+
+Secondly, connection protocols are not gossiped on cluster information. 
+To specify a `ws://`  connection, the connection option `ws` must be set to `true`.
+Otherwise the client will always attempt to connect via `wss://`
+
+
+```typescript
+  // connects via ws://
+  const conn = await connect(
+    { url: "localhost:9222", ws: true },
+  );
+
+  // connects via wss://
+  const wssConn = await connect(
+    { url: "localhost:9222"}
+  )
+```
+
+## Web Application Examples
+
+For various examples of using NATS in the browser, checkout [examples](examples).
+
+## Contributing
+
+NATS.ws uses [deno](https://deno.land) to build and package the ES Module for the library.
+The library shares client functionality with [NATS.deno](https://github.com/nats-io/nats.deno).
+This means that both the NATS.deno and NATS.ws use the same exact code base, only differing
+on the implementation of the `Transport`. This strategy greatly reduces the amount of work 
+required to develop and maintain the clients.
+
+Currently, the base client implementation is the deno implementation. You can take
+a look at it [here](https://github.com/nats-io/nats.deno/tree/main/nats-base-client).
+
 
