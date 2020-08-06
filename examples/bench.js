@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { connect, Payload } from "./nats.mjs";
+import { connect, Empty } from "../nats.mjs";
 
 function getString(id) {
   return document.getElementById(id).value;
@@ -72,6 +72,7 @@ window.benchapp = {
 function getOpts() {
   return {
     server: getString("server"),
+    ws: isChecked("ws"),
     subject: getString("subject"),
     count: getNumber("count"),
     start: 0,
@@ -104,8 +105,9 @@ function formatReport(test, opts) {
 async function pub() {
   const opts = getOpts();
   try {
+    debugger;
     setResults("working...");
-    const nc = await connect({ url: opts.server, payload: Payload.BINARY });
+    const nc = await connect({ url: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {
@@ -128,7 +130,7 @@ async function pub() {
 async function sub() {
   const opts = getOpts();
   try {
-    const nc = await connect({ url: opts.server, payload: Payload.BINARY });
+    const nc = await connect({ url: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {
@@ -161,7 +163,7 @@ async function pubsub() {
   const opts = getOpts();
   try {
     setResults("working...");
-    const nc = await connect({ url: opts.server, payload: Payload.BINARY });
+    const nc = await connect({ url: opts.server, ws: opts.ws });
 
     let received = 0;
     const sub = nc.subscribe(opts.subject, { max: opts.count });
@@ -198,7 +200,8 @@ async function reqrep() {
   const opts = getOpts();
   try {
     setResults("working...");
-    const nc = await connect({ url: opts.server, payload: Payload.BINARY });
+    console.log(`ws? ${opts.ws}`);
+    const nc = await connect({ url: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {
@@ -217,7 +220,7 @@ async function reqrep() {
     const futures = [];
     opts.start = Date.now();
     for (let i = 0; i < opts.count; i++) {
-      const f = nc.request(opts.subject, "", { timeout: 200000 });
+      const f = nc.request(opts.subject, Empty, { timeout: 200000 });
       futures.push(f);
     }
     await Promise.all(futures);

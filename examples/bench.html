@@ -12,7 +12,9 @@
     <h1 id="title">WS NATS Browser Performance</h1>
     <label for="server">NATS Websocket Server</label>
     <input type="text" class="form-control" id="server" placeholder="server" autocomplete="off"
-           value="wss://localhost:9222"><br/>
+           value="localhost:9222"><br/>
+    <label for="ws">Use ws:// (uncheck for wss://)</label>
+    <input type="checkbox" class="form-check-input" id="ws" value="true" checked><br/>
     <label for="subject">Subject</label>
     <input type="text" class="form-control" id="subject" placeholder="subject" autocomplete="off" value="foo"><br/>
     <label for="count">Count</label>

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 import {
-  ConnectionOptions,
   ErrorCode,
   NatsError,
   render,
@@ -21,6 +20,8 @@ import {
   Deferred,
   deferred,
 } from "https://deno.land/x/nats@v0.1.1-19/nats-base-client/internal_mod.ts";
+
+import { ConnectionOptions } from "./nats-base-client.ts";
 
 const VERSION = "1.0.0-50";
 const LANG = "nats.ws";
@@ -54,8 +55,11 @@ export class WsTransport implements Transport {
     const connLock = deferred<void>();
 
     this.options = options;
-    //@ts-ignore
-    this.socket = new WebSocket(`wss://${hp.hostname}:${hp.port}`);
+    const proto = this.options.ws ? "ws" : "wss";
+    // @ts-ignore
+    this.socket = new WebSocket(
+      `${proto}://${hp.hostname}:${hp.port}`,
+    );
     this.socket.binaryType = "arraybuffer";
 
     this.socket.onopen = () => {
@@ -173,7 +177,7 @@ export class WsTransport implements Transport {
 
   isEncrypted(): boolean {
     // ws from nats-server is only supported over tls
-    return true;
+    return !this.options.ws;
   }
 
   send(frame: Uint8Array): Promise<void> {

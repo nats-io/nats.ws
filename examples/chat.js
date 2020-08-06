@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { connect, Payload } from "./nats.mjs";
+import { connect, JSONCodec } from "../nats.mjs";
 const me = Date.now();
 
 window.chat = {
@@ -21,12 +21,16 @@ window.chat = {
   exiting: exiting,
 };
 
+// create a decoder, the client is sending JSON
+const jc = JSONCodec();
+
 // create a connection, and register listeners
 const init = async function () {
   // if the connection doesn't resolve, an exception is thrown
-  // a real app would allow configuring the URL
+  // a real app would allow configuring the hostport and whether
+  // to use WSS or not.
   const conn = await connect(
-    { url: "wss://localhost:9222", payload: Payload.JSON },
+    { url: "localhost:9222", ws: true },
   );
 
   // handle connection to the server is closed - should disable the ui
@@ -35,7 +39,7 @@ const init = async function () {
     addEntry(`${m} ${err ? err.message : ""}`);
   });
   (async () => {
-    for await (const s of nc.status()) {
+    for await (const s of conn.status()) {
       addEntry(`Received status update: ${s.type}`);
     }
   })().then();
@@ -44,8 +48,9 @@ const init = async function () {
   (async () => {
     const chat = conn.subscribe("chat");
     for await (const m of chat) {
+      const jm = jc.decode(m.data);
       addEntry(
-        m.data.id === me ? `(me): ${m.data.m}` : `(${m.data.id}): ${m.data.m}`,
+        jm.id === me ? `(me): ${jm.m}` : `(${jm.id}): ${jm.m}`,
       );
     }
   })().then();
@@ -54,21 +59,23 @@ const init = async function () {
   (async () => {
     const enter = conn.subscribe("enter");
     for await (const m of enter) {
-      addEntry(`${m.data.id} entered.`);
+      const jm = jc.decode(m.data);
+      addEntry(`${jm.id} entered.`);
     }
   })().then();
 
   (async () => {
     const exit = conn.subscribe("exit");
     for await (const m of exit) {
-      if (m.data.id !== me) {
-        addEntry(`${m.data.id} exited.`);
+      const jm = jc.decode(m.data);
+      if (jm.id !== me) {
+        addEntry(`${jm.id} exited.`);
       }
     }
   })().then();
 
   // we connected, and we publish our enter message
-  conn.publish("enter", { id: me });
+  conn.publish("enter", jc.encode({ id: me }));
   return conn;
 };
 
@@ -94,7 +101,7 @@ function send() {
   input = document.getElementById("data");
   const m = input.value;
   if (m !== "" && window.nc) {
-    window.nc.publish("chat", { id: me, m: m });
+    window.nc.publish("chat", jc.encode({ id: me, m: m }));
     input.value = "";
   }
   return false;
@@ -103,7 +110,7 @@ function send() {
 // send the exit message
 function exiting() {
   if (window.nc) {
-    window.nc.publish("exit", { id: me });
+    window.nc.publish("exit", jc.encode({ id: me }));
   }
 }
 

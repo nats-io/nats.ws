@@ -12,5 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from "./nats-base-client.ts";
-export { connect } from "./connect.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+
+import { ConnectionOptions as CO } from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+
+export interface ConnectionOptions extends CO {
+  ws?: boolean;
+}

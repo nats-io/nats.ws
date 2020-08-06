@@ -3,6 +3,7 @@
   "version": "1.0.0-50",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
+  "types": "nats.d.ts",
   "files": [
     "examples/",
     "OWNERS.md",
@@ -13,7 +14,13 @@
     "build": "deno bundle --unstable src/mod.ts ./nats.mjs",
     "prepack": "npm run build",
     "fmt": "deno fmt src/*.ts examples/*.js",
-    "clean": "rm ./nats.mjs"
+    "clean": "rm ./nats.mjs",
+    "start-tls-nats": "cd examples && ../nats-server -DV -c tls.conf",
+    "start-nats": "cd examples && ../nats-server -DV -c nontls.conf",
+    "start-http": "deno run --allow-all --unstable bin/file_server.ts .",
+    "start-https": "deno run --allow-all --unstable bin/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
+    "install-certs": "env CAROOT=./certs mkcert -cert-file ./certs/cert.pem -key-file ./certs/key.pem -install localhost 127.0.0.1 ::1",
+    "install-ns": "mkdir srv && cd srv && git clone --branch=master https://github.com/nats-io/nats-server.git && cd nats-server && go build && mv nats-server ../../"
   },
   "repository": {
     "type": "git",
@@ -29,8 +36,5 @@
   "author": {
     "name": "The NATS Authors"
   },
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "babel-preset-minify": "^0.5.1"
-  }
+  "license": "Apache-2.0"
 }
