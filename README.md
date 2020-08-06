@@ -71,6 +71,11 @@ npm run start-http
 
 ```
 
+## Documentation
+
+NATS.ws shares all client API and examples with 
+[nats.deno repo](https://github.com/nats-io/nats.deno)
+
 
 ## Importing the Module
 nats.ws is an async nats client. The model a standard ES Module. Copy the nats.mjs 
@@ -84,9 +89,6 @@ can reference it from your code:
   // do something with it...
 </script>
 ```
-
-After this initial step, all the documentation on how to use the client
-is shared with the [nats.deno repo](https://github.com/nats-io/nats.deno).
 
 ## Connection Options Specific to nats.ws
 
