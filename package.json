@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "setup": "curl -fsSL https://deno.land/x/install/install.sh | sh",
-    "build": "deno bundle --unstable src/mod.ts ./nats.mjs",
+    "build": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --unstable src/mod.ts ./nats.mjs",
     "prepack": "npm run build",
     "fmt": "deno fmt src/*.ts examples/*.js",
     "clean": "rm ./nats.mjs",
