@@ -50,11 +50,10 @@ export interface ConnectionOptions {
   reconnectJitter?: number;
   reconnectJitterTLS?: number;
   reconnectTimeWait?: number;
-  servers?: Array<string>;
+  servers?: Array<string> | string;
   timeout?: number;
   tls?: boolean | TlsOptions;
   token?: string;
-  url?: string;
   user?: string;
   verbose?: boolean;
   waitOnFirstConnect?: boolean;

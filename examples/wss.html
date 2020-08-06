@@ -20,18 +20,21 @@
     document.getElementById("messages").appendChild(p);
   }
 
-  const sc = StringCodec();
-
   const init = async function () {
     // create a connection to a wss server
-    const nc = await connect({ url: 'localhost:9222', ws: false })
-    addEntry('connected!');
-    await nc.flush();
-    addEntry('did a round-trip to the server');
+    const nc = await connect({ servers: 'localhost:9222', ws: false })
+    .then(async () => {
+      addEntry('connected!');
+      await nc.flush();
+      addEntry('did a round-trip to the server');
 
-    // close the connection
-    await nc.close();
-    addEntry('closed the connection');
+      // close the connection
+      await nc.close();
+      addEntry('closed the connection');
+    })
+    .catch(() => {
+      addEntry(`error connecting - did you setup a wss server?`);
+    });
   }
   init();
 </script>

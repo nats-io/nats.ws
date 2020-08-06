@@ -5,6 +5,7 @@ npm-debug.log*
 build/
 .idea/
 .certs/
+srv/
 
 # nyc test coverage
 .nyc_output
