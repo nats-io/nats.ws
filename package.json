@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-51",
+  "version": "1.0.0-85",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
   "types": "nats.d.ts",
