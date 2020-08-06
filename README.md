@@ -6,24 +6,26 @@ A websocket client for the [NATS messaging system](https://nats.io).
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](LICENSE)
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
-# Installation
+
+## Changes since original preview
 
 > :warning: The API for the NATS.ws library has evolved since its initial preview.
 > The current changes modify how the library delivers messages and notifications, so if you had
 > developed with the initial preview, you'll need to update your code.
->
-> - Packaging is now an ES Module
-> - `subscribe()` returns a Subscription
-> - Subscription objects are async iterators, callbacks are no longer supported.
-> - Lifecycle notifications are via async iterator `status()`
-> - Close notification is now in the form of a promise provided by `closed()`
-> - Message payloads are always `Uint8Arrays`, to encode/decode to strings or JSON use `StringCodec` or `JSONCodec`, alternatively use `TextEncoder/Decoder`
-> - Publisher signatures have changed to `publish(subject: string, data?: Uint8Array, options?: {reply?: string, headers?: MsgHdrs})`
-> - [Request signatures have changed to `request(subject: string, data?: Uint8Array, options?: {timeout: number, headers?: MsgHdrs})`
-> - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
-> - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise _resolves_ to an error, the error is the reason for the close.
 
->
+ - Packaging is now an ES Module
+ - `subscribe()` returns a Subscription
+ - Subscription objects are async iterators, callbacks are no longer supported.
+ - Lifecycle notifications are via async iterator `status()`
+ - Close notification is now in the form of a promise provided by `closed()`
+ - Message payloads are always `Uint8Arrays`, to encode/decode to strings or JSON use `StringCodec` or `JSONCodec`, alternatively use `TextEncoder/Decoder`
+ - Publisher signatures have changed to `publish(subject: string, data?: Uint8Array, options?: {reply?: string, headers?: MsgHdrs})`
+ - [Request signatures have changed to `request(subject: string, data?: Uint8Array, options?: {timeout: number, headers?: MsgHdrs})`
+ - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
+ - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise _resolves_ to an error, the error is the reason for the close.
+
+## Installation
+
 >** :warning: NATS.ws is a preview** you can get the current development version by:
 
 ```bash
@@ -70,9 +72,10 @@ npm run start-http
 ```
 
 
-### Setup
-nats.ws is an async nats client. The library a standard es module. Copy the nats.mjs 
-library from node_modules, and place it where you can reference it from your code:
+## Importing the Module
+nats.ws is an async nats client. The model a standard ES Module. Copy the nats.mjs 
+module from node_modules (if you didn't build it yourself), and place it where you 
+can reference it from your code:
 
 ```html
 <script type="module">
@@ -85,6 +88,31 @@ library from node_modules, and place it where you can reference it from your cod
 After this initial step, all the documentation on how to use the client
 is shared with the [nats.deno repo](https://github.com/nats-io/nats.deno).
 
+## Connection Options Specific to nats.ws
+
+By default, the nats-server will serve WSS connections only.
+The current architecture of nats.deno and nats.ws will soon be
+removing the `url` connection field in favor of `servers`.
+
+There are two reasons for this change. First, URL embedded authentication
+credentials are not globally supported in non HTTP/S protocols.
+
+Secondly, connection protocols are not gossiped on cluster information. 
+To specify a `ws://`  connection, the connection option `ws` must be set to `true`.
+Otherwise the client will always attempt to connect via `wss://`
+
+
+```typescript
+  // connects via ws://
+  const conn = await connect(
+    { url: "localhost:9222", ws: true },
+  );
+
+  // connects via wss://
+  const wssConn = await connect(
+    { url: "localhost:9222"}
+  )
+```
 
 ## Web Application Examples
 
