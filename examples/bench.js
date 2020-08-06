@@ -107,7 +107,7 @@ async function pub() {
   try {
     debugger;
     setResults("working...");
-    const nc = await connect({ url: opts.server, ws: opts.ws });
+    const nc = await connect({ servers: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {
@@ -130,7 +130,7 @@ async function pub() {
 async function sub() {
   const opts = getOpts();
   try {
-    const nc = await connect({ url: opts.server, ws: opts.ws });
+    const nc = await connect({ servers: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {
@@ -163,7 +163,7 @@ async function pubsub() {
   const opts = getOpts();
   try {
     setResults("working...");
-    const nc = await connect({ url: opts.server, ws: opts.ws });
+    const nc = await connect({ servers: opts.server, ws: opts.ws });
 
     let received = 0;
     const sub = nc.subscribe(opts.subject, { max: opts.count });
@@ -201,7 +201,7 @@ async function reqrep() {
   try {
     setResults("working...");
     console.log(`ws? ${opts.ws}`);
-    const nc = await connect({ url: opts.server, ws: opts.ws });
+    const nc = await connect({ servers: opts.server, ws: opts.ws });
     nc.closed()
       .then((err) => {
         if (err) {

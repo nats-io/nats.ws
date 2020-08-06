@@ -23,6 +23,7 @@ A websocket client for the [NATS messaging system](https://nats.io).
  - [Request signatures have changed to `request(subject: string, data?: Uint8Array, options?: {timeout: number, headers?: MsgHdrs})`
  - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
  - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise _resolves_ to an error, the error is the reason for the close.
+ - `url` connection property has been removed - use `servers` (it can be a string or array of strings)
 
 ## Installation
 
@@ -107,12 +108,12 @@ Otherwise the client will always attempt to connect via `wss://`
 ```typescript
   // connects via ws://
   const conn = await connect(
-    { url: "localhost:9222", ws: true },
+    { servers: "localhost:9222", ws: true },
   );
 
   // connects via wss://
   const wssConn = await connect(
-    { url: "localhost:9222"}
+    { servers: "localhost:9222"}
   )
 ```
 
