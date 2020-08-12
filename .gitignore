@@ -1,11 +1,15 @@
 # Logs
 npm-debug.log*
+.DS_STORE
 
 # generated files
 build/
 .idea/
-.certs/
+certs/
 srv/
+
+nats-server
+nats.mjs
 
 # nyc test coverage
 .nyc_output

@@ -52,7 +52,7 @@ export interface ConnectionOptions {
   reconnectTimeWait?: number;
   servers?: Array<string> | string;
   timeout?: number;
-  tls?: boolean | TlsOptions;
+  tls?: TlsOptions;
   token?: string;
   user?: string;
   verbose?: boolean;
