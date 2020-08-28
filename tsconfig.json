@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "CommonJS",
-    "outDir": "cjs-build/",
+    "outDir": "build/",
     "moduleResolution": "node",
     "sourceMap": true
   },
   "include": [
-    "cjs-wst"
+    "wst"
   ],
   "exclude": [
     "src/**/*",

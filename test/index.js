@@ -14,4 +14,4 @@
  */
 "use strict";
 
-module.exports = require("../cjs-build/cjs-wst/mod");
+module.exports = require("../build/wst/mod");

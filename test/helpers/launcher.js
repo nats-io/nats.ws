@@ -19,7 +19,7 @@ const {
   delay,
   timeout,
   nuid,
-} = require("../../cjs-build/nats-base-client/internal_mod");
+} = require("../../build/nats-base-client/internal_mod");
 
 const { spawn } = require("child_process");
 

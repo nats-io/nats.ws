@@ -24,13 +24,13 @@
     "install-ns": "mkdir -p ./.deps && cd ./.deps && git clone --branch=master https://github.com/nats-io/nats-server.git && cd nats-server && go build && mv nats-server ../../",
     "clone-nbc": "deno run --allow-all bin/clone-nd.ts",
     "cjs-nbc": "deno run --allow-all ./bin/cjs-fix-imports.ts -o nats-base-client/ ./.deps/nats.deno/nats-base-client/",
-    "cjs-wst": "deno run --allow-all ./bin/cjs-fix-imports.ts -o cjs-wst/ ./src",
+    "cjs-wst": "deno run --allow-all ./bin/cjs-fix-imports.ts -o wst/ ./src",
     "build-cjs": "tsc",
-    "clean": "rm -Rf ./nats.mjs ./cjs-build ./.deps ./nats-base-client ./cjs-wst ./nats-server",
-    "stage": "npm run clean && npm run clone-nbc && npm run cjs-nbc && npm run cjs-wst && npm run build-cjs",
+    "clean": "rm -Rf ./nats.mjs ./build ./.deps ./nats-base-client ./cjs-wst",
+    "stage": "npm run clean && npm run clone-nbc && npm run cjs-nbc && npm run cjs-wst && rm -Rf ./.deps/ && npm run build-cjs && rm -Rf ./wst",
     "ava": "nyc ava --verbose -T 60000",
-    "test": "npm run ava",
-    "debug-test": "npm run build-cjs && node node_modules/.bin/ava --verbose -T 6500000 --match"
+    "test": "npm run stage && npm run ava",
+    "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
   },
   "devDependencies": {
     "@types/node": "^14.6.0",
@@ -62,7 +62,7 @@
     ],
     "include": [
       "src/**/*.ts",
-      "cjs-build/**/*.js",
+      "build/**/*.js",
       "nats-base-client/**/*.ts"
     ],
     "exclude": [

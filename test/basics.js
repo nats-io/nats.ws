@@ -18,7 +18,7 @@ const { connect, ErrorCode, createInbox, StringCodec, Empty, Events } = require(
   "./index",
 );
 const { deferred, delay } = require(
-  "../cjs-build/nats-base-client/internal_mod",
+  "../build/nats-base-client/internal_mod",
 );
 const { Lock } = require("./helpers/lock");
 const { NatsServer, wsConfig, tlsConfig } = require("./helpers/launcher");
