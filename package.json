@@ -29,7 +29,7 @@
     "clean": "rm -Rf ./nats.mjs ./cjs-build ./.deps ./nats-base-client ./cjs-wst ./nats-server",
     "stage": "npm run clean && npm run clone-nbc && npm run cjs-nbc && npm run cjs-wst && npm run build-cjs",
     "ava": "nyc ava --verbose -T 60000",
-    "test": "npm run build-cjs && npm run ava",
+    "test": "npm run ava",
     "debug-test": "npm run build-cjs && node node_modules/.bin/ava --verbose -T 6500000 --match"
   },
   "devDependencies": {
