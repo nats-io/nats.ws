@@ -109,7 +109,6 @@ async function run() {
   updateResults(report.join("\n"));
 }
 
-
 const reducer = (a, m) => {
   if (a) {
     a.name = m.name;
