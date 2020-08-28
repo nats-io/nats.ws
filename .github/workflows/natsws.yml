@@ -34,12 +34,10 @@ jobs:
         run: echo '::set-env name=NATS_VERSION::v2.1.7'
       - name: Get nats-server
         run: |
+          pwd
           wget "https://github.com/nats-io/nats-server/releases/download/$NATS_VERSION/nats-server-$NATS_VERSION-linux-amd64.zip" -O tmp.zip
           unzip tmp.zip
           mv nats-server-$NATS_VERSION-linux-amd64 nats-server
-      - run: pwd
-      - run: ls -lah
-      - run: ls -lah ./nats-server/
       - run: npm ci
       - run: npm run stage
       - run: npm test
