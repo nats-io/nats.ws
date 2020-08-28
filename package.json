@@ -8,6 +8,7 @@
     "examples/",
     "OWNERS.md",
     "CODE-OF-CONDUCT.md",
+    "LICENSE",
     "nats.d.ts"
   ],
   "scripts": {
