@@ -37,6 +37,7 @@ jobs:
           wget "https://github.com/nats-io/nats-server/releases/download/$NATS_VERSION/nats-server-$NATS_VERSION-linux-amd64.zip" -O tmp.zip
           unzip tmp.zip
           mv nats-server-$NATS_VERSION-linux-amd64 nats-server
+      - run: tree
       - run: npm ci
       - run: npm run stage
       - run: npm test
