@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,22 +12,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export class Lock {
-    latch: Promise<any>;
-    count: number;
-    unlock!: Function;
-
-    constructor(count: number = 1) {
-        this.count = count;
-        let lock = this;
-        this.latch = new Promise((resolve) => {
-            this.unlock = function () {
-                lock.count -= 1;
-                if (lock.count === 0) {
-                    resolve();
-                }
-            }
-        });
-    }
-}
+export * from "./nats-base-client.ts";
+export { connect } from "./connect.ts";

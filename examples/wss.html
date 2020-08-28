@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          crossorigin="anonymous">
+</head>
+<body>
+<!-- a place to record messages -->
+<div id="messages" class="container"></div>
+<!-- load a script -->
+<script type="module">
+  import { connect, StringCodec } from '../nats.mjs'
+
+  // add an entry to the document
+  function addEntry(s) {
+    const p = document.createElement("pre");
+    p.appendChild(document.createTextNode(s));
+    document.getElementById("messages").appendChild(p);
+  }
+
+  const init = async function () {
+    // create a connection to a wss server
+    const nc = await connect({ servers: 'localhost:9222', ws: false })
+    .then(async () => {
+      addEntry('connected!');
+      await nc.flush();
+      addEntry('did a round-trip to the server');
+
+      // close the connection
+      await nc.close();
+      addEntry('closed the connection');
+    })
+    .catch(() => {
+      addEntry(`error connecting - did you setup a wss server?`);
+    });
+  }
+  init();
+</script>
+</body>
+</html>

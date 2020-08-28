@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -11,18 +11,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/v0.1.1-31/nats-base-client/internal_mod.ts";
 
-import * as wsecho from './wsecho'
+import { ConnectionOptions as CO } from "https://raw.githubusercontent.com/nats-io/nats.deno/v0.1.1-31/nats-base-client/internal_mod.ts";
 
-console.log(process.argv);
-
-//@ts-ignore
-if (process.argv.length == 3 && !isNaN(process.argv[2])) {
-    new wsecho.WSEchoServer(parseInt(process.argv[2], 10));
-} else {
-    console.log('usage: ts-node wsecho-cli <port>');
-    process.exit(1);
+export interface ConnectionOptions extends CO {
+  ws?: boolean;
 }
-
