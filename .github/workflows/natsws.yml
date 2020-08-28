@@ -45,6 +45,8 @@ jobs:
       - run: npm run install-ns
       - run: npm run build
       - run: npm test
+        env:
+          CI: true
 #      - name: Gather coverage
 #        if: matrix.node-version == '14.x'
 #        run: npm run coveralls
