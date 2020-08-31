@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "outDir": "build/",
+    "moduleResolution": "node",
+    "sourceMap": true
+  },
+  "include": [
+    "wst"
+  ],
+  "exclude": [
+    "src/**/*",
+    "test/**/*",
+    "lib/**/*"
+  ]
+}
+

@@ -24,13 +24,14 @@ import {
 
 import { ConnectionOptions } from "./nats-base-client.ts";
 
-const VERSION = "1.0.0-90";
+const VERSION = "1.0.0-100";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
   version: string = VERSION;
   lang: string = LANG;
   closeError?: Error;
+  connected = false;
   private done = false;
   // @ts-ignore
   private socket: WebSocket;
@@ -60,6 +61,7 @@ export class WsTransport implements Transport {
     this.socket.binaryType = "arraybuffer";
 
     this.socket.onopen = () => {
+      this.connected = true;
       connLock.resolve();
     };
 
@@ -95,6 +97,7 @@ export class WsTransport implements Transport {
   }
 
   private async _closed(err?: Error, internal: boolean = true): Promise<void> {
+    if (!this.connected) return;
     if (this.done) return;
     this.closeError = err;
     if (!err) {

@@ -6,7 +6,11 @@ npm-debug.log*
 build/
 .idea/
 certs/
-srv/
+!test/certs/
+.deps/
+cjs-build/
+cjs-wst/
+nats-base-client/
 
 nats-server
 nats.mjs
