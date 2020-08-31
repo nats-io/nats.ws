@@ -1,5 +1,5 @@
 export declare function connect(
-  opts: ConnectionOptions
+  opts: ConnectionOptions,
 ): Promise<NatsConnection>;
 
 export interface NatsConnection {
@@ -10,7 +10,7 @@ export interface NatsConnection {
   request(
     subject: string,
     data?: Uint8Array,
-    opts?: RequestOptions
+    opts?: RequestOptions,
   ): Promise<Msg>;
   flush(): Promise<void>;
   drain(): Promise<void>;
@@ -139,7 +139,7 @@ export declare function noAuthFn(): Authenticator;
  * @return {NKeyAuth}
  */
 export declare function nkeyAuthenticator(
-  seed?: Uint8Array | (() => Uint8Array)
+  seed?: Uint8Array | (() => Uint8Array),
 ): Authenticator;
 /**
  * Returns a jwt authenticator. If a seed is provided, the public
@@ -152,7 +152,7 @@ export declare function nkeyAuthenticator(
  */
 export declare function jwtAuthenticator(
   ajwt: string | (() => string),
-  seed?: Uint8Array | (() => Uint8Array)
+  seed?: Uint8Array | (() => Uint8Array),
 ): Authenticator;
 /**
  * Returns a jwt authenticator configured from the specified creds file contents.
