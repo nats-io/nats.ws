@@ -1,3 +1,7 @@
+export declare function connect(
+  opts: ConnectionOptions,
+): Promise<NatsConnection>;
+
 export interface NatsConnection {
   closed(): Promise<void | Error>;
   close(): Promise<void>;
@@ -57,6 +61,7 @@ export interface ConnectionOptions {
   user?: string;
   verbose?: boolean;
   waitOnFirstConnect?: boolean;
+  ws?: boolean;
 }
 export interface TlsOptions {
   certFile?: string;
