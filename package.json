@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-100",
+  "version": "1.0.0-101",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
   "types": "nats.d.ts",
@@ -17,7 +17,7 @@
     "prepack": "npm run build",
     "fmt": "deno fmt src/*.ts examples/*.js test/*.js test/*/*.js",
     "start-tls-nats": "cd examples && ../nats-server -DV -c tls.conf",
-    "start-nats": "cd examples && ../nats-server -DV -c nontls.conf",
+    "start-nats": "cd examples && ../nats-server -c nontls.conf",
     "start-http": "deno run --allow-all --unstable bin/file_server.ts .",
     "start-https": "deno run --allow-all --unstable bin/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
     "install-certs": "env CAROOT=./certs mkcert -cert-file ./certs/cert.pem -key-file ./certs/key.pem -install localhost 127.0.0.1 ::1",
