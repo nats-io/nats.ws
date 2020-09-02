@@ -62,6 +62,7 @@ async function run() {
 
   const kind = getTestChoice();
   const t = {};
+  t.callbacks = isChecked("callbacks");
   t.msgs = getNumber("count");
   t.size = getNumber("payload");
   t.subject = getString("subject");
