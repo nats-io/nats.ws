@@ -13,6 +13,5 @@
  * limitations under the License.
  *
  */
-
 let browserEnv = require("browser-env");
 browserEnv();

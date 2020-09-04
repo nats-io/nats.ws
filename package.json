@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-101",
+  "version": "1.0.0-104",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
   "types": "nats.d.ts",
@@ -67,9 +67,10 @@
     ],
     "exclude": [
       "nats-base-client/bench.ts",
-      "nats-base-client/buffer.ts",
       "nats-base-client/codec.ts",
       "nats-base-client/databuffer.ts",
+      "nats-base-client/denobuffer.ts",
+      "nats-base-client/headers.ts",
       "nats-base-client/muxsubscription.ts",
       "nats-base-client/nkeys.ts",
       "nats-base-client/nuid.ts",
