@@ -7,30 +7,12 @@ A websocket client for the [NATS messaging system](https://nats.io).
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
 
-## Changes since original preview
-
-> :warning: The API for the NATS.ws library has evolved since its initial preview.
-> The current changes modify how the library delivers messages and notifications, so if you had
-> developed with the initial preview, you'll need to update your code.
-
- - Packaging is now an ES Module
- - `subscribe()` returns a Subscription
- - Subscription objects are async iterators, callbacks are no longer supported.
- - Lifecycle notifications are via async iterator `status()`
- - Close notification is now in the form of a promise provided by `closed()`
- - Message payloads are always `Uint8Arrays`, to encode/decode to strings or JSON use `StringCodec` or `JSONCodec`, alternatively use `TextEncoder/Decoder`
- - Publisher signatures have changed to `publish(subject: string, data?: Uint8Array, options?: {reply?: string, headers?: MsgHdrs})`
- - [Request signatures have changed to `request(subject: string, data?: Uint8Array, options?: {timeout: number, headers?: MsgHdrs})`
- - `addEventListener()` for getting lifecycle events has been removed. The async iterator `status()` is the mechanism for receiving connection change updates.
- - `closed(): Promise<void|Error>` returns a promise that resolves when the client closes. If the promise _resolves_ to an error, the error is the reason for the close.
- - `url` connection property has been removed - use `servers` (it can be a string or array of strings)
-
 ## Installation
 
 >** :warning: NATS.ws is a preview** you can get the current development version by:
 
 ```bash
-npm install nats.ws@beta2
+npm install nats.ws
 ```
 
 Getting started with NATS.ws requires a little of preparation:
