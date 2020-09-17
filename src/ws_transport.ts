@@ -12,17 +12,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import type {
+  Transport,
+  Deferred,
+} from "./nats-base-client.ts";
 import {
   ErrorCode,
   NatsError,
   render,
-  Transport,
-  Deferred,
   deferred,
   delay,
 } from "./nats-base-client.ts";
 
-import { ConnectionOptions } from "./nats-base-client.ts";
+import type { ConnectionOptions } from "./nats-base-client.ts";
 
 const VERSION = "1.0.0-106";
 const LANG = "nats.ws";
@@ -81,7 +83,8 @@ export class WsTransport implements Transport {
       this._closed(reason);
     };
 
-    this.socket.onerror = (evt: ErrorEvent) => {
+    this.socket.onerror = (e: ErrorEvent | Event): any => {
+      const evt = e as ErrorEvent;
       const err = new NatsError(evt.message, ErrorCode.UNKNOWN);
       if (!connected) {
         connLock.reject(err);
