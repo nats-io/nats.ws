@@ -1,8 +1,8 @@
-import { parse } from "https://deno.land/std@0.61.0/flags/mod.ts";
+import { parse } from "https://deno.land/std@0.69.0/flags/mod.ts";
 import {
   resolve,
   join,
-} from "https://deno.land/std@0.61.0/path/mod.ts";
+} from "https://deno.land/std@0.69.0/path/mod.ts";
 
 const argv = parse(
   Deno.args,
@@ -27,7 +27,7 @@ await Deno.lstat(lib)
 
 await Deno.lstat(dir)
   .then(async () => {
-    await Deno.remove(join(dir, "nats.deno"), {recursive: true});
+    await Deno.remove(join(dir, "nats.deno"), { recursive: true });
   })
   .catch(async () => {
     Deno.mkdir(dir)
@@ -59,9 +59,9 @@ const git = Deno.run({
 
 git.status()
   .then(() => {
-  console.log("OK");
-})
+    console.log("OK");
+  })
   .catch((err: Error) => {
-  console.error(`cloning nats.deno on branch ${m[2]} failed: ${err.message}`);
-  Deno.exit(1);
-});
+    console.error(`cloning nats.deno on branch ${m[2]} failed: ${err.message}`);
+    Deno.exit(1);
+  });
