@@ -26,7 +26,7 @@ import {
 
 import type { ConnectionOptions } from "./nats-base-client.ts";
 
-const VERSION = "1.0.0-106";
+const VERSION = "1.0.0-108";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
