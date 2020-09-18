@@ -1,10 +1,10 @@
-import { parse } from "https://deno.land/std@0.61.0/flags/mod.ts";
+import { parse } from "https://deno.land/std@0.69.0/flags/mod.ts";
 import {
   join,
   resolve,
   basename,
   extname,
-} from "https://deno.land/std@0.61.0/path/mod.ts";
+} from "https://deno.land/std@0.69.0/path/mod.ts";
 
 const argv = parse(
   Deno.args,
@@ -75,7 +75,10 @@ for (const fn of files) {
   let mod = txt.replace(/from\s+"(\S+).[t|j]s"/gim, 'from "$1"');
   mod = mod.replace(/require\("(\S+).[j|t]s"\)/gim, 'require("$1")');
 
-  mod = mod.replace(/(https:\/\/raw.githubusercontent.com\/nats-io\/nats.deno\/\S+\/nats-base-client)/gim, "../nats-base-client")
+  mod = mod.replace(
+    /(https:\/\/raw.githubusercontent.com\/nats-io\/nats.deno\/\S+\/nats-base-client)/gim,
+    "../nats-base-client",
+  );
 
   // some of the imports are references to external projects
   // that in node we resolve with requires - if we encounter one that

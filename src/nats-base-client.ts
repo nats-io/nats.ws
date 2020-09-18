@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-5/nats-base-client/internal_mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-7/nats-base-client/internal_mod.ts";
 
-import { ConnectionOptions as CO } from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-5/nats-base-client/internal_mod.ts";
+import type { ConnectionOptions as CO } from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-7/nats-base-client/internal_mod.ts";
 
 export interface ConnectionOptions extends CO {
   ws?: boolean;
