@@ -79,13 +79,16 @@ By default, the nats-server will serve WSS connections only.
 
 The `nats-server` gossips cluster configuration to clients. Cluster
 configuration however is disseminated as `host:port`. With websockets, 
-a connection is made using an URL which means that it sports an URL. By default,
+a connection is made using an URL which means that the protocol specifies
+whether the connection is encrypted or not. By default,
 the nats.ws client assumes any specified `host:port` is available
 via `wss://host:port`.
 
-If your cluster is not uniform (`ws://` or `wss://` only, 
+If your cluster security not uniform (mixes `ws://` and `wss://`), 
 you'll need to disable server advertising or on the client specify 
-the `ignoreServerUpdates` connection option. 
+the `ignoreServerUpdates` connection option. Of course in this case
+you are responsible for providing all the URLs for the cluster if
+you want fail over. 
 
 
 ```typescript
