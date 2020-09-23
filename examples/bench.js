@@ -52,7 +52,12 @@ function updateResults(s) {
 async function run() {
   const server = getString("server");
   const ws = isChecked("ws");
-  const nc = await connect({ servers: server, ws: ws, pendingLimit: 8192 });
+  const nc = await connect(
+    {
+      servers: `${ws ? "ws://" : "wss://"}${server}`,
+      pendingLimit: 8192,
+    },
+  );
   nc.closed()
     .then((err) => {
       if (err) {

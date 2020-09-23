@@ -30,7 +30,7 @@ const init = async function () {
   // a real app would allow configuring the hostport and whether
   // to use WSS or not.
   const conn = await connect(
-    { servers: "localhost:9222", ws: true },
+    { servers: "ws://localhost:9222" },
   );
 
   // handle connection to the server is closed - should disable the ui
