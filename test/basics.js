@@ -25,7 +25,7 @@ const { NatsServer, wsConfig, tlsConfig } = require("./helpers/launcher");
 
 test("basics - connect", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   await nc.flush();
   await nc.close();
   await ns.stop();
@@ -35,7 +35,6 @@ test("basics - connect", async (t) => {
 test("basics - tls connect", async (t) => {
   const conf = {
     websocket: {
-      no_tls: true,
       port: -1,
       tls: tlsConfig(),
     },
@@ -50,7 +49,7 @@ test("basics - tls connect", async (t) => {
 
 test("basics - publish", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   nc.publish(createInbox());
   await nc.flush();
   await nc.close();
@@ -61,7 +60,7 @@ test("basics - publish", async (t) => {
 test("basics - no publish without subject", async (t) => {
   t.plan(1);
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   try {
     nc.publish("");
     fail("should not be able to publish without a subject");
@@ -77,7 +76,7 @@ test("basics - pubsub", async (t) => {
   t.plan(1);
   const ns = await NatsServer.start(wsConfig());
   const subj = createInbox();
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   const sub = nc.subscribe(subj);
   const iter = (async () => {
     for await (const m of sub) {
@@ -96,7 +95,7 @@ test("basics - subscribe and unsubscribe", async (t) => {
   t.plan(12);
   const ns = await NatsServer.start(wsConfig());
   const subj = createInbox();
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   const sub = nc.subscribe(subj, { max: 1000, queue: "aaa" });
 
   // check the subscription
@@ -132,7 +131,7 @@ test("basics - subscribe and unsubscribe", async (t) => {
 test("basics - subscriptions iterate", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   const lock = Lock();
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   const subj = createInbox();
   const sub = nc.subscribe(subj);
   const _ = (async () => {
@@ -150,7 +149,7 @@ test("basics - subscriptions iterate", async (t) => {
 
 test("basics - subscriptions pass exact subject to cb", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const s = createInbox();
   const subj = `${s}.foo.bar.baz`;
@@ -172,7 +171,7 @@ test("basics - subscriptions pass exact subject to cb", async (t) => {
 
 test("basics - subscribe returns Subscription", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj);
@@ -190,7 +189,7 @@ test("basics - subscribe returns Subscription", async (t) => {
 
 test("basics - wildcard subscriptions", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const single = 3;
   const partial = 2;
@@ -220,7 +219,7 @@ test("basics - wildcard subscriptions", async (t) => {
 
 test("basics - correct data in message", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const sc = StringCodec();
   const subj = createInbox();
@@ -244,7 +243,7 @@ test("basics - correct data in message", async (t) => {
 
 test("basics - correct reply in message", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const s = createInbox();
   const r = createInbox();
@@ -265,7 +264,7 @@ test("basics - correct reply in message", async (t) => {
 
 test("basics - respond returns false if no reply subject set", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let s = createInbox();
   const dr = deferred();
@@ -285,7 +284,7 @@ test("basics - respond returns false if no reply subject set", async (t) => {
 
 test("basics - closed cannot subscribe", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   await nc.close();
   await ns.stop();
 
@@ -301,7 +300,7 @@ test("basics - closed cannot subscribe", async (t) => {
 
 test("basics - close cannot request", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
   await nc.close();
   await ns.stop();
 
@@ -317,7 +316,7 @@ test("basics - close cannot request", async (t) => {
 
 test("basics - flush returns promise", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let p = nc.flush();
   if (!p) {
@@ -331,7 +330,7 @@ test("basics - flush returns promise", async (t) => {
 
 test("basics - unsubscribe after close", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let sub = nc.subscribe(createInbox());
   await nc.close();
@@ -343,7 +342,7 @@ test("basics - unsubscribe after close", async (t) => {
 
 test("basics - unsubscribe stops messages", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   // in this case we use a callback otherwise messages are buffered.
@@ -365,7 +364,7 @@ test("basics - unsubscribe stops messages", async (t) => {
 
 test("basics - request", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const sc = StringCodec();
   const s = createInbox();
@@ -383,7 +382,7 @@ test("basics - request", async (t) => {
 
 test("basics - request timeout", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const s = createInbox();
   const lock = Lock();
@@ -404,7 +403,7 @@ test("basics - request timeout", async (t) => {
 
 test("basics - request cancel rejects", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const s = createInbox();
   const lock = Lock();
@@ -428,7 +427,7 @@ test("basics - request cancel rejects", async (t) => {
 
 test("basics - subscription with timeout", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const lock = Lock(1);
   const sub = nc.subscribe(createInbox(), { max: 1, timeout: 250 });
@@ -445,7 +444,7 @@ test("basics - subscription with timeout", async (t) => {
 
 test("basics - subscription expecting 2 doesn't fire timeout", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 2, timeout: 500 });
@@ -466,7 +465,7 @@ test("basics - subscription expecting 2 doesn't fire timeout", async (t) => {
 
 test("basics - subscription timeout auto cancels", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   let c = 0;
@@ -489,7 +488,7 @@ test("basics - subscription timeout auto cancels", async (t) => {
 
 test("basics - no mux requests create normal subs", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const _ = nc.request(createInbox(), Empty, { timeout: 1000, noMux: true });
   t.is(nc.protocol.subscriptions.size(), 1);
@@ -505,7 +504,7 @@ test("basics - no mux requests create normal subs", async (t) => {
 
 test("basics - no mux requests timeout", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const lock = Lock();
   nc.request(createInbox(), Empty, { timeout: 250, noMux: true })
@@ -520,7 +519,7 @@ test("basics - no mux requests timeout", async (t) => {
 
 test("basics - no mux requests", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj);
@@ -539,7 +538,7 @@ test("basics - no mux requests", async (t) => {
 
 test("basics - no max_payload messages", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   t.truthy(nc.protocol.info.max_payload);
   const big = new Uint8Array(nc.protocol.info.max_payload + 1);
@@ -581,7 +580,7 @@ test("basics - no max_payload messages", async (t) => {
 
 test("basics - empty message", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const mp = deferred();
@@ -603,7 +602,7 @@ test("basics - empty message", async (t) => {
 
 test("basics - subject is required", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   t.plan(2);
   t.throws(() => {
@@ -620,7 +619,7 @@ test("basics - subject is required", async (t) => {
 
 test("basics - payload is only Uint8Array", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   t.throws(() => {
     nc.publish(createInbox(), "s");
@@ -632,7 +631,7 @@ test("basics - payload is only Uint8Array", async (t) => {
 
 test("basics - disconnect reconnects", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const lock = new Lock();
   const status = nc.status();
@@ -649,6 +648,22 @@ test("basics - disconnect reconnects", async (t) => {
 
   nc.protocol.transport.disconnect();
   await lock;
+  await nc.close();
+  await ns.stop();
+  t.pass();
+});
+
+test("basics - wss connection", async (t) => {
+  const conf = {
+    websocket: {
+      port: -1,
+      tls: tlsConfig(),
+    },
+  };
+
+  const ns = await NatsServer.start(conf);
+  const nc = await connect({ servers: `wss://127.0.0.1:${ns.websocket}` });
+  await nc.flush();
   await nc.close();
   await ns.stop();
   t.pass();

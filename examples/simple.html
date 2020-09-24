@@ -24,7 +24,7 @@
 
   const init = async function () {
     // create a connection
-    const nc = await connect({ servers: 'localhost:9222', ws: true })
+    const nc = await connect({ servers: 'ws://localhost:9222' })
     addEntry('connected to NATS!');
 
     // simple publisher

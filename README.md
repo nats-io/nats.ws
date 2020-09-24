@@ -76,28 +76,36 @@ can reference it from your code:
 ## Connection Options Specific to nats.ws
 
 By default, the nats-server will serve WSS connections only.
-The current architecture of nats.deno and nats.ws will soon be
-removing the `url` connection field in favor of `servers`.
 
-There are two reasons for this change. First, URL embedded authentication
-credentials are not globally supported in non HTTP/S protocols.
+The `nats-server` gossips cluster configuration to clients. Cluster
+configuration however is disseminated as `host:port`. With websockets, 
+a connection is made using an URL which means that the protocol specifies
+whether the connection is encrypted or not. By default,
+the nats.ws client assumes any specified `host:port` is available
+via `wss://host:port`.
 
-Secondly, connection protocols are not gossiped on cluster information. 
-To specify a `ws://`  connection, the connection option `ws` must be set to `true`.
-Otherwise the client will always attempt to connect via `wss://`
+If your cluster security not uniform (mixes `ws://` and `wss://`), 
+you'll need to disable server advertising or on the client specify 
+the `ignoreServerUpdates` connection option. Of course in this case
+you are responsible for providing all the URLs for the cluster if
+you want fail over. 
 
 
 ```typescript
-  // connects via ws://
+  
   const conn = await connect(
-    { servers: "localhost:9222", ws: true },
+    { servers: ["ws://localhost:9222", "wss://localhost:2229", "localhost:9111"] },
   );
 
-  // connects via wss://
-  const wssConn = await connect(
-    { servers: "localhost:9222"}
-  )
 ```
+
+In the above example, the first two URLs connect as per their protocol specifications.
+The third server connects using `wss://` as that is the default.
+
+If you are accessing websocket via a proxy, likely the `ignoreServerUpdates` should
+be specified to avoid learning about servers that are not accessible from
+the outside.
+
 
 ## Web Application Examples
 

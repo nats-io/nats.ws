@@ -45,7 +45,7 @@ test("auth - none", async (t) => {
   t.plan(1);
   const ns = await NatsServer.start(conf);
   try {
-    const nc = await connect({ port: ns.websocket, ws: true });
+    const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
     await nc.close();
     t.fail("shouldnt have been able to connect");
   } catch (ex) {
@@ -59,7 +59,7 @@ test("auth - bad", async (t) => {
   const ns = await NatsServer.start(conf);
   try {
     const nc = await connect(
-      { port: ns.websocket, user: "me", pass: "hello", ws: true },
+      { servers: `ws://127.0.0.1:${ns.websocket}`, user: "me", pass: "hello" },
     );
     await nc.close();
     t.fail("shouldnt have been able to connect");
@@ -73,7 +73,11 @@ test("auth - un/pw", async (t) => {
   t.plan(1);
   const ns = await NatsServer.start(conf);
   const nc = await connect(
-    { port: ns.websocket, user: "derek", pass: "foobar", ws: true },
+    {
+      servers: `ws://127.0.0.1:${ns.websocket}`,
+      user: "derek",
+      pass: "foobar",
+    },
   );
   await nc.flush();
   await nc.close();
@@ -86,7 +90,11 @@ test("auth - sub permissions", async (t) => {
   const ns = await NatsServer.start(conf);
   const lock = Lock(2);
   const nc = await connect(
-    { port: ns.websocket, user: "derek", pass: "foobar", ws: true },
+    {
+      servers: `ws://127.0.0.1:${ns.websocket}`,
+      user: "derek",
+      pass: "foobar",
+    },
   );
   nc.closed().then((err) => {
     t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);
@@ -112,7 +120,11 @@ test("auth - pub perm", async (t) => {
   const ns = await NatsServer.start(conf);
   const lock = Lock();
   const nc = await connect(
-    { port: ns.websocket, user: "derek", pass: "foobar", ws: true },
+    {
+      servers: `ws://127.0.0.1:${ns.websocket}`,
+      user: "derek",
+      pass: "foobar",
+    },
   );
   nc.closed().then((err) => {
     t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);
@@ -135,7 +147,7 @@ test("auth - pub perm", async (t) => {
 
 test("auth - user and token is rejected", async (t) => {
   connect(
-    { servers: "127.0.0.1:4222", user: "derek", token: "foobar", ws: true },
+    { servers: "ws://127.0.0.1:4222", user: "derek", token: "foobar" },
   )
     .then(async (nc) => {
       await nc.close();
@@ -150,7 +162,9 @@ test("auth - token", async (t) => {
   const ns = await NatsServer.start(
     Object.assign({ authorization: { token: "foo" } }, wsConfig()),
   );
-  const nc = await connect({ port: ns.websocket, token: "foo", ws: true });
+  const nc = await connect(
+    { servers: `ws://127.0.0.1:${ns.websocket}`, token: "foo" },
+  );
   await nc.flush();
   await nc.close();
   await ns.stop();
@@ -171,7 +185,10 @@ test("auth - nkey", async (t) => {
   }, wsConfig());
   const ns = await NatsServer.start(conf);
   const nc = await connect(
-    { port: ns.websocket, authenticator: nkeyAuthenticator(seed), ws: true },
+    {
+      servers: `ws://127.0.0.1:${ns.websocket}`,
+      authenticator: nkeyAuthenticator(seed),
+    },
   );
   await nc.flush();
   await nc.close();
@@ -205,9 +222,8 @@ test("auth - creds", async (t) => {
   const ns = await NatsServer.start(conf);
   const nc = await connect(
     {
-      port: ns.websocket,
+      servers: `ws://127.0.0.1:${ns.websocket}`,
       authenticator: credsAuthenticator(new TextEncoder().encode(creds)),
-      ws: true,
     },
   );
   await nc.flush();
@@ -241,9 +257,8 @@ test("auth - custom", async (t) => {
   };
   const nc = await connect(
     {
-      port: ns.websocket,
+      servers: `ws://127.0.0.1:${ns.websocket}`,
       authenticator: authenticator,
-      ws: true,
     },
   );
   await nc.flush();
@@ -269,9 +284,8 @@ test("auth - jwt", async (t) => {
   const ns = await NatsServer.start(conf);
   const nc = await connect(
     {
-      port: ns.websocket,
+      servers: `ws://127.0.0.1:${ns.websocket}`,
       authenticator: jwtAuthenticator(jwt, new TextEncoder().encode(useed)),
-      ws: true,
     },
   );
   await nc.flush();
@@ -288,10 +302,9 @@ test("auth - custom error", async (t) => {
   };
   await connect(
     {
-      port: ns.websocket,
+      servers: `ws://127.0.0.1:${ns.websocket}`,
       maxReconnectAttempts: 1,
       authenticator: authenticator,
-      ws: true,
     },
   ).then(() => {
     t.fail("shouldn't have connected");

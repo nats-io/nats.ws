@@ -30,8 +30,8 @@ const {
 test("reconnect - should receive when some servers are invalid", async (t) => {
   const ns = await NatsServer.start(wsConfig());
 
-  const servers = ["127.0.0.1:7", `127.0.0.1:${ns.websocket}`];
-  const nc = await connect({ servers: servers, noRandomize: true, ws: true });
+  const servers = ["ws://127.0.0.1:7", `ws://127.0.0.1:${ns.websocket}`];
+  const nc = await connect({ servers: servers, noRandomize: true });
 
   const lock = Lock(1);
   const subj = createInbox();
@@ -55,11 +55,10 @@ test("reconnect - events", async (t) => {
   const ns = await NatsServer.start(wsConfig());
 
   let nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     waitOnFirstConnect: true,
     reconnectTimeWait: 100,
     maxReconnectAttempts: 10,
-    ws: true,
   });
 
   let disconnects = 0;
@@ -93,9 +92,8 @@ test("reconnect - events", async (t) => {
 test("reconnect - reconnect not emitted if suppressed", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   let nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     reconnect: false,
-    ws: true,
   });
 
   let disconnects = 0;
@@ -120,10 +118,9 @@ test("reconnect - reconnect not emitted if suppressed", async (t) => {
 test("reconnect - reconnecting after proper delay", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   let nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     reconnectTimeWait: 500,
     maxReconnectAttempts: 1,
-    ws: true,
   });
   // @ts-ignore
   const serverLastConnect = nc.protocol.servers.getCurrentServer().lastConnect;
@@ -148,10 +145,9 @@ test("reconnect - reconnecting after proper delay", async (t) => {
 test("reconnect - indefinite reconnects", async (t) => {
   let ns = await NatsServer.start(wsConfig());
   let nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     reconnectTimeWait: 100,
     maxReconnectAttempts: -1,
-    ws: true,
   });
 
   let disconnects = 0;
@@ -202,17 +198,15 @@ test("reconnect - jitter", async (t) => {
 
   let hasDefaultFn;
   let dc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     reconnect: false,
-    ws: true,
   });
   hasDefaultFn = typeof dc.options.reconnectDelayHandler === "function";
 
   let nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     maxReconnectAttempts: 1,
     reconnectDelayHandler: h,
-    ws: true,
   });
 
   await ns.stop();
@@ -225,10 +219,9 @@ test("reconnect - jitter", async (t) => {
 test("reconnect - internal disconnect forces reconnect", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   const nc = await connect({
-    port: ns.websocket,
+    servers: `ws://127.0.0.1:${ns.websocket}`,
     reconnect: true,
     reconnectTimeWait: 200,
-    ws: true,
   });
 
   let stale = false;

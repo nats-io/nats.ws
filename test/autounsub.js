@@ -21,7 +21,7 @@ const { NatsServer, wsConfig } = require("./helpers/launcher");
 
 test("autounsub - max option", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 10 });
@@ -37,7 +37,7 @@ test("autounsub - max option", async (t) => {
 
 test("autounsub - unsubscribe", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 10 });
@@ -54,7 +54,7 @@ test("autounsub - unsubscribe", async (t) => {
 
 test("autounsub - can unsub from auto-unsubscribed", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 1 });
@@ -71,7 +71,7 @@ test("autounsub - can unsub from auto-unsubscribed", async (t) => {
 
 test("autounsub - can break to unsub", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 20 });
@@ -93,7 +93,7 @@ test("autounsub - can break to unsub", async (t) => {
 
 test("autounsub - can change auto-unsub to a higher value", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const sub = nc.subscribe(subj, { max: 1 });
@@ -112,7 +112,7 @@ test("autounsub - request receives expected count with multiple helpers", async 
   t,
 ) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
 
@@ -143,7 +143,7 @@ test("autounsub - manual request receives expected count with multiple helpers",
   t,
 ) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const lock = Lock(5);
@@ -169,7 +169,7 @@ test("autounsub - manual request receives expected count with multiple helpers",
 
 test("autounsub - check subscription leaks", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let subj = createInbox();
   let sub = nc.subscribe(subj);
@@ -181,7 +181,7 @@ test("autounsub - check subscription leaks", async (t) => {
 
 test("autounsub - check request leaks", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let subj = createInbox();
 
@@ -219,7 +219,7 @@ test("autounsub - check request leaks", async (t) => {
 
 test("autounsub - check cancelled request leaks", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   let subj = createInbox();
 

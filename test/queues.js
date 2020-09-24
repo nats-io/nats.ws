@@ -22,7 +22,7 @@ const { NatsServer, wsConfig } = require("./helpers/launcher");
 
 test("queues - deliver to single queue", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const subs = [];
@@ -41,7 +41,7 @@ test("queues - deliver to single queue", async (t) => {
 
 test("queues - deliver to multiple queues", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const fn = (queue) => {
@@ -72,7 +72,7 @@ test("queues - deliver to multiple queues", async (t) => {
 
 test("queues - queues and subs independent", async (t) => {
   const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ port: ns.websocket, ws: true });
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
   const subj = createInbox();
   const subs = [];

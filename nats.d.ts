@@ -62,7 +62,6 @@ export interface ConnectionOptions {
   user?: string;
   verbose?: boolean;
   waitOnFirstConnect?: boolean;
-  ws?: boolean;
 }
 
 export interface TlsOptions {
