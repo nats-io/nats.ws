@@ -40,6 +40,7 @@ export interface ConnectionOptions {
   authenticator?: Authenticator;
   debug?: boolean;
   headers?: boolean;
+  ignoreServerUpdates?: boolean;
   maxPingOut?: number;
   maxReconnectAttempts?: number;
   name?: string;
