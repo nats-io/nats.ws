@@ -26,7 +26,7 @@ import {
   render,
 } from "./nats-base-client.ts";
 
-const VERSION = "1.0.0-112";
+const VERSION = "1.0.0-113";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
