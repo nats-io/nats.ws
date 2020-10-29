@@ -14,16 +14,16 @@
  */
 import type {
   ConnectionOptions,
-  Transport,
   Deferred,
   Server,
+  Transport,
 } from "./nats-base-client.ts";
 import {
+  deferred,
+  delay,
   ErrorCode,
   NatsError,
   render,
-  deferred,
-  delay,
 } from "./nats-base-client.ts";
 
 const VERSION = "1.0.0-112";
