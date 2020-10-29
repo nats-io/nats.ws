@@ -12,4 +12,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-10/nats-base-client/internal_mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-11/nats-base-client/internal_mod.ts";

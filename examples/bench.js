@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { connect, Bench, Metric } from "../nats.mjs";
+import { Bench, connect, Metric } from "../nats.mjs";
 
 function getString(id) {
   return document.getElementById(id).value;
