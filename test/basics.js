@@ -668,3 +668,28 @@ test("basics - wss connection", async (t) => {
   await ns.stop();
   t.pass();
 });
+
+test("basics - drain connection publisher", async (t) => {
+  const ns = await NatsServer.start(wsConfig());
+
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
+  const nc2 = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
+
+  const subj = createInbox();
+
+  const lock = new Lock(5);
+  nc2.subscribe(subj, {
+    callback: (err, m) => {
+      lock.unlock();
+    },
+  });
+  await nc2.flush();
+
+  for (let i = 0; i < 5; i++) {
+    nc.publish(subj);
+  }
+  await nc.drain();
+  await lock;
+  await nc.close();
+  t.pass();
+});
