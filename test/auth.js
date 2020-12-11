@@ -102,8 +102,10 @@ test("auth - sub permissions", async (t) => {
   });
 
   const sub = nc.subscribe("foo");
-  (async (t) => {
-    for await (const m of sub) {}
+  (async () => {
+    for await (const m of sub) {
+      // ignored
+    }
   })().catch((err) => {
     lock.unlock();
     t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);

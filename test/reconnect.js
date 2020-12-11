@@ -153,7 +153,7 @@ test("reconnect - indefinite reconnects", async (t) => {
   let disconnects = 0;
   let reconnects = 0;
   let reconnect = false;
-  (async (t) => {
+  (async () => {
     for await (const e of nc.status()) {
       switch (e.type) {
         case Events.DISCONNECT:

@@ -12,8 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export declare function connect(
+  opts?: ConnectionOptions,
+): Promise<NatsConnection>;
 
 export interface NatsConnection {
+  info?: ServerInfo;
   closed(): Promise<void | Error>;
   close(): Promise<void>;
   publish(subject: string, data?: Uint8Array, options?: PublishOptions): void;
@@ -29,34 +33,14 @@ export interface NatsConnection {
   isDraining(): boolean;
   getServer(): string;
   status(): AsyncIterable<Status>;
+  stats(): Stats;
 }
-
-export declare enum Events {
-  DISCONNECT = "disconnect",
-  RECONNECT = "reconnect",
-  UPDATE = "update",
-  LDM = "ldm",
-}
-
-export interface Status {
-  type: string;
-  data: string | ServersChanged;
-}
-
-export interface MsgHdrs extends Iterable<[string, string[]]> {
-  get(k: string): string;
-  set(k: string, v: string): void;
-  append(k: string, v: string): void;
-  has(k: string): boolean;
-  values(k: string): string[];
-  delete(k: string): void;
-}
-export declare function headers(): MsgHdrs;
 
 export interface ConnectionOptions {
   authenticator?: Authenticator;
   debug?: boolean;
   headers?: boolean;
+  ignoreServerUpdates?: boolean;
   maxPingOut?: number;
   maxReconnectAttempts?: number;
   name?: string;
@@ -80,29 +64,33 @@ export interface ConnectionOptions {
   verbose?: boolean;
   waitOnFirstConnect?: boolean;
 }
+
 export interface TlsOptions {
   certFile?: string;
   caFile?: string;
   keyFile?: string;
 }
-export interface Msg {
-  subject: string;
-  sid: number;
-  reply?: string;
-  data: Uint8Array;
-  headers?: MsgHdrs;
-  respond(data?: Uint8Array, headers?: MsgHdrs): boolean;
+
+declare type Auth = NoAuth | TokenAuth | UserPass | NKeyAuth | JwtAuth;
+/**
+ * Authenticator is an interface that returns credentials
+ */
+export interface Authenticator {
+  (nonce?: string): Auth;
 }
-export interface SubscriptionOptions {
-  queue?: string;
-  max?: number;
-  timeout?: number;
-  callback?: (err: NatsError | null, msg: Msg) => void;
+
+export declare enum Events {
+  DISCONNECT = "disconnect",
+  RECONNECT = "reconnect",
+  UPDATE = "update",
+  LDM = "ldm",
 }
-export interface ServersChanged {
-  readonly added: string[];
-  readonly deleted: string[];
+
+export interface Status {
+  type: string;
+  data: string | ServersChanged;
 }
+
 export interface Subscription extends AsyncIterable<Msg> {
   unsubscribe(max?: number): void;
   drain(): Promise<void>;
@@ -115,6 +103,14 @@ export interface Subscription extends AsyncIterable<Msg> {
   getID(): number;
   getMax(): number | undefined;
 }
+
+export interface SubscriptionOptions {
+  queue?: string;
+  max?: number;
+  timeout?: number;
+  callback?: (err: NatsError | null, msg: Msg) => void;
+}
+
 export interface RequestOptions {
   timeout: number;
   headers?: MsgHdrs;
@@ -125,7 +121,32 @@ export interface PublishOptions {
   headers?: MsgHdrs;
 }
 
+export interface Msg {
+  subject: string;
+  sid: number;
+  reply?: string;
+  data: Uint8Array;
+  headers?: MsgHdrs;
+  respond(data?: Uint8Array, opts?: PublishOptions): boolean;
+}
+
+export interface MsgHdrs extends Iterable<[string, string[]]> {
+  get(k: string): string;
+  set(k: string, v: string): void;
+  append(k: string, v: string): void;
+  has(k: string): boolean;
+  values(k: string): string[];
+  delete(k: string): void;
+}
+export declare function headers(): MsgHdrs;
+
+export interface ServersChanged {
+  readonly added: string[];
+  readonly deleted: string[];
+}
+
 export declare type NoAuth = void;
+
 export interface TokenAuth {
   auth_token: string;
 }
@@ -142,13 +163,7 @@ export interface JwtAuth {
   nkey?: string;
   sig?: string;
 }
-declare type Auth = NoAuth | TokenAuth | UserPass | NKeyAuth | JwtAuth;
-/**
- * Authenticator is an interface that returns credentials
- */
-export interface Authenticator {
-  (nonce?: string): Auth;
-}
+
 export declare function noAuthFn(): Authenticator;
 /**
  * Returns an nkey authenticator that returns a public key
@@ -179,12 +194,13 @@ export declare function jwtAuthenticator(
 export declare function credsAuthenticator(creds: Uint8Array): Authenticator;
 
 export declare enum ErrorCode {
+  API_ERROR = "BAD API",
   BAD_AUTHENTICATION = "BAD_AUTHENTICATION",
   BAD_CREDS = "BAD_CREDS",
   BAD_HEADER = "BAD_HEADER",
   BAD_JSON = "BAD_JSON",
-  BAD_SUBJECT = "BAD_SUBJECT",
   BAD_PAYLOAD = "BAD_PAYLOAD",
+  BAD_SUBJECT = "BAD_SUBJECT",
   CANCELLED = "CANCELLED",
   CONNECTION_CLOSED = "CONNECTION_CLOSED",
   CONNECTION_DRAINING = "CONNECTION_DRAINING",
@@ -193,12 +209,14 @@ export declare enum ErrorCode {
   DISCONNECT = "DISCONNECT",
   INVALID_OPTION = "INVALID_OPTION",
   INVALID_PAYLOAD_TYPE = "INVALID_PAYLOAD",
+  MAX_PAYLOAD_EXCEEDED = "MAX_PAYLOAD_EXCEEDED",
   NOT_FUNC = "NOT_FUNC",
   REQUEST_ERROR = "REQUEST_ERROR",
   SERVER_OPTION_NA = "SERVER_OPT_NA",
   SUB_CLOSED = "SUB_CLOSED",
   SUB_DRAINING = "SUB_DRAINING",
   TIMEOUT = "TIMEOUT",
+  TLS = "TLS",
   UNKNOWN = "UNKNOWN_ERROR",
   WSS_REQUIRED = "WSS_REQUIRED",
   AUTHORIZATION_VIOLATION = "AUTHORIZATION_VIOLATION",
@@ -212,3 +230,42 @@ export declare interface NatsError extends Error {
   code: string;
   chainedError?: Error;
 }
+
+export interface ServerInfo {
+  auth_required?: boolean;
+  client_id: number;
+  client_ip?: string;
+  connect_urls?: string[];
+  git_commit?: string;
+  go: string;
+  headers?: boolean;
+  host: string;
+  jetstream?: boolean;
+  ldm?: boolean;
+  max_payload: number;
+  nonce?: string;
+  port: number;
+  proto: number;
+  server_id: string;
+  server_name: string;
+  tls_available?: boolean;
+  tls_required?: boolean;
+  tls_verify?: boolean;
+  version: string;
+}
+
+export interface Stats {
+  inBytes: number;
+  outBytes: number;
+  inMsgs: number;
+  outMsgs: number;
+}
+
+export interface Codec<T> {
+  encode(d: T): Uint8Array;
+  decode(a: Uint8Array): T;
+}
+
+export declare function StringCodec(): Codec<string>;
+
+export declare function JSONCodec(): Codec<unknown>;

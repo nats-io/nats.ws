@@ -167,15 +167,34 @@ export interface JwtAuth {
 
 export declare function noAuthFn(): Authenticator;
 
+/**
+ * Returns an nkey authenticator that returns a public key
+ * @param {Uint8Array | (() => Uint8Array)} seed
+ * @return {NKeyAuth}
+ */
 export declare function nkeyAuthenticator(
   seed?: Uint8Array | (() => Uint8Array),
 ): Authenticator;
 
+/**
+ * Returns a jwt authenticator. If a seed is provided, the public
+ * key, and signature are calculated. Note if a signature is provided
+ * the returned value should be a base64 encoded string.
+ *
+ * @return {JwtAuth}
+ * @param ajwt
+ * @param seed
+ */
 export declare function jwtAuthenticator(
   ajwt: string | (() => string),
   seed?: Uint8Array | (() => Uint8Array),
 ): Authenticator;
 
+/**
+ * Returns a jwt authenticator configured from the specified creds file contents.
+ * @param creds
+ * @returns {JwtAuth}
+ */
 export declare function credsAuthenticator(creds: Uint8Array): Authenticator;
 
 export declare enum ErrorCode {
@@ -253,4 +272,4 @@ export interface Codec<T> {
 
 export declare function StringCodec(): Codec<string>;
 
-export declare function JSONCodec(): Codec<any>;
+export declare function JSONCodec(): Codec<unknown>;

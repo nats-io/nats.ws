@@ -190,7 +190,6 @@ exports.NatsServer = class NatsServer {
   signal(signal) {
     const sn = ServerSignals.get(signal);
     this.process.kill(sn ? sn : signal);
-    return Promise.resolve();
   }
 
   async varz() {

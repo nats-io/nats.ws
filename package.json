@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-114",
+  "version": "1.0.0-115",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
   "types": "nats.d.ts",
@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "setup": "curl -fsSL https://deno.land/x/install/install.sh | sh",
-    "build": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --unstable src/mod.ts ./nats.mjs",
+    "build": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --log-level info --unstable src/mod.ts ./nats.mjs",
     "prepack": "npm run build",
     "fmt": "deno fmt src/*.ts examples/*.js test/*.js test/*/*.js",
     "start-tls-nats": "cd examples && ../nats-server -c tls.conf",
@@ -29,7 +29,8 @@
     "clean": "rm -Rf ./nats.mjs ./build ./.deps ./nats-base-client ./cjs-wst",
     "stage": "npm run clean && npm run clone-nbc && npm run cjs-nbc && npm run cjs-wst && rm -Rf ./.deps/ && npm run build-cjs && rm -Rf ./wst",
     "ava": "nyc ava --verbose -T 60000",
-    "test": "npm run stage && npm run ava",
+    "test": "npm run stage && npm run check-imports && npm run ava",
+    "check-imports": "deno run --allow-all bin/consistent-deps.ts",
     "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
   },
   "devDependencies": {

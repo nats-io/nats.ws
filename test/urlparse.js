@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 const test = require("ava");
-const { urlParseFn } = require("../build/wst/connect.js");
+const { wsUrlParseFn } = require("../build/wst/connect.js");
 
 test("url - parse", (t) => {
   const u = [
@@ -41,7 +41,7 @@ test("url - parse", (t) => {
   t.plan(u.length);
 
   u.forEach((tc) => {
-    const out = urlParseFn(tc.in);
+    const out = wsUrlParseFn(tc.in);
     t.is(out, tc.expect, `test ${tc.in}`);
   });
 });
