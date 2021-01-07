@@ -21,9 +21,9 @@
   }
 
   const init = async function () {
-    // create a connection to a wss server
-    const nc = await connect({ servers: 'localhost:9222', ws: false })
-    .then(async () => {
+    try {
+      // create a connection to a wss server
+      const nc = await connect({ servers: 'wss://localhost:9222' });
       addEntry('connected!');
       await nc.flush();
       addEntry('did a round-trip to the server');
@@ -31,10 +31,10 @@
       // close the connection
       await nc.close();
       addEntry('closed the connection');
-    })
-    .catch(() => {
-      addEntry(`error connecting - did you setup a wss server?`);
-    });
+    } catch(err) {
+      addEntry(`error connecting - did you setup a wss server? ${err}`);
+      console.error(err)
+    }
   }
   init();
 </script>
