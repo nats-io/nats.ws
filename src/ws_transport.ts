@@ -16,21 +16,22 @@ import type {
   ConnectionOptions,
   Deferred,
   Server,
-  Transport,
   ServerInfo,
+  Transport,
 } from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-13/nats-base-client/internal_mod.ts";
 import {
+  checkOptions,
+  DataBuffer,
   deferred,
   delay,
   ErrorCode,
-  NatsError,
-  render,
-  DataBuffer,
   extractProtocolMessage,
   INFO,
+  NatsError,
+  render,
 } from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-13/nats-base-client/internal_mod.ts";
 
-const VERSION = "1.0.0-116";
+const VERSION = "1.0.0-117";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
@@ -44,7 +45,7 @@ export class WsTransport implements Transport {
   private options!: ConnectionOptions;
   socketClosed: boolean;
   encrypted: boolean;
-  peeked: boolean
+  peeked: boolean;
 
   yields: Uint8Array[] = [];
   signal: Deferred<void> = deferred<void>();
@@ -60,12 +61,18 @@ export class WsTransport implements Transport {
     this.peeked = false;
   }
 
-  async connect(
+  connect(
     server: Server,
     options: ConnectionOptions,
   ): Promise<void> {
     const connected = false;
     const connLock = deferred<void>();
+
+    // ws client doesn't support TLS setting
+    if (options.tls) {
+      connLock.reject(new NatsError("tls", ErrorCode.INVALID_OPTION));
+      return connLock;
+    }
 
     this.options = options;
     const u = server.src;
@@ -74,32 +81,34 @@ export class WsTransport implements Transport {
     this.socket.binaryType = "arraybuffer";
 
     this.socket.onopen = () => {
-      this.connected = true;
+      // we don't do anything here...
     };
 
     this.socket.onmessage = (me: MessageEvent) => {
       this.yields.push(new Uint8Array(me.data));
       if (this.peeked) {
         this.signal.resolve();
-        return
+        return;
       }
       const t = DataBuffer.concat(...this.yields);
       const pm = extractProtocolMessage(t);
       if (pm) {
         const m = INFO.exec(pm);
         if (!m) {
+          if (options.debug) {
+            console.error("!!!", render(t));
+          }
           connLock.reject(new Error("unexpected response from server"));
           return;
         }
         try {
-          // we are going to ignore this value, just trying to parse
-          JSON.parse(m[1]);
-          // if here we parsed something
+          const info = JSON.parse(m[1]) as ServerInfo;
+          checkOptions(info, this.options);
           this.peeked = true;
           this.connected = true;
           this.signal.resolve();
           connLock.resolve();
-        } catch(err) {
+        } catch (err) {
           connLock.reject(err);
           return;
         }
@@ -129,7 +138,6 @@ export class WsTransport implements Transport {
     };
     return connLock;
   }
-
 
   disconnect(): void {
     this._closed(undefined, true);
