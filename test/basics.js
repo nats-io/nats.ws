@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
+
 const test = require("ava");
-const { connect, ErrorCode, createInbox, StringCodec, Empty, Events } = require(
+const { connect, ErrorCode, createInbox, StringCodec, Empty } = require(
   "./index",
 );
 const { deferred, delay } = require(
@@ -665,6 +666,24 @@ test("basics - wss connection", async (t) => {
   const nc = await connect({ servers: `wss://127.0.0.1:${ns.websocket}` });
   await nc.flush();
   await nc.close();
+  await ns.stop();
+  t.pass();
+});
+
+test("basics - wsnats doesn't support tls options", async (t) => {
+  const conf = {
+    websocket: {
+      port: -1,
+      tls: tlsConfig(),
+    },
+  };
+  const ns = await NatsServer.start(conf);
+  try {
+    await connect({ servers: `wss://127.0.0.1:${ns.websocket}`, tls: {} });
+    t.fail(`should have failed with ${ErrorCode.INVALID_OPTION}`);
+  } catch(err) {
+    t.is(err.code, ErrorCode.INVALID_OPTION)
+  }
   await ns.stop();
   t.pass();
 });
