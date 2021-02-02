@@ -47,7 +47,7 @@ jobs:
       - run: npm test
         env:
           CI: true
-          NGS_TOKEN: ${{ secrets.WS_NGS_CI_USER }}
+          WS_NGS_CI_USER: ${{ secrets.WS_NGS_CI_USER }}
 #      - name: Gather coverage
 #        if: matrix.node-version == '14.x'
 #        run: npm run coveralls
