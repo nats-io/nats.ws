@@ -319,14 +319,16 @@ test("auth - custom error", async (t) => {
 
 test("auth - ngs", async (t) => {
   t.plan(1);
-  if (process.env.WS_NGS_CI_USER === undefined) {
-    t.log("test skipped - no WS_NGS_CI_USER defined in the environment")
+  const token = process.env.WS_NGS_CI_USER || "";
+  if (token.length === 0) {
+    t.log("test skipped - no WS_NGS_CI_USER defined in the environment");
     t.pass();
     return;
+  } else {
+    t.log("token.len", token.length);
   }
-  t.log("this ran?", process.env.WS_NGS_CI_USER)
   const sc = StringCodec();
-  const authenticator = jwtAuthenticator(process.env.WS_NGS_CI_USER);
+  const authenticator = jwtAuthenticator(token);
   const nc1 = await connect({
     servers: "wss://connect.ngs.global",
     authenticator: authenticator,
