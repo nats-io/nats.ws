@@ -31,7 +31,7 @@ import {
   render,
 } from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
 
-const VERSION = "1.0.0-117";
+const VERSION = "1.0.0-118";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
@@ -79,7 +79,6 @@ export class WsTransport implements Transport {
 
     this.options = options;
     const u = server.src;
-    console.log("connecting to:", u)
     this.encrypted = u.indexOf("wss://") === 0;
     this.socket = new WebSocket(u);
     this.socket.binaryType = "arraybuffer";
@@ -132,9 +131,12 @@ export class WsTransport implements Transport {
 
     // @ts-ignore: signature can be any
     this.socket.onerror = (e: ErrorEvent | Event): void => {
-      console.log(e);
       const evt = e as ErrorEvent;
-      const err = new NatsError(evt.message, ErrorCode.UNKNOWN, new Error(evt.error));
+      const err = new NatsError(
+        evt.message,
+        ErrorCode.UNKNOWN,
+        new Error(evt.error),
+      );
       if (!connected) {
         connLock.reject(err);
       } else {

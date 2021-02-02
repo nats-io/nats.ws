@@ -20,7 +20,7 @@ const {
   jwtAuthenticator,
   nkeyAuthenticator,
   credsAuthenticator,
-  StringCodec
+  StringCodec,
 } = require(
   "./index",
 );
@@ -317,27 +317,27 @@ test("auth - custom error", async (t) => {
   await ns.stop();
 });
 
-test.failing("auth - ngs", async (t) => {
-  t.log(process.env.NGS_TOKEN)
-  if (process.env.NGS_TOKEN === "") {
-    t.pass("skipped test - no token defined in the environment")
+test("auth - ngs", async (t) => {
+  t.plan(1);
+  if (process.env.WS_NGS_CI_USER === undefined) {
+    t.log("test skipped - no WS_NGS_CI_USER defined in the environment")
+    t.pass();
     return;
   }
-  t.truthy(process.env.NGS_TOKEN);
-  t.plan(3);
-  const authenticator = jwtAuthenticator(process.env.NGS_TOKEN);
+  t.log("this ran?", process.env.WS_NGS_CI_USER)
+  const sc = StringCodec();
+  const authenticator = jwtAuthenticator(process.env.WS_NGS_CI_USER);
   const nc1 = await connect({
-    servers: "wss://connect.ngs.global:9222",
-    authenticator: authenticator
+    servers: "wss://connect.ngs.global",
+    authenticator: authenticator,
   });
   const nc2 = await connect({
     servers: "wss://connect.ngs.global",
-    authenticator: authenticator
+    authenticator: authenticator,
   });
-  const sc = StringCodec();
   nc1.subscribe("hello.ngs", {
     callback: (err, msg) => {
-      msg.reply(sc.encode("hi!"));
+      msg.respond(sc.encode("hi!"));
     },
     max: 1,
   });

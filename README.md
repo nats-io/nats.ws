@@ -9,7 +9,7 @@ A websocket client for the [NATS messaging system](https://nats.io).
 
 ## Installation
 
->** :warning: NATS.ws is a preview** you can get the current development version by:
+>** :warning: NATS.ws is a release candidate** you can get the current candidate by:
 
 ```bash
 npm install nats.ws
@@ -76,6 +76,7 @@ can reference it from your code:
 ## Connection Options Specific to nats.ws
 
 By default, the nats-server will serve WSS connections only.
+
 
 The `nats-server` gossips cluster configuration to clients. Cluster
 configuration however is disseminated as `host:port`. With websockets, 
