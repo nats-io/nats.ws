@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.0.0-117",
+  "version": "1.0.0-119",
   "description": "WebSocket NATS client",
   "main": "nats.mjs",
   "types": "nats.d.ts",
@@ -16,8 +16,8 @@
     "build": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --log-level info --unstable src/mod.ts ./nats.mjs",
     "prepack": "npm run build",
     "fmt": "deno fmt src/*.ts examples/*.js test/*.js test/*/*.js",
-    "start-tls-nats": "cd examples && ../nats-server -c tls.conf",
-    "start-nats": "cd examples && ../nats-server -c nontls.conf",
+    "start-tls-nats": "cd examples && nats-server -c tls.conf",
+    "start-nats": "cd examples && nats-server -c nontls.conf",
     "start-http": "deno run --allow-all --unstable https://raw.githubusercontent.com/denoland/deno/master/std/http/file_server.ts .",
     "start-https": "deno run --allow-all --unstable https://raw.githubusercontent.com/denoland/deno/master/std/http/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
     "install-certs": "env CAROOT=./certs mkcert -cert-file ./certs/cert.pem -key-file ./certs/key.pem -install localhost 127.0.0.1 ::1",
@@ -34,14 +34,14 @@
     "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
   },
   "devDependencies": {
-    "@types/node": "^14.6.0",
-    "ava": "^3.11.1",
+    "@types/node": "^14.14.25",
+    "ava": "^3.15.0",
     "browser-env": "^3.3.0",
     "minimist": "^1.2.5",
-    "nkeys.js": "^1.0.0-5",
+    "nkeys.js": "^1.0.0-9",
     "nyc": "^15.1.0",
     "tslint": "^6.1.3",
-    "typescript": "^3.9.7"
+    "typescript": "^4.1.3"
   },
   "ava": {
     "failFast": true,
