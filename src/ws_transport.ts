@@ -31,7 +31,7 @@ import {
   render,
 } from "https://raw.githubusercontent.com/nats-io/nats.deno/v1.0.0-rc1/nats-base-client/internal_mod.ts";
 
-const VERSION = "1.0.0-117";
+const VERSION = "1.0.0-118";
 const LANG = "nats.ws";
 
 export class WsTransport implements Transport {
@@ -132,7 +132,11 @@ export class WsTransport implements Transport {
     // @ts-ignore: signature can be any
     this.socket.onerror = (e: ErrorEvent | Event): void => {
       const evt = e as ErrorEvent;
-      const err = new NatsError(evt.message, ErrorCode.UNKNOWN);
+      const err = new NatsError(
+        evt.message,
+        ErrorCode.UNKNOWN,
+        new Error(evt.error),
+      );
       if (!connected) {
         connLock.reject(err);
       } else {

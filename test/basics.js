@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 const test = require("ava");
 const { connect, ErrorCode, createInbox, StringCodec, Empty } = require(
   "./index",
@@ -681,8 +680,8 @@ test("basics - wsnats doesn't support tls options", async (t) => {
   try {
     await connect({ servers: `wss://127.0.0.1:${ns.websocket}`, tls: {} });
     t.fail(`should have failed with ${ErrorCode.INVALID_OPTION}`);
-  } catch(err) {
-    t.is(err.code, ErrorCode.INVALID_OPTION)
+  } catch (err) {
+    t.is(err.code, ErrorCode.INVALID_OPTION);
   }
   await ns.stop();
   t.pass();
