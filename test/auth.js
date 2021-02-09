@@ -20,6 +20,7 @@ const {
   jwtAuthenticator,
   nkeyAuthenticator,
   credsAuthenticator,
+  StringCodec,
 } = require(
   "./index",
 );
@@ -314,4 +315,38 @@ test("auth - custom error", async (t) => {
     t.is(err.code, ErrorCode.BAD_AUTHENTICATION);
   });
   await ns.stop();
+});
+
+test("auth - ngs", async (t) => {
+  t.plan(1);
+  const token = process.env.WS_NGS_CI_USER || "";
+  if (token.length === 0) {
+    t.log("test skipped - no WS_NGS_CI_USER defined in the environment");
+    t.pass();
+    return;
+  } else {
+    t.log("token.len", token.length);
+  }
+  const sc = StringCodec();
+  const authenticator = jwtAuthenticator(token);
+  const nc1 = await connect({
+    servers: "wss://connect.ngs.global",
+    authenticator: authenticator,
+  });
+  const nc2 = await connect({
+    servers: "wss://connect.ngs.global",
+    authenticator: authenticator,
+  });
+  nc1.subscribe("hello.ngs", {
+    callback: (err, msg) => {
+      msg.respond(sc.encode("hi!"));
+    },
+    max: 1,
+  });
+
+  await nc1.flush();
+  const m = await nc2.request("hello.ngs");
+  t.is(sc.decode(m.data), "hi!");
+  await nc1.close();
+  await nc2.close();
 });

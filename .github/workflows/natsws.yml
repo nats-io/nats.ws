@@ -13,7 +13,7 @@ jobs:
   test:
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [15.x]
 
     runs-on: ubuntu-latest
 
@@ -29,7 +29,7 @@ jobs:
       - name: Use Deno Version ${{ matrix.deno-version }}
         uses: denolib/setup-deno@master
         with:
-          deno-version: 1.6.3
+          deno-version: 1.6.1
       - name: Setup Go
         uses: actions/setup-go@v1
         with:
@@ -47,6 +47,7 @@ jobs:
       - run: npm test
         env:
           CI: true
+          WS_NGS_CI_USER: ${{ secrets.WS_NGS_CI_USER }}
 #      - name: Gather coverage
 #        if: matrix.node-version == '14.x'
 #        run: npm run coveralls
