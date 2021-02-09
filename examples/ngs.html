@@ -13,44 +13,44 @@
 <script type="module">
   import { connect, StringCodec, credsAuthenticator } from '../nats.mjs'
 
-
   // add an entry to the document
-  function addEntry(s) {
-    const p = document.createElement("pre");
-    p.appendChild(document.createTextNode(s));
-    document.getElementById("messages").appendChild(p);
+  function addEntry (s) {
+    const p = document.createElement('pre')
+    p.appendChild(document.createTextNode(s))
+    document.getElementById('messages').appendChild(p)
   }
 
-  const sc = StringCodec();
+  const sc = StringCodec()
 
-  async function testConnection(nc) {
-    addEntry('connected to NATS!');
+  async function testConnection (nc) {
+    addEntry('connected to NATS!')
 
     // simple publisher
     nc.publish('hello', sc.encode('nats'))
-    addEntry('published a message to `hello`');
+    addEntry('published a message to `hello`')
 
     // simple subscriber, if the message has a reply subject
     // send a reply
     const sub = await nc.subscribe('help');
     (async () => {
-      addEntry('listening for request on `help`');
+      addEntry('listening for request on `help`')
       for await (const m of sub) {
-        m.respond(sc.encode(`I can help ${sc.decode(m.data)}`));
+        m.respond(sc.encode(`I can help ${sc.decode(m.data)}`))
       }
     })().then()
 
     // request data - requests only receive one message
     // to receive multiple messages, create a subscription
-    addEntry('making a request to `help`');
+    addEntry('making a request to `help`')
     const msg = await nc.request('help', sc.encode('nats request'))
 
-    addEntry(`got response '${sc.decode(msg.data)}'`);
+    addEntry(`got response '${sc.decode(msg.data)}'`)
 
     // close the connection
-    nc.close();
-    addEntry('closed the connection');
+    nc.close()
+    addEntry('closed the connection')
   }
+
 
   async function init () {
     // To connect to NGS you need a creds or jwt authenticator
@@ -59,20 +59,21 @@
     // nsc add account myaccount
     // nsc add user myuser
     // nsc generate creds -a myaccount -n myuser -o ./myuser.creds
-
     // fetch the creds
-    const creds = await fetch("./myuser.creds")
-    const token = await creds.text();
-    addEntry("downloaded my creds")
-    // create an authenticator
-    const auth = credsAuthenticator(sc.encode(token));
-
+    const creds = await fetch('./myuser.creds')
+    if (!creds.ok) {
+      addEntry("unable to find ./myuser.creds - aborting")
+      return;
+    }
+    const token = await creds.text()
+    const auth = credsAuthenticator(sc.encode(token))
     // connect
-    let nc = await connect({ servers: 'wss://connect.ngs.global', authenticator: auth, debug: true });
-    await testConnection(nc);
-    await nc.closed;
+    let nc = await connect({ servers: 'wss://connect.ngs.global', authenticator: auth, debug: true })
+    await testConnection(nc)
+    await nc.closed
   }
-  init();
+
+  init()
 </script>
 </body>
 </html>
