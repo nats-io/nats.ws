@@ -216,7 +216,7 @@ export enum ErrorCode {
   PERMISSIONS_VIOLATION = "PERMISSIONS_VIOLATION",
 }
 
-export declare interface NatsError extends Error {
+export declare class NatsError extends Error {
   name: string;
   message: string;
   code: string;

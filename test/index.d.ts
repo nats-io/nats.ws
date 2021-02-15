@@ -218,7 +218,7 @@ export declare const ErrorCode: Readonly<{
   PERMISSIONS_VIOLATION: string;
 }>;
 
-export declare interface NatsError extends Error {
+export declare class NatsError extends Error {
   name: string;
   message: string;
   code: string;
