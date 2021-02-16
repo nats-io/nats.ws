@@ -711,3 +711,27 @@ test("basics - drain connection publisher", async (t) => {
   await nc.close();
   t.pass();
 });
+
+test("basics - default connection", async (t) => {
+  t.plan(1);
+  const ns = await NatsServer.start(
+    {
+      port: -1,
+      websocket: {
+        port: 443,
+        tls: tlsConfig(),
+      }
+    });
+  const nc = await connect();
+  try {
+    const subj = createInbox();
+    await nc.request(subj)
+    t.fail("expected request to fail");
+  } catch(err) {
+    t.is(err.code, ErrorCode.NO_RESPONDERS);
+  }
+  await nc.close();
+  await ns.stop();
+});
+
+
