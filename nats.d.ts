@@ -12,7 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export declare function connect(opts?: ConnectionOptions): Promise<NatsConnection>;
+export declare function connect(
+  opts?: ConnectionOptions,
+): Promise<NatsConnection>;
 
 export interface NatsConnection {
   info?: ServerInfo;
@@ -20,7 +22,11 @@ export interface NatsConnection {
   close(): Promise<void>;
   publish(subject: string, data?: Uint8Array, options?: PublishOptions): void;
   subscribe(subject: string, opts?: SubscriptionOptions): Subscription;
-  request(subject: string, data?: Uint8Array, opts?: RequestOptions): Promise<Msg>;
+  request(
+    subject: string,
+    data?: Uint8Array,
+    opts?: RequestOptions,
+  ): Promise<Msg>;
   flush(): Promise<void>;
   drain(): Promise<void>;
   isClosed(): boolean;
