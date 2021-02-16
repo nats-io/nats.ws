@@ -392,7 +392,9 @@ test("basics - request timeout", async (t) => {
       fail();
     })
     .catch((err) => {
-      t.true(err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS);
+      t.true(
+        err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS,
+      );
       lock.unlock();
     });
 
@@ -509,7 +511,9 @@ test("basics - no mux requests timeout", async (t) => {
   const lock = Lock();
   nc.request(createInbox(), Empty, { timeout: 250, noMux: true })
     .catch((err) => {
-      t.true(err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS);
+      t.true(
+        err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS,
+      );
       lock.unlock();
     });
   await lock;
@@ -710,4 +714,32 @@ test("basics - drain connection publisher", async (t) => {
   await lock;
   await nc.close();
   t.pass();
+});
+
+test("basics - default connection", async (t) => {
+  t.plan(1);
+  if(process.env.GITHUB_ACTIONS) {
+    t.log("skipping on github actions")
+    t.pass();
+    return;
+  }
+
+  const ns = await NatsServer.start(
+    {
+      websocket: {
+        port: 443,
+        tls: tlsConfig(),
+      },
+    },
+  );
+  const nc = await connect();
+  try {
+    const subj = createInbox();
+    await nc.request(subj);
+    t.fail("expected request to fail");
+  } catch (err) {
+    t.is(err.code, ErrorCode.NO_RESPONDERS);
+  }
+  await nc.close();
+  await ns.stop();
 });
