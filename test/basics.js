@@ -718,8 +718,8 @@ test("basics - drain connection publisher", async (t) => {
 
 test("basics - default connection", async (t) => {
   t.plan(1);
-  if(process.env.GITHUB_ACTIONS) {
-    t.log("skipping on github actions")
+  if (process.env.GITHUB_ACTIONS) {
+    t.log("skipping on github actions");
     t.pass();
     return;
   }

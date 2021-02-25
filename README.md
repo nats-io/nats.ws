@@ -154,9 +154,9 @@ await servers.forEach(async (v) => {
 ```
 
 To disconnect from the nats-server, call `close()` on the connection. A
-connection can be terminated by an unexpected error. For example, the server
-returns a runtime error. In those cases, the client will re-initiate a
-connection.
+connection can also be terminated when an unexpected error happens. For example,
+the server returns a run-time error. In those cases, the client will re-initiate
+a connection.
 
 By default, the client will always attempt to reconnect if the connection is
 closed for a reason other than calling `close()`. To get notified when the
@@ -276,10 +276,10 @@ Request/Reply is NATS equivalent to an HTTP request. To make requests you
 publish messages as you did before, but also specify a `reply` subject. The
 `reply` subject is where a service will publish your response.
 
-NATS provides syntactic sugar for publishing requests. The `request()` API will
+NATS provides syntactic sugar, for publishing requests. The `request()` API will
 generate a reply subject and manage the creation of a subscription under the
 covers. It will also start a timer to ensure that if a response is not received
-within your allotted time, the request fails. The example also illustrates a
+within your alloted time, the request fails. The example also illustrates a
 graceful shutdown.
 
 #### Services
@@ -388,10 +388,9 @@ await nc.close();
 
 ### Queue Groups
 
-Queue groups enable the scaling of services horizontally. Subscriptions for
-members of a queue group are treated as a single service. When you send a
-message to a queue group subscription, only a single client in a queue group
-will receive it.
+Queue groups allow scaling of services horizontally. Subscriptions for members
+of a queue group are treated as a single service. When you send a message to a
+queue group subscription, only a single client in a queue group will receive it.
 
 There can be any number of queue groups. Each group is treated as its own
 independent unit. Note that non-queue subscriptions are also independent of
@@ -403,7 +402,7 @@ import { connect, NatsConnection, StringCodec } from "./nats.mjs";
 async function createService(
   name,
   count = 1,
-  queue = "",
+  queue = ""
 ): Promise {
   const conns = [];
   for (let i = 1; i <= count; i++) {
@@ -624,11 +623,10 @@ const nc = await connect(
 ### Flush
 
 Flush sends a PING to the server. When the server responds with PONG you are
-guaranteed that all pending data was sent and received by the server.
-
-Note `ping()` effectively adds a server round-trip. All NATS clients handle
-their buffering optimally, so `ping(): Promise<void>` shouldn't be used except
-in cases where you are writing some sort of test.
+guaranteed that all pending data was sent and received by the server. Note
+`ping()` effectively adds a server round-trip. All NATS clients handle their
+buffering optimally, so `ping(): Promise<void>` shouldn't be used except in
+cases where you are writing some sort of test.
 
 ```javascript
 nc.publish("foo");
@@ -776,8 +774,8 @@ nc.closed()
   });
 ```
 
-To be aware of when a client closes, wait for the `closed()` promise to resolve.
-When it resolves, the client has finished and won't reconnect.
+Be aware that when a client closes, you will need to wait for the `closed()`
+promise to resolve. When it resolves, the client is done and will not reconnect.
 
 ### Async vs. Callbacks
 
@@ -821,6 +819,8 @@ The following is the list of connection options and default values.
 | ----------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `authenticator`         | none               | Specifies the authenticator function that sets the client credentials.                                                                                                                                                                                                                                                                                                                   |
 | `debug`                 | `false`            | If `true`, the client prints protocol interactions to the console. Useful for debugging.                                                                                                                                                                                                                                                                                                 |
+| `ignoreClusterUpdates`  | `false`            | If `true` the client will ignore any cluster updates provided by the server.                                                                                                                                                                                                                                                                                                             |
+| `inboxPrefix`           | `"_INBOX"`         | Sets de prefix for automatically created inboxes - `createInbox(prefix)`                                                                                                                                                                                                                                                                                                                 |
 | `maxPingOut`            | `2`                | Max number of pings the client will allow unanswered before raising a stale connection error.                                                                                                                                                                                                                                                                                            |
 | `maxReconnectAttempts`  | `10`               | Sets the maximum number of reconnect attempts. The value of `-1` specifies no limit.                                                                                                                                                                                                                                                                                                     |
 | `name`                  |                    | Optional client name - recommended to be set to a unique client name.                                                                                                                                                                                                                                                                                                                    |
@@ -830,18 +830,17 @@ The following is the list of connection options and default values.
 | `pedantic`              | `false`            | Turns on strict subject format checks.                                                                                                                                                                                                                                                                                                                                                   |
 | `pingInterval`          | `120000`           | Number of milliseconds between client-sent pings.                                                                                                                                                                                                                                                                                                                                        |
 | `port`                  | `4222`             | Port to connect to (only used if `servers` is not specified).                                                                                                                                                                                                                                                                                                                            |
-| `reconnectTimeWait`     | `2000`             | If disconnected, the client will wait the specified number of milliseconds between reconnect attempts.                                                                                                                                                                                                                                                                                   |
+| `reconnect`             | `true`             | If false, client will not attempt reconnecting.                                                                                                                                                                                                                                                                                                                                          |
+| `reconnectDelayHandler` | Generated function | A function that returns the number of millis to wait before the next connection to a server it connected to `()=>number`.                                                                                                                                                                                                                                                                |
 | `reconnectJitter`       | `100`              | Number of millis to randomize after `reconnectTimeWait`.                                                                                                                                                                                                                                                                                                                                 |
 | `reconnectJitterTLS`    | `1000`             | Number of millis to randomize after `reconnectTimeWait` when TLS options are specified.                                                                                                                                                                                                                                                                                                  |
-| `reconnectDelayHandler` | Generated function | A function that returns the number of millis to wait before the next connection to a server it connected to `()=>number`.                                                                                                                                                                                                                                                                |
-| `reconnect`             | `true`             | If false, client will not attempt reconnecting.                                                                                                                                                                                                                                                                                                                                          |
+| `reconnectTimeWait`     | `2000`             | If disconnected, the client will wait the specified number of milliseconds between reconnect attempts.                                                                                                                                                                                                                                                                                   |
 | `servers`               | `"localhost:4222"` | String or Array of hostport for servers.                                                                                                                                                                                                                                                                                                                                                 |
 | `timeout`               | 20000              | Number of milliseconds the client will wait for a connection to be established. If it fails it will emit a `connection_timeout` event with a NatsError that provides the hostport of the server where the connection was attempted.                                                                                                                                                      |
 | `token`                 |                    | Sets an authorization token for a connection.                                                                                                                                                                                                                                                                                                                                            |
 | `user`                  |                    | Sets the username for a connection.                                                                                                                                                                                                                                                                                                                                                      |
 | `verbose`               | `false`            | Turns on `+OK` protocol acknowledgements.                                                                                                                                                                                                                                                                                                                                                |
 | `waitOnFirstConnect`    | `false`            | If `true` the client will fall back to a reconnect mode if it fails its first connection attempt.                                                                                                                                                                                                                                                                                        |
-| `ignoreClusterUpdates`  | `false`            | If `true` the client will ignore any cluster updates provided by the server.                                                                                                                                                                                                                                                                                                             |
 
 ### Jitter
 
