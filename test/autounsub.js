@@ -235,7 +235,7 @@ test("autounsub - check cancelled request leaks", async (t) => {
   const lock = Lock();
   rp.catch((rej) => {
     t.true(
-      rej?.code === ErrorCode.TIMEOUT || rej?.code === ErrorCode.NO_RESPONDERS,
+      rej?.code === ErrorCode.Timeout || rej?.code === ErrorCode.NoResponders,
     );
     lock.unlock();
   });

@@ -65,7 +65,7 @@ test("basics - no publish without subject", async (t) => {
     nc.publish("");
     fail("should not be able to publish without a subject");
   } catch (err) {
-    t.is(err.code, ErrorCode.BAD_SUBJECT);
+    t.is(err.code, ErrorCode.BadSubject);
   } finally {
     await nc.close();
     await ns.stop();
@@ -393,7 +393,7 @@ test("basics - request timeout", async (t) => {
     })
     .catch((err) => {
       t.true(
-        err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS,
+        err.code === ErrorCode.Timeout || err.code === ErrorCode.NoResponders,
       );
       lock.unlock();
     });
@@ -415,7 +415,7 @@ test("basics - request cancel rejects", async (t) => {
       t.fail();
     })
     .catch((err) => {
-      t.is(err.code, ErrorCode.CANCELLED);
+      t.is(err.code, ErrorCode.Cancelled);
       lock.unlock();
     });
 
@@ -436,7 +436,7 @@ test("basics - subscription with timeout", async (t) => {
   (async () => {
     for await (const m of sub) {}
   })().catch((err) => {
-    t.is(err.code, ErrorCode.TIMEOUT);
+    t.is(err.code, ErrorCode.Timeout);
     lock.unlock();
   });
   await lock;
@@ -512,7 +512,7 @@ test("basics - no mux requests timeout", async (t) => {
   nc.request(createInbox(), Empty, { timeout: 250, noMux: true })
     .catch((err) => {
       t.true(
-        err.code === ErrorCode.TIMEOUT || err.code === ErrorCode.NO_RESPONDERS,
+        err.code === ErrorCode.Timeout || err.code === ErrorCode.NoResponders,
       );
       lock.unlock();
     });
@@ -552,14 +552,14 @@ test("basics - no max_payload messages", async (t) => {
     nc.publish(subj, big);
     t.fail();
   } catch (err) {
-    t.is(err.code, ErrorCode.MAX_PAYLOAD_EXCEEDED);
+    t.is(err.code, ErrorCode.MaxPayloadExceeded);
   }
 
   try {
     const _ = await nc.request(subj, big);
     t.fail();
   } catch (err) {
-    t.is(err.code, ErrorCode.MAX_PAYLOAD_EXCEEDED);
+    t.is(err.code, ErrorCode.MaxPayloadExceeded);
   }
 
   const sub = nc.subscribe(subj);
@@ -569,13 +569,13 @@ test("basics - no max_payload messages", async (t) => {
       t.fail();
     }
   })().catch((err) => {
-    t.is(err.code, ErrorCode.MAX_PAYLOAD_EXCEEDED);
+    t.is(err.code, ErrorCode.MaxPayloadExceeded);
   });
 
   await nc.request(subj).then(() => {
     t.fail();
   }).catch((err) => {
-    t.is(err.code, ErrorCode.TIMEOUT);
+    t.is(err.code, ErrorCode.Timeout);
   });
 
   await nc.close();
@@ -611,10 +611,10 @@ test("basics - subject is required", async (t) => {
   t.plan(2);
   t.throws(() => {
     nc.publish();
-  }, { code: ErrorCode.BAD_SUBJECT });
+  }, { code: ErrorCode.BadSubject });
 
   await nc.request().catch((err) => {
-    t.is(err.code, ErrorCode.BAD_SUBJECT);
+    t.is(err.code, ErrorCode.BadSubject);
   });
 
   await nc.close();
@@ -627,7 +627,7 @@ test("basics - payload is only Uint8Array", async (t) => {
 
   t.throws(() => {
     nc.publish(createInbox(), "s");
-  }, { code: ErrorCode.BAD_PAYLOAD });
+  }, { code: ErrorCode.BadPayload });
 
   await nc.close();
   await ns.stop();
@@ -683,9 +683,9 @@ test("basics - wsnats doesn't support tls options", async (t) => {
   const ns = await NatsServer.start(conf);
   try {
     await connect({ servers: `wss://127.0.0.1:${ns.websocket}`, tls: {} });
-    t.fail(`should have failed with ${ErrorCode.INVALID_OPTION}`);
+    t.fail(`should have failed with ${ErrorCode.InvalidOption}`);
   } catch (err) {
-    t.is(err.code, ErrorCode.INVALID_OPTION);
+    t.is(err.code, ErrorCode.InvalidOption);
   }
   await ns.stop();
   t.pass();
@@ -738,7 +738,7 @@ test("basics - default connection", async (t) => {
     await nc.request(subj);
     t.fail("expected request to fail");
   } catch (err) {
-    t.is(err.code, ErrorCode.NO_RESPONDERS);
+    t.is(err.code, ErrorCode.NoResponders);
   }
   await nc.close();
   await ns.stop();
