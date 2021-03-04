@@ -50,7 +50,7 @@ test("auth - none", async (t) => {
     await nc.close();
     t.fail("shouldnt have been able to connect");
   } catch (ex) {
-    t.is(ex.code, ErrorCode.AUTHORIZATION_VIOLATION);
+    t.is(ex.code, ErrorCode.AuthorizationViolation);
   }
   await ns.stop();
 });
@@ -65,7 +65,7 @@ test("auth - bad", async (t) => {
     await nc.close();
     t.fail("shouldnt have been able to connect");
   } catch (ex) {
-    t.is(ex.code, ErrorCode.AUTHORIZATION_VIOLATION);
+    t.is(ex.code, ErrorCode.AuthorizationViolation);
   }
   await ns.stop();
 });
@@ -98,7 +98,7 @@ test("auth - sub permissions", async (t) => {
     },
   );
   nc.closed().then((err) => {
-    t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);
+    t.is(err.code, ErrorCode.PermissionsViolation);
     lock.unlock();
   });
 
@@ -109,7 +109,7 @@ test("auth - sub permissions", async (t) => {
     }
   })().catch((err) => {
     lock.unlock();
-    t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);
+    t.is(err.code, ErrorCode.PermissionsViolation);
   });
 
   nc.publish("foo");
@@ -130,7 +130,7 @@ test("auth - pub perm", async (t) => {
     },
   );
   nc.closed().then((err) => {
-    t.is(err.code, ErrorCode.PERMISSIONS_VIOLATION);
+    t.is(err.code, ErrorCode.PermissionsViolation);
     lock.unlock();
   });
 
@@ -157,7 +157,7 @@ test("auth - user and token is rejected", async (t) => {
       t.fail("should not have connected");
     })
     .catch((err) => {
-      t.is(err.code, ErrorCode.BAD_AUTHENTICATION);
+      t.is(err.code, ErrorCode.BadAuthentication);
     });
 });
 
@@ -312,7 +312,7 @@ test("auth - custom error", async (t) => {
   ).then(() => {
     t.fail("shouldn't have connected");
   }).catch((err) => {
-    t.is(err.code, ErrorCode.BAD_AUTHENTICATION);
+    t.is(err.code, ErrorCode.BadAuthentication);
   });
   await ns.stop();
 });
