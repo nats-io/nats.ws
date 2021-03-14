@@ -13,4 +13,4 @@
  * limitations under the License.
  */
 // this import here to drive the build system
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/subscribe-requires-deliverto/nats-base-client/internal_mod.ts";
