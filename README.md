@@ -3,12 +3,12 @@
 A websocket client for the [NATS messaging system](https://nats.io).
 
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)](LICENSE)
+![NATS.ws CI](https://github.com/nats-io/nats.ws/actions/workflows/natsws.yml/badge.svg)
+[![npm](https://img.shields.io/npm/v/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 [![npm](https://img.shields.io/npm/dt/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 [![npm](https://img.shields.io/npm/dm/nats.ws.svg)](https://www.npmjs.com/package/nats.ws)
 
 ## Installation
-
-> ** NATS.ws is a release candidate** you can get the current candidate by:
 
 ```bash
 npm install nats.ws
@@ -402,7 +402,7 @@ import { connect, NatsConnection, StringCodec } from "./nats.mjs";
 async function createService(
   name,
   count = 1,
-  queue = "",
+  queue = ""
 ): Promise {
   const conns = [];
   for (let i = 1; i <= count; i++) {
