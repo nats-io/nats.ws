@@ -146,7 +146,7 @@ test("jetstream - pull", async (t) => {
   await ns.stop();
 });
 
-test("jetstream - pullbatch", async (t) => {
+test("jetstream - fetch", async (t) => {
   const ns = await NatsServer.start(jetstreamServerConf(wsConfig()));
   const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
@@ -158,7 +158,7 @@ test("jetstream - pullbatch", async (t) => {
   });
 
   const js = nc.jetstream();
-  let iter = await js.pullBatch("stream", "me", { no_wait: true });
+  let iter = await js.fetch("stream", "me", { no_wait: true });
   await (async () => {
     for await (const m of iter) {
       // nothing
@@ -175,7 +175,7 @@ test("jetstream - pullbatch", async (t) => {
   pa = await js.publish("hello.world", Empty, { expect: { lastSequence: 2 } });
   t.is(pa.seq, 3);
 
-  iter = await js.pullBatch("stream", "me", { no_wait: true, batch: 2 });
+  iter = await js.fetch("stream", "me", { no_wait: true, batch: 2 });
   await (async () => {
     for await (const m of iter) {
       m.ack();
@@ -183,7 +183,7 @@ test("jetstream - pullbatch", async (t) => {
   })();
   t.is(iter.getProcessed(), 2);
 
-  iter = await js.pullBatch("stream", "me", { no_wait: true, batch: 2 });
+  iter = await js.fetch("stream", "me", { no_wait: true, batch: 2 });
   await (async () => {
     for await (const m of iter) {
       m.ack();
@@ -191,7 +191,7 @@ test("jetstream - pullbatch", async (t) => {
   })();
   t.is(iter.getProcessed(), 1);
 
-  iter = await js.pullBatch("stream", "me", { no_wait: true, batch: 3 });
+  iter = await js.fetch("stream", "me", { no_wait: true, batch: 3 });
   await (async () => {
     for await (const m of iter) {
       m.ack();

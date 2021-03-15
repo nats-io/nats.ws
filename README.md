@@ -19,7 +19,7 @@ Getting started with NATS.ws requires a little preparation:
 - A recent NATS server that supports WebSockets
 - An HTTP server to serve HTML and the nats.ws library
 
-To make it easy, the nats.ws github repository aids you with this setup. If you
+To make it easy, the nats.ws GitHub repository aids you with this setup. If you
 are on Windows, you'll need to look at the package.json for hints on what to do.
 Better yet, contribute an alternate package.json.
 
@@ -77,7 +77,7 @@ By default, the nats-server will serve WSS connections **only**.
 
 The `nats-server` gossips cluster configuration to clients. Cluster
 configuration however is disseminated as `host:port`. With websockets, a
-connection is made using an URL which means that the protocol specifies whether
+connection is made using a URL which means that the protocol specifies whether
 the connection is encrypted or not. By default, the nats.ws client assumes any
 specified `host:port` is available via `wss://host:port`. If this is not the
 case, you will need to specify the protocol as part of the server hostport
@@ -169,7 +169,7 @@ returned by `closed()`. If closed resolves to a value, the value is a
 The basic client operations are `publish` to send messages and `subscribe` to
 receive messages.
 
-Messages are published to a subject. A subject is like an URL with the exception
+Messages are published to a subject. A subject is like a URL with the exception
 that it doesn't specify an actual endpoint. All recipients that have expressed
 interest in a subject will receive messages addressed to that subject (provided
 they have access and permissions to get it). To express interest in a subject,
@@ -279,7 +279,7 @@ publish messages as you did before, but also specify a `reply` subject. The
 NATS provides syntactic sugar, for publishing requests. The `request()` API will
 generate a reply subject and manage the creation of a subscription under the
 covers. It will also start a timer to ensure that if a response is not received
-within your alloted time, the request fails. The example also illustrates a
+within your allotted time, the request fails. The example also illustrates a
 graceful shutdown.
 
 #### Services
@@ -402,7 +402,7 @@ import { connect, NatsConnection, StringCodec } from "./nats.mjs";
 async function createService(
   name,
   count = 1,
-  queue = ""
+  queue = "",
 ): Promise {
   const conns = [];
   for (let i = 1; i <= count; i++) {
@@ -468,7 +468,7 @@ Run it and publish a request to the subject `echo` to see what happens.
 ### Headers
 
 NATS headers are similar to HTTP headers. Headers are enabled automatically if
-the server supports them. Note that if you publish a message using headers but
+the server supports them. Note that if you publish a message using headers, and
 the server doesn't support them, an Error is thrown. Also note that even if you
 are publishing a message with a header, it is possible for the recipient to not
 support them.
@@ -512,7 +512,7 @@ await nc.close();
 ### No Responders
 
 Requests can fail for many reasons. A common reason for a failure is the lack of
-interest in the subject. Typically these surface as a timeout error. If the
+interest in the subject. Typically, these surface as a timeout error. If the
 server is enabled to use headers, it will also enable a `no responders` feature.
 If you send a request for which there's no interest, the request will be
 immediately rejected:
@@ -543,7 +543,7 @@ await nc.close();
 
 ### Authentication
 
-NATS supports many different forms of credentials:
+NATS supports different forms of authentication:
 
 - username/password
 - token
@@ -638,8 +638,8 @@ await nc.flush();
 
 When you publish a message you can specify some options:
 
-- `reply` - this is a subject to receive a reply (you must setup a subscription)
-  before you publish.
+- `reply` - this is a subject to receive a reply (you must set up a
+  subscription) before you publish.
 - `headers` - a set of headers to decorate the message.
 
 ### `SubscriptionOptions`
@@ -722,12 +722,12 @@ You can drain a subscription or all subscriptions in a connection.
 
 When you drain a subscription, the client sends an `unsubscribe` protocol
 message to the server followed by a `flush`. The subscription handler is only
-removed after the server responds. Thus all pending messages for the
+removed after the server responds. Thus, all pending messages for the
 subscription have been processed.
 
-Draining a connection, drains all subscriptions. However when you drain the
+Draining a connection, drains all subscriptions. However, when you drain the
 connection it becomes impossible to make new subscriptions or send new requests.
-After the last subscription is drained it also becomes impossible to publish a
+After the last subscription is drained, it also becomes impossible to publish a
 message. These restrictions do not exist when just draining a subscription.
 
 ### Lifecycle/Informational Events
@@ -852,7 +852,7 @@ The intention of the settings is to spread out the number of clients attempting
 to reconnect to a server over a period of time, and thus preventing a
 ["Thundering Herd"](https://docs.nats.io/developing-with-nats/reconnect/random).
 
-The relationship between these is:
+The relationship between these are:
 
 - If `reconnectDelayHandler` is specified, the client will wait the value
   returned by this function. No other value will be taken into account.
@@ -863,12 +863,18 @@ The relationship between these is:
 
 ## Web Application Examples
 
-For various examples browser examples, checkout [examples](examples).
+For various browser examples checkout [examples](examples).
+
+## JetStream
+
+[Support for JetStream is built-in](https://github.com/nats-io/nats.deno/blob/main/jetstream.md).
+However, the JetStream API extensions are still in beta. Feel free to use them.
+The client will emit a console message when either `nc.jetstream()` or
+`nc.jetstreamManager()` apis are used to remind you they are in beta.
 
 ## Contributing
 
-NATS.ws uses [deno](https://deno.land) to build and package the ES Module for
-the library. The library shares client functionality with
+The library shares client functionality with
 [NATS.deno](https://github.com/nats-io/nats.deno). This means that both the
 NATS.deno and NATS.ws use the same exact code base, only differing on the
 implementation of the `Transport`. This strategy greatly reduces the amount of
