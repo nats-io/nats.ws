@@ -1,4 +1,4 @@
-name: NATS.ws CI
+name: CI
 
 on:
   push:
@@ -14,9 +14,8 @@ jobs:
     strategy:
       matrix:
         node-version: [15.x]
-
+    environment: CI
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout NATS.ws
         uses: actions/checkout@v2
@@ -37,11 +36,16 @@ jobs:
           wget "https://github.com/nats-io/nats-server/releases/download/$NATS_VERSION/nats-server-$NATS_VERSION-linux-amd64.zip" -O tmp.zip
           unzip tmp.zip
           mv nats-server-$NATS_VERSION-linux-amd64 nats-server
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
+      - name: Setup NPM
+        run: npm ci
+      - name: Build Library
+        run: npm run build
+      - name: Run Tests
         env:
           CI: true
+          WS_NGS_CI_USER: ${{ secrets.WS_NGS_CI_USER }}
+        run: npm test
+
 #      - name: Gather coverage
 #        if: matrix.node-version == '15.x'
 #        run: npm run coveralls
