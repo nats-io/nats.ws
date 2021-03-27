@@ -4,6 +4,12 @@
   "description": "WebSocket NATS client",
   "main": "nats.js",
   "module": "nats.mjs",
+  "exports": {
+    ".": {
+      "require":  "./nats.js",
+      "default": "./nats.mjs"
+    }
+  },
   "types": "nats.d.ts",
   "files": [
     "nats.mjs",
