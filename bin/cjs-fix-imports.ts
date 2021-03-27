@@ -29,7 +29,7 @@ const argv = parse(
     boolean: true,
     string: ["out"],
     default: {
-      o: "build",
+      o: "lib",
     },
   },
 );
@@ -40,6 +40,10 @@ requires.set(
   "https://raw.githubusercontent.com/nats-io/nkeys.js",
   { lib: "nkeys.js", arg: "nkeys" },
 );
+requires.set(
+  "https://deno.land/x/nkeys.js",
+  { lib: "nkeys.js", arg: "nkeys" },
+)
 
 // resolve the specified directories to fq
 let dirs = (argv._ as string[]).map((n) => {
@@ -70,7 +74,7 @@ if (argv.debug) {
 
 if (!dirs.length || argv.h || argv.help) {
   console.log(
-    `deno run --allow-all cjs-fix-imports [--debug] [--out build/] dir/ dir2/`,
+    `deno run --allow-all cjs-fix-imports [--debug] [--out lib/] dir/ dir2/`,
   );
   Deno.exit(1);
 }

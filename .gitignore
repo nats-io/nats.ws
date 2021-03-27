@@ -4,6 +4,7 @@ npm-debug.log*
 
 # generated files
 build/
+lib/
 .idea/
 certs/
 !test/certs/

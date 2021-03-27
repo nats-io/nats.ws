@@ -21,7 +21,7 @@ const {
   ErrorCode,
   deferred,
   DebugEvents,
-} = require("../build/nats-base-client/internal_mod");
+} = require("../lib/nats-base-client/internal_mod");
 const { Lock } = require("./helpers/lock");
 const {
   connect,
