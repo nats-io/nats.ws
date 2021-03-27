@@ -30,4 +30,5 @@ node_modules
 vcs.xml
 
 issues/
+**.creds
 

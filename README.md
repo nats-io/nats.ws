@@ -14,42 +14,33 @@ A websocket client for the [NATS messaging system](https://nats.io).
 npm install nats.ws
 ```
 
-Getting started with NATS.ws requires a little preparation:
+The npm bundle provides both esm and cjs versions of the library. This will have
+implications on how you consume the library. Other areas of this guide focus on
+esm. The esm library is consumable directly by the browser and Deno.
 
-- A recent NATS server that supports WebSockets
-- An HTTP server to serve HTML and the nats.ws library
+The cjs library is consumable with traditional react setups etc. For information
+on how to consume it with react or angular, please refer to your tooling's
+documentation. Even better contribute a guide!
 
-To make it easy, the nats.ws GitHub repository aids you with this setup. If you
-are on Windows, you'll need to look at the package.json for hints on what to do.
-Better yet, contribute an alternate package.json.
+While nats.ws is intended for the browser, the only limitation is really to have
+W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
+directly, so simply import the library and run:
 
-Here are the steps:
+```javascript
+import { connect } from "nats.ws/nats.mjs";
 
-```bash
-# clone the nats.ws repository:
-git clone https://github.com/nats-io/nats.ws.git
+// write some code that runs
+```
 
-# install [deno](https://deno.land):
-npm run setup
+In Node.js (using cjs), you shim the
+[websocket](https://www.npmjs.com/package/websocket):
 
-# build the library
-npm run build
+```javascript
+// shim the websocket library
+globalThis.WebSocket = require("websocket").w3cwebsocket;
+const { connect } = require("nats.ws");
 
-# install the master of nats-server, if you have 
-# [Go](https://golang.org/doc/install) installed,
-# you can easily clone and build the latest from
-# master:
-npm run install-ns
-
-# start the built nats-server:
-npm run start-nats
-
-# start an http server to serve the content in
-# the examples directory:
-npm run start-http
-
-# point your browser to: http://localhost:4507/examples
-# click on one of the HTML files
+// write some code that runs on the server
 ```
 
 ## Documentation
@@ -111,7 +102,7 @@ are not directly accessible to the clients.
 
 To connect to a server you use the `connect()` function. It returns a connection
 that you can use to interact with the server. You can customize the behavior of
-the client by specifying many [`ConnectionOptions`](#Connection_Options).
+the client by specifying many [`ConnectionOptions`](#connection-options).
 
 By default, a connection will attempt a connection on `127.0.0.1:4222`. If the
 connection is dropped, the client will attempt to reconnect. You can customize
@@ -884,3 +875,45 @@ completely compatible API across all clients.
 Currently, the base client implementation is the deno implementation. You can
 take a look at it
 [here](https://github.com/nats-io/nats.deno/tree/main/nats-base-client).
+
+### Developer Setup (for working on the websocket transport)
+
+Getting started with NATS.ws for contributions requires a little preparation:
+
+- A recent NATS server that supports WebSockets
+- An HTTP server to serve HTML and the nats.ws library
+
+To make it easy, the nats.ws GitHub repository aids you with this setup. If you
+are on Windows, you'll need to look at the package.json for hints on what to do.
+Better yet, contribute an alternate package.json.
+
+Here are the steps:
+
+```bash
+# clone the nats.ws repository:
+git clone https://github.com/nats-io/nats.ws.git
+
+# install [deno](https://deno.land)
+# on windows do `npm run setup_win`
+npm run setup
+
+# build the library
+npm run build
+
+# install the master of nats-server, if you have 
+# [Go](https://golang.org/doc/install) installed,
+# you can easily clone and build the latest from
+# master - you only need to do this if you want
+# run a server from master.
+npm run install-ns
+
+# start a nats-server:
+npm run start-nats
+
+# start an http server to serve the content in
+# the examples directory:
+npm run start-http
+
+# point your browser to: http://localhost:4507/examples
+# click on one of the HTML files
+```
