@@ -2,17 +2,17 @@
   "name": "nats.ws",
   "version": "1.1.0-3",
   "description": "WebSocket NATS client",
-  "main": "nats.js",
-  "module": "nats.es.js",
+  "main": "nats.cjs",
+  "module": "nats.js",
   "exports": {
     ".": {
-      "require":  "./nats.js",
-      "default": "./nats.es.js"
+      "require":  "./nats.cjs",
+      "default": "./nats.js"
     }
   },
   "types": "nats.d.ts",
   "files": [
-    "nats.es.js",
+    "nats.js",
     "lib/",
     "examples/",
     "OWNERS.md",
@@ -33,11 +33,11 @@
     "install-ns": "shx mkdir -p ./.deps && cd ./.deps && git clone --branch=master https://github.com/nats-io/nats-server.git && cd nats-server && go build && shx mv nats-server ../../",
 
     "prepack": "npm run build",
-    "clean": "shx rm -Rf ./nats.es.js ./lib ./.deps ./nats-base-client ./wst",
+    "clean": "shx rm -Rf ./nats.js ./lib ./.deps ./nats-base-client ./wst",
     "build": "npm run clean && npm run check-imports && npm run build-cjs && npm run build-es",
 
     "build-cjs": "npm run stage && npm run cjs-nbc && npm run cjs-wst && shx rm -Rf ./deps/ && tsc && shx rm -Rf ./wst && shx mv ./lib/wst ./lib/src && rm -Rf ./nats-base-client",
-    "build-es": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --log-level info --unstable src/mod.ts ./nats.es.js",
+    "build-es": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --log-level info --unstable src/mod.ts ./nats.js",
     "stage": "npm run clone-nbc",
 
     "cjs-nbc": "deno run --allow-all ./bin/cjs-fix-imports.ts -o nats-base-client/ ./.deps/nats.deno/nats-base-client/",
