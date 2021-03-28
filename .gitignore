@@ -14,7 +14,7 @@ cjs-wst/
 nats-base-client/
 
 nats-server
-nats.mjs
+nats.es.js
 
 # nyc test coverage
 .nyc_output
