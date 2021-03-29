@@ -14,42 +14,40 @@ A websocket client for the [NATS messaging system](https://nats.io).
 npm install nats.ws
 ```
 
-Getting started with NATS.ws requires a little preparation:
+The npm bundle provides both esm and cjs versions of the library. This will have
+implications on how you consume the library. Other areas of this guide focus on
+esm. The ES module (esm) library is consumable directly by the browser and Deno.
 
-- A recent NATS server that supports WebSockets
-- An HTTP server to serve HTML and the nats.ws library
+The Common JS (cjs) library is consumable with traditional react setups etc. For
+information on how to consume it with react or angular, please refer to your
+tooling's documentation. Even better contribute a guide!
 
-To make it easy, the nats.ws GitHub repository aids you with this setup. If you
-are on Windows, you'll need to look at the package.json for hints on what to do.
-Better yet, contribute an alternate package.json.
+Previous versions of the library packaged the ES module library as `nats.mjs`.
+However, this creates downstream issues for React and Angular consumers. The
+library seems to be easier to onboard if the cjs library is named `nats.cjs` and
+the esm version `nats.js`. Note this is in complete opposition, as Node.js would
+like `nats.mjs`, and even webpack's documentation seems to imply that `.mjs` and
+`.cjs` are handled correctly...
 
-Here are the steps:
+While nats.ws is intended for the browser, the only limitation is really to have
+W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
+directly, so simply import the library and run:
 
-```bash
-# clone the nats.ws repository:
-git clone https://github.com/nats-io/nats.ws.git
+```javascript
+import { connect } from "nats.ws/nats.js";
 
-# install [deno](https://deno.land):
-npm run setup
+// write some code that runs
+```
 
-# build the library
-npm run build
+In Node.js (using cjs), you shim the
+[websocket](https://www.npmjs.com/package/websocket):
 
-# install the master of nats-server, if you have 
-# [Go](https://golang.org/doc/install) installed,
-# you can easily clone and build the latest from
-# master:
-npm run install-ns
+```javascript
+// shim the websocket library
+globalThis.WebSocket = require("websocket").w3cwebsocket;
+const { connect } = require("nats.ws");
 
-# start the built nats-server:
-npm run start-nats
-
-# start an http server to serve the content in
-# the examples directory:
-npm run start-http
-
-# point your browser to: http://localhost:4507/examples
-# click on one of the HTML files
+// write some code that runs on the server
 ```
 
 ## Documentation
@@ -60,13 +58,13 @@ NATS.ws shares all client API and examples with
 ## Importing the Module
 
 nats.ws is an async nats client. The model a standard ES Module. Copy the
-nats.mjs module from node_modules (if you didn't build it yourself), and place
+nats.js module from node_modules (if you didn't build it yourself), and place
 it where you can reference it from your code:
 
 ```html
 <script type="module">
   // load the library
-  import { connect } from './nats.mjs'
+  import { connect } from './nats.js'
   // do something with it...
 </script>
 ```
@@ -111,7 +109,7 @@ are not directly accessible to the clients.
 
 To connect to a server you use the `connect()` function. It returns a connection
 that you can use to interact with the server. You can customize the behavior of
-the client by specifying many [`ConnectionOptions`](#Connection_Options).
+the client by specifying many [`ConnectionOptions`](#connection-options).
 
 By default, a connection will attempt a connection on `127.0.0.1:4222`. If the
 connection is dropped, the client will attempt to reconnect. You can customize
@@ -124,7 +122,7 @@ different `ConnectionOptions`. At least two of them should work if your internet
 is working.
 
 ```javascript
-import { connect } from "./nats.mjs";
+import { connect } from "./nats.js";
 const servers = [
   {},
   { servers: ["demo.nats.io:4442", "demo.nats.io:4222"] },
@@ -191,7 +189,7 @@ all subscriptions have been drained and all outbound messages have been sent to
 the server.
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // to create a connection to a nats-server:
 const nc = await connect({ servers: "demo.nats.io:4222" });
@@ -235,7 +233,7 @@ All subscriptions are independent. If two different subscriptions match a
 subject, both will get to process the message:
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 const nc = await connect({ servers: "demo.nats.io:4222" });
 const sc = StringCodec();
@@ -289,7 +287,7 @@ simply to illustrate not only how to create responses, but how the subject
 itself is used to dispatch different behaviors.
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // create a connection
 const nc = await connect({ servers: "demo.nats.io" });
@@ -364,7 +362,7 @@ Here's a simple example of a client making a simple request from the service
 above:
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // create a connection
 const nc = await connect({ servers: "demo.nats.io:4222" });
@@ -397,7 +395,7 @@ independent unit. Note that non-queue subscriptions are also independent of
 subscriptions in a queue group.
 
 ```javascript
-import { connect, NatsConnection, StringCodec } from "./nats.mjs";
+import { connect, NatsConnection, StringCodec } from "./nats.js";
 
 async function createService(
   name,
@@ -474,7 +472,7 @@ are publishing a message with a header, it is possible for the recipient to not
 support them.
 
 ```javascript
-import { connect, createInbox, Empty, headers } from "./nats.mjs";
+import { connect, createInbox, Empty, headers } from "./nats.js";
 
 const nc = await connect(
   {
@@ -562,7 +560,7 @@ Setting the `user`/`pass` or `token` options, simply initializes an
 ```typescript
 // if the connection requires authentication, provide `user` and `pass` or
 // `token` options in the NatsConnectionOptions
-import { connect } from "./nats.mjs";
+import { connect } from "./nats.js";
 
 const nc1 = await connect({
   servers: "127.0.0.1:4222",
@@ -884,3 +882,45 @@ completely compatible API across all clients.
 Currently, the base client implementation is the deno implementation. You can
 take a look at it
 [here](https://github.com/nats-io/nats.deno/tree/main/nats-base-client).
+
+### Developer Setup (for working on the websocket transport)
+
+Getting started with NATS.ws for contributions requires a little preparation:
+
+- A recent NATS server that supports WebSockets
+- An HTTP server to serve HTML and the nats.ws library
+
+To make it easy, the nats.ws GitHub repository aids you with this setup. If you
+are on Windows, you'll need to look at the package.json for hints on what to do.
+Better yet, contribute an alternate package.json.
+
+Here are the steps:
+
+```bash
+# clone the nats.ws repository:
+git clone https://github.com/nats-io/nats.ws.git
+
+# install [deno](https://deno.land)
+# on windows do `npm run setup_win`
+npm run setup
+
+# build the library
+npm run build
+
+# install the master of nats-server, if you have 
+# [Go](https://golang.org/doc/install) installed,
+# you can easily clone and build the latest from
+# master - you only need to do this if you want
+# run a server from master.
+npm run install-ns
+
+# start a nats-server:
+npm run start-nats
+
+# start an http server to serve the content in
+# the examples directory:
+npm run start-http
+
+# point your browser to: http://localhost:4507/examples
+# click on one of the HTML files
+```

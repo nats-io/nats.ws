@@ -1,4 +1,8 @@
+*.creds
+examples/
 test/
-build/
+bin/
+nats-base-client/
 tsconfig.json
-webpack.config.js
+
+

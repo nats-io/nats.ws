@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 const test = require("ava");
-const { delay } = require("../build/nats-base-client/internal_mod");
+const { delay } = require("../lib/nats-base-client/internal_mod");
 const { connect, Empty, consumerOpts, AckPolicy } = require(
   "./index",
 );

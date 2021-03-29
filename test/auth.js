@@ -24,7 +24,7 @@ const {
 } = require(
   "./index",
 );
-const { nkeys } = require("../build/nats-base-client/internal_mod");
+const { nkeys } = require("../lib/nats-base-client/internal_mod");
 const { Lock } = require("./helpers/lock");
 const { NatsServer, wsConfig } = require("./helpers/launcher");
 
