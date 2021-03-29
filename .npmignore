@@ -1,4 +1,8 @@
+*.creds
+examples/
 test/
 bin/
 nats-base-client/
 tsconfig.json
+
+
