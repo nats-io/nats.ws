@@ -6,7 +6,7 @@
   "module": "nats.js",
   "exports": {
     ".": {
-      "require":  "./nats.cjs",
+      "require": "./nats.cjs",
       "default": "./nats.js"
     }
   },
@@ -22,7 +22,6 @@
   "scripts": {
     "setup": "curl -fsSL https://deno.land/x/install/install.sh | sh",
     "setup_win": "choco install deno",
-
     "fmt": "deno fmt src/*.ts examples/*.js test/*.js test/*/*.js",
     "start-tls-nats": "cd examples && nats-server -c tls.conf",
     "start-nats": "cd examples && nats-server -c nontls.conf",
@@ -30,19 +29,15 @@
     "start-https": "deno run --allow-all --unstable https://raw.githubusercontent.com/denoland/deno/master/std/http/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
     "install-certs": "env CAROOT=./certs mkcert -cert-file ./certs/cert.pem -key-file ./certs/key.pem -install localhost 127.0.0.1 ::1",
     "install-ns": "shx mkdir -p ./.deps && cd ./.deps && git clone --branch=master https://github.com/nats-io/nats-server.git && cd nats-server && go build && shx mv nats-server ../../",
-
     "prepack": "npm run build",
     "clean": "shx rm -Rf ./nats.js ./lib ./.deps ./nats-base-client ./wst",
     "build": "npm run clean && npm run check-imports && npm run build-cjs && npm run build-esm",
-
     "build-cjs": "npm run stage && npm run cjs-nbc && npm run cjs-wst && shx rm -Rf ./deps/ && tsc && shx rm -Rf ./wst && shx mv ./lib/wst ./lib/src && rm -Rf ./nats-base-client",
     "build-esm": "deno run --allow-all --unstable --reload src/mod.ts && deno bundle --log-level info --unstable src/mod.ts ./nats.js",
     "stage": "npm run clone-nbc",
-
     "cjs-nbc": "deno run --allow-all ./bin/cjs-fix-imports.ts -o nats-base-client/ ./.deps/nats.deno/nats-base-client/",
     "cjs-wst": "deno run --allow-all ./bin/cjs-fix-imports.ts -o wst/ ./src",
     "clone-nbc": "deno run --allow-all bin/clone-nd.ts",
-
     "ava": "nyc ava --verbose -T 60000",
     "test": "npm run build && npm run check-imports && npm run ava",
     "check-imports": "deno run --allow-all bin/consistent-deps.ts",
