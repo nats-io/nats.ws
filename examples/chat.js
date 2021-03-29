@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { connect, JSONCodec } from "../nats.mjs";
+import { connect, JSONCodec } from "../nats.js";
 const me = Date.now();
 
 window.chat = {

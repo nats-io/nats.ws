@@ -16,18 +16,25 @@ npm install nats.ws
 
 The npm bundle provides both esm and cjs versions of the library. This will have
 implications on how you consume the library. Other areas of this guide focus on
-esm. The esm library is consumable directly by the browser and Deno.
+esm. The ES module (esm) library is consumable directly by the browser and Deno.
 
-The cjs library is consumable with traditional react setups etc. For information
-on how to consume it with react or angular, please refer to your tooling's
-documentation. Even better contribute a guide!
+The Common JS (cjs) library is consumable with traditional react setups etc. For
+information on how to consume it with react or angular, please refer to your
+tooling's documentation. Even better contribute a guide!
+
+Previous versions of the library packaged the ES module library as `nats.mjs`.
+However, this creates downstream issues for React and Angular consumers. The
+library seems to be easier to onboard if the cjs library is named `nats.cjs` and
+the esm version `nats.js`. Note this is in complete opposition, as Node.js would
+like `nats.mjs`, and even webpack's documentation seems to imply that `.mjs` and
+`.cjs` are handled correctly...
 
 While nats.ws is intended for the browser, the only limitation is really to have
 W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
 directly, so simply import the library and run:
 
 ```javascript
-import { connect } from "nats.ws/nats.mjs";
+import { connect } from "nats.ws/nats.js";
 
 // write some code that runs
 ```
@@ -51,13 +58,13 @@ NATS.ws shares all client API and examples with
 ## Importing the Module
 
 nats.ws is an async nats client. The model a standard ES Module. Copy the
-nats.mjs module from node_modules (if you didn't build it yourself), and place
+nats.js module from node_modules (if you didn't build it yourself), and place
 it where you can reference it from your code:
 
 ```html
 <script type="module">
   // load the library
-  import { connect } from './nats.mjs'
+  import { connect } from './nats.js'
   // do something with it...
 </script>
 ```
@@ -115,7 +122,7 @@ different `ConnectionOptions`. At least two of them should work if your internet
 is working.
 
 ```javascript
-import { connect } from "./nats.mjs";
+import { connect } from "./nats.js";
 const servers = [
   {},
   { servers: ["demo.nats.io:4442", "demo.nats.io:4222"] },
@@ -182,7 +189,7 @@ all subscriptions have been drained and all outbound messages have been sent to
 the server.
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // to create a connection to a nats-server:
 const nc = await connect({ servers: "demo.nats.io:4222" });
@@ -226,7 +233,7 @@ All subscriptions are independent. If two different subscriptions match a
 subject, both will get to process the message:
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 const nc = await connect({ servers: "demo.nats.io:4222" });
 const sc = StringCodec();
@@ -280,7 +287,7 @@ simply to illustrate not only how to create responses, but how the subject
 itself is used to dispatch different behaviors.
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // create a connection
 const nc = await connect({ servers: "demo.nats.io" });
@@ -355,7 +362,7 @@ Here's a simple example of a client making a simple request from the service
 above:
 
 ```javascript
-import { connect, StringCodec } from "./nats.mjs";
+import { connect, StringCodec } from "./nats.js";
 
 // create a connection
 const nc = await connect({ servers: "demo.nats.io:4222" });
@@ -388,7 +395,7 @@ independent unit. Note that non-queue subscriptions are also independent of
 subscriptions in a queue group.
 
 ```javascript
-import { connect, NatsConnection, StringCodec } from "./nats.mjs";
+import { connect, NatsConnection, StringCodec } from "./nats.js";
 
 async function createService(
   name,
@@ -465,7 +472,7 @@ are publishing a message with a header, it is possible for the recipient to not
 support them.
 
 ```javascript
-import { connect, createInbox, Empty, headers } from "./nats.mjs";
+import { connect, createInbox, Empty, headers } from "./nats.js";
 
 const nc = await connect(
   {
@@ -553,7 +560,7 @@ Setting the `user`/`pass` or `token` options, simply initializes an
 ```typescript
 // if the connection requires authentication, provide `user` and `pass` or
 // `token` options in the NatsConnectionOptions
-import { connect } from "./nats.mjs";
+import { connect } from "./nats.js";
 
 const nc1 = await connect({
   servers: "127.0.0.1:4222",
