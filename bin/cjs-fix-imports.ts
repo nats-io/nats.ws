@@ -43,7 +43,7 @@ requires.set(
 requires.set(
   "https://deno.land/x/nkeys.js",
   { lib: "nkeys.js", arg: "nkeys" },
-)
+);
 
 // resolve the specified directories to fq
 let dirs = (argv._ as string[]).map((n) => {

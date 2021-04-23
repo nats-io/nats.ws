@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.1.0",
+  "version": "1.1.1-1",
   "description": "WebSocket NATS client",
   "main": "nats.cjs",
   "module": "nats.js",
@@ -25,8 +25,8 @@
     "fmt": "deno fmt src/*.ts examples/*.js test/*.js test/*/*.js",
     "start-tls-nats": "cd examples && nats-server -c tls.conf",
     "start-nats": "cd examples && nats-server -c nontls.conf",
-    "start-http": "deno run --allow-all --unstable https://raw.githubusercontent.com/denoland/deno/master/std/http/file_server.ts .",
-    "start-https": "deno run --allow-all --unstable https://raw.githubusercontent.com/denoland/deno/master/std/http/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
+    "start-http": "deno run --allow-all --unstable https://deno.land/std@0.95.0/http/file_server.ts .",
+    "start-https": "deno run --allow-all --unstable https://deno.land/std@0.95.0/http/file_server.ts --port 4607 --cert ./certs/cert.pem --key ./certs/key.pem --host localhost .",
     "install-certs": "env CAROOT=./certs mkcert -cert-file ./certs/cert.pem -key-file ./certs/key.pem -install localhost 127.0.0.1 ::1",
     "install-ns": "shx mkdir -p ./.deps && cd ./.deps && git clone --branch=master https://github.com/nats-io/nats-server.git && cd nats-server && go build && shx mv nats-server ../../",
     "prepack": "npm run build",

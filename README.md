@@ -58,8 +58,8 @@ NATS.ws shares all client API and examples with
 ## Importing the Module
 
 nats.ws is an async nats client. The model a standard ES Module. Copy the
-nats.js module from node_modules (if you didn't build it yourself), and place
-it where you can reference it from your code:
+nats.js module from node_modules (if you didn't build it yourself), and place it
+where you can reference it from your code:
 
 ```html
 <script type="module">
@@ -400,7 +400,7 @@ import { connect, NatsConnection, StringCodec } from "./nats.js";
 async function createService(
   name,
   count = 1,
-  queue = ""
+  queue = "",
 ): Promise {
   const conns = [];
   for (let i = 1; i <= count; i++) {
