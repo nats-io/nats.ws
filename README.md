@@ -50,6 +50,30 @@ const { connect } = require("nats.ws");
 // write some code that runs on the server
 ```
 
+### Older Typescript Compiler?
+
+If you are using an older version of the typescript compiler (for example, if
+you on Angular 8), then simply add this to your `tsconfig.json` file:
+
+```
+{
+  "compilerOptions": {
+    "paths": {
+      "nkeys.js": [
+        "node_modules/nkeys.js/nkeys.mjs",
+        "node_modules/nkeys.js/lib/nkeys.d.ts"
+      ],
+      "nats.ws": [
+        "node_modules/nats.ws/nats.cjs",
+        "node_modules/nats.ws/nats.d.ts"
+      ]
+    },
+    ...
+  },
+  ...
+}
+```
+
 ## Documentation
 
 NATS.ws shares all client API and examples with
