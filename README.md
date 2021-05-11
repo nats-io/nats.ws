@@ -400,7 +400,7 @@ import { connect, NatsConnection, StringCodec } from "./nats.js";
 async function createService(
   name,
   count = 1,
-  queue = "",
+  queue = ""
 ): Promise {
   const conns = [];
   for (let i = 1; i <= count; i++) {
@@ -885,42 +885,4 @@ take a look at it
 
 ### Developer Setup (for working on the websocket transport)
 
-Getting started with NATS.ws for contributions requires a little preparation:
-
-- A recent NATS server that supports WebSockets
-- An HTTP server to serve HTML and the nats.ws library
-
-To make it easy, the nats.ws GitHub repository aids you with this setup. If you
-are on Windows, you'll need to look at the package.json for hints on what to do.
-Better yet, contribute an alternate package.json.
-
-Here are the steps:
-
-```bash
-# clone the nats.ws repository:
-git clone https://github.com/nats-io/nats.ws.git
-
-# install [deno](https://deno.land)
-# on windows do `npm run setup_win`
-npm run setup
-
-# build the library
-npm run build
-
-# install the master of nats-server, if you have 
-# [Go](https://golang.org/doc/install) installed,
-# you can easily clone and build the latest from
-# master - you only need to do this if you want
-# run a server from master.
-npm run install-ns
-
-# start a nats-server:
-npm run start-nats
-
-# start an http server to serve the content in
-# the examples directory:
-npm run start-http
-
-# point your browser to: http://localhost:4507/examples
-# click on one of the HTML files
-```
+See [developer_notes.md](./developer_notes.md).
