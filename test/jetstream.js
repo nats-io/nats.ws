@@ -14,7 +14,7 @@
  */
 const test = require("ava");
 const { delay } = require("../lib/nats-base-client/internal_mod");
-const { connect, Empty, consumerOpts, AckPolicy } = require(
+const { connect, Empty, consumerOpts, AckPolicy, headers } = require(
   "./index",
 );
 const { NatsServer, wsConfig } = require("./helpers/launcher");
@@ -43,8 +43,10 @@ test("jetstream - jsm", async (t) => {
   t.is(streams.length, 1);
   t.is(streams[0].config.name, "stream");
 
-  nc.publish("hello.world");
-  nc.publish("hello.world");
+  const h = headers();
+  h.set("xxx", "a");
+  nc.publish("hello.world", Empty, { headers: h });
+  nc.publish("hello.world", Empty, { headers: h });
 
   si = await jsm.streams.info("stream");
   t.is(si.state.messages, 2);
@@ -82,6 +84,8 @@ test("jetstream - jsm", async (t) => {
 
   const sm = await jsm.streams.getMessage("stream", 2);
   t.is(sm.seq, 2);
+  t.truthy(sm.header);
+  t.is(sm.header.get("xxx"), "a");
 
   ok = await jsm.streams.deleteMessage("stream", 1);
   t.is(ok, true);
