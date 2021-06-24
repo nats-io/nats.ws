@@ -244,21 +244,18 @@ export declare enum ErrorCode {
   ProtocolError = "NATS_PROTOCOL_ERR",
   PermissionsViolation = "PERMISSIONS_VIOLATION",
 }
-
 export declare interface NatsError extends Error {
   name: string;
   message: string;
   code: string;
   chainedError?: Error;
 }
-
 export interface Stats {
     inBytes: number;
     outBytes: number;
     inMsgs: number;
     outMsgs: number;
 }
-
 export interface Codec<T> {
   encode(d: T): Uint8Array;
   decode(a: Uint8Array): T;
@@ -334,11 +331,11 @@ export interface JetStreamClient {
 export interface ConsumerOpts {
     config: Partial<ConsumerConfig>;
     mack: boolean;
-    subQueue: string;
     stream: string;
     callbackFn?: JsMsgCallback;
     name?: string;
     max?: number;
+    queue?: string;
     debug?: boolean;
 }
 export declare function consumerOpts(opts?: Partial<ConsumerConfig>): ConsumerOptsBuilder;
@@ -359,6 +356,7 @@ export interface ConsumerOptsBuilder {
     maxAckPending(max: number): void;
     maxWaiting(max: number): void;
     maxMessages(max: number): void;
+    queue(n: string): void;
     callback(fn: JsMsgCallback): void;
 }
 export interface Lister<T> {
