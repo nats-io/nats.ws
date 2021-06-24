@@ -39,7 +39,7 @@
     "cjs-wst": "deno run --allow-all ./bin/cjs-fix-imports.ts -o wst/ ./src",
     "clone-nbc": "deno run --allow-all bin/clone-nd.ts",
     "ava": "nyc ava --verbose -T 60000",
-    "test": "npm run build && npm run check-imports && npm run ava",
+    "test": "npm run build && npm run check-imports && npm run check-package && npm run ava",
     "check-imports": "deno run --allow-all bin/consistent-deps.ts",
     "check-package": "deno run --allow-all bin/check-bundle-version.ts",
     "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
