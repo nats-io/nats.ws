@@ -125,6 +125,7 @@ export interface ServersChanged {
     readonly deleted: string[];
 }
 export interface Sub<T> extends AsyncIterable<T> {
+    closed: Promise<void>;
     unsubscribe(max?: number): void;
     drain(): Promise<void>;
     isDraining(): boolean;
@@ -266,6 +267,7 @@ export declare function JSONCodec<T = unknown>(): Codec<T>;
 export interface JetStreamOptions {
     apiPrefix?: string;
     timeout?: number;
+    domain?: string;
 }
 export interface JetStreamManager {
     consumers: ConsumerAPI;
@@ -293,6 +295,7 @@ export interface JetStreamPublishOptions {
         lastMsgID: string;
         streamName: string;
         lastSequence: number;
+        lastSubjectSequence: number;
     }>;
 }
 export interface ConsumerInfoable {
@@ -358,6 +361,8 @@ export interface ConsumerOptsBuilder {
     maxMessages(max: number): void;
     queue(n: string): void;
     callback(fn: JsMsgCallback): void;
+    idleHeartbeat(millis: number): void;
+    flowControl(): void;
 }
 export interface Lister<T> {
     next(): Promise<T[]>;
@@ -375,11 +380,11 @@ export interface StreamAPI {
     info(stream: string, opts?: StreamInfoRequestOptions): Promise<StreamInfo>;
     add(cfg: Partial<StreamConfig>): Promise<StreamInfo>;
     update(cfg: StreamConfig): Promise<StreamInfo>;
-    purge(stream: string): Promise<PurgeResponse>;
+    purge(stream: string, opts?: PurgeOpts): Promise<PurgeResponse>;
     delete(stream: string): Promise<boolean>;
     list(): Lister<StreamInfo>;
-    deleteMessage(stream: string, seq: number): Promise<boolean>;
-    getMessage(stream: string, seq: number): Promise<StoredMsg>;
+    deleteMessage(stream: string, seq: number, erase?: boolean): Promise<boolean>;
+    getMessage(stream: string, query: MsgRequest): Promise<StoredMsg>;
     find(subject: string): Promise<string>;
 }
 export interface JsMsg {
@@ -472,16 +477,17 @@ export interface StreamConfig {
     "num_replicas": number;
     "no_ack"?: boolean;
     "template_owner"?: string;
-    "duplicate_window"?: number;
+    "duplicate_window"?: Nanos;
     placement?: Placement;
     mirror?: StreamSource;
     sources?: StreamSource[];
+    "max_msgs_per_subject"?: number;
 }
 export interface StreamSource {
     name: string;
-    "opt_start_seq": number;
-    "opt_start_time": string;
-    "filter_subject": string;
+    "opt_start_seq"?: number;
+    "opt_start_time"?: string;
+    "filter_subject"?: string;
 }
 export interface Placement {
     cluster: string;
@@ -551,6 +557,18 @@ export interface StreamSourceInfo {
     active: Nanos;
     error?: ApiError;
 }
+export declare type PurgeOpts = PurgeBySeq | PurgeTrimOpts | PurgeBySubject;
+export declare type PurgeBySeq = {
+    filter?: string;
+    seq: number;
+};
+export declare type PurgeTrimOpts = {
+    filter?: string;
+    keep: number;
+};
+export declare type PurgeBySubject = {
+    filter: string;
+};
 export interface PurgeResponse extends Success {
     purged: number;
 }
@@ -594,10 +612,14 @@ export interface Success {
     success: boolean;
 }
 export declare type SuccessResponse = ApiResponse & Success;
-export interface MsgRequest {
+export interface LastForMsgRequest {
+    "last_by_subj": string;
+}
+export interface SeqMsgRequest {
     seq: number;
 }
-export interface MsgDeleteRequest extends MsgRequest {
+export declare type MsgRequest = SeqMsgRequest | LastForMsgRequest | number;
+export interface MsgDeleteRequest extends SeqMsgRequest {
     "no_erase"?: boolean;
 }
 export interface JetStreamAccountStats {
@@ -607,6 +629,7 @@ export interface JetStreamAccountStats {
     consumers: number;
     api: JetStreamApiStats;
     limits: AccountLimits;
+    domain?: string;
 }
 export interface JetStreamApiStats {
     total: number;
@@ -628,7 +651,7 @@ export interface ConsumerConfig {
     "opt_start_seq"?: number;
     "opt_start_time"?: string;
     "ack_policy": AckPolicy;
-    "ack_wait"?: number;
+    "ack_wait"?: Nanos;
     "max_deliver"?: number;
     "filter_subject"?: string;
     "replay_policy": ReplayPolicy;
@@ -636,6 +659,8 @@ export interface ConsumerConfig {
     "sample_freq"?: string;
     "max_waiting"?: number;
     "max_ack_pending"?: number;
+    "idle_heartbeat"?: Nanos;
+    "flow_control"?: boolean;
 }
 export interface Consumer {
     "stream_name": string;
@@ -651,6 +676,12 @@ export interface NextRequest {
     expires: number;
     batch: number;
     "no_wait": boolean;
+}
+
+export declare enum JsHeaders {
+    StreamSourceHdr = "Nats-Stream-Source",
+    LastConsumerSeqHdr = "Nats-Last-Consumer",
+    LastStreamSeqHdr = "Nats-Last-Stream"
 }
 
 export declare type MsgAdapter<T> = (
@@ -672,3 +703,9 @@ export interface TypedSubscriptionOptions<T> extends SubOpts<T> {
 }
 
 export declare type DispatchedFn<T> = (data: T | null) => void;
+
+export declare function defaultConsumer(name: string, opts?: Partial<ConsumerConfig>): ConsumerConfig;
+export declare function nanos(millis: number): Nanos;
+export declare function millis(ns: Nanos): number;
+export declare function isFlowControlMsg(msg: Msg): boolean;
+export declare function isHeartbeatMsg(msg: Msg): boolean;
