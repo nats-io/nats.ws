@@ -33,12 +33,6 @@ test("basics - connect", async (t) => {
 });
 
 test("basics - wss connection", async (t) => {
-  if (process.env.GITHUB_ACTIONS) {
-    t.log("skipping cert not trusted");
-    t.pass();
-    return;
-  }
-
   const conf = {
     websocket: {
       port: -1,
