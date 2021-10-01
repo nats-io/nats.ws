@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.3.1-1",
+  "version": "1.3.1-2",
   "description": "WebSocket NATS client",
   "main": "nats.cjs",
   "module": "nats.js",
@@ -10,14 +10,13 @@
       "default": "./nats.js"
     }
   },
-  "types": "nats.d.ts",
+  "types": "lib/src/mod.d.ts",
   "files": [
     "nats.js",
     "lib/",
     "OWNERS.md",
     "CODE-OF-CONDUCT.md",
-    "LICENSE",
-    "nats.d.ts"
+    "LICENSE"
   ],
   "scripts": {
     "setup": "curl -fsSL https://deno.land/x/install/install.sh | sh",
