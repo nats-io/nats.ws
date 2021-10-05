@@ -14,7 +14,14 @@
  */
 
 const test = require("ava");
-const { connect, ErrorCode, createInbox, StringCodec, Empty } = require(
+const {
+  connect,
+  ErrorCode,
+  createInbox,
+  StringCodec,
+  Empty,
+  jwtAuthenticator,
+} = require(
   "./index",
 );
 const { deferred, delay } = require(
@@ -727,4 +734,26 @@ test("basics - default connection", async (t) => {
   }
   await nc.close();
   await ns.stop();
+});
+
+test("basics - resolve not supported", async (t) => {
+  t.plan(1);
+  const token = process.env.WS_NGS_CI_USER || "";
+  if (token.length === 0) {
+    t.log("test skipped - no WS_NGS_CI_USER defined in the environment");
+    t.pass();
+    return;
+  }
+  try {
+    const authenticator = jwtAuthenticator(token);
+    const nc = await connect({
+      servers: "wss://connect.ngs.global",
+      authenticator: authenticator,
+      resolve: true,
+    });
+    t.fail("should have not connected");
+    await nc.close();
+  } catch (err) {
+    assertEquals(err.message, "'resolve' is not supported on this client");
+  }
 });

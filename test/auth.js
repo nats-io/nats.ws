@@ -324,8 +324,6 @@ test("auth - ngs", async (t) => {
     t.log("test skipped - no WS_NGS_CI_USER defined in the environment");
     t.pass();
     return;
-  } else {
-    t.log("token.len", token.length);
   }
   const sc = StringCodec();
   const authenticator = jwtAuthenticator(token);
