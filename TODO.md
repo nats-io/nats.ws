@@ -1,4 +1,5 @@
-# NATS.ws TODO
+# NATS.ws
 
-- [ ] Restoring of the tests
-- [ ] Change `ws` property in favor of `tls`.
+- [ ] Additional ws specific tests around connections
+- [ ] Possibly merge into nbc as a full WebSocket implementations are native in both Deno and shimmed easily into Node
+- [ ] Test that import the lib into React/Angular/etc to detect bundler issues

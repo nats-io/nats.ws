@@ -614,9 +614,11 @@ test("basics - subject is required", async (t) => {
     nc.publish();
   }, { code: ErrorCode.BadSubject });
 
-  await nc.request().catch((err) => {
-    t.is(err.code, ErrorCode.BadSubject);
-  });
+  try {
+    await nc.request();
+  } catch (err) {
+    t.is(err.message, "BAD_SUBJECT");
+  }
 
   await nc.close();
   await ns.stop();
