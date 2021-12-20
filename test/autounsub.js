@@ -108,7 +108,7 @@ test("autounsub - can change auto-unsub to a higher value", async (t) => {
   await ns.stop();
 });
 
-test("autounsub - request receives expected count with multiple helpers", async (t,) => {
+test("autounsub - request receives expected count with multiple helpers", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 
@@ -137,7 +137,7 @@ test("autounsub - request receives expected count with multiple helpers", async 
   await ns.stop();
 });
 
-test("autounsub - manual request receives expected count with multiple helpers", async (t,) => {
+test("autounsub - manual request receives expected count with multiple helpers", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
 

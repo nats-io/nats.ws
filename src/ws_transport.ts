@@ -19,7 +19,7 @@ import type {
   Server,
   ServerInfo,
   Transport,
-} from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+} from "https://raw.githubusercontent.com/nats-io/nats.deno/fix-237/nats-base-client/internal_mod.ts";
 import {
   checkOptions,
   DataBuffer,
@@ -30,7 +30,7 @@ import {
   INFO,
   NatsError,
   render,
-} from "https://raw.githubusercontent.com/nats-io/nats.deno/main/nats-base-client/internal_mod.ts";
+} from "https://raw.githubusercontent.com/nats-io/nats.deno/fix-237/nats-base-client/internal_mod.ts";
 
 const VERSION = "1.6.0-1";
 const LANG = "nats.ws";

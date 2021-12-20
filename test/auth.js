@@ -118,6 +118,27 @@ test("auth - sub permissions", async (t) => {
   await ns.stop();
 });
 
+test("auth - weird characters", async (t) => {
+  const pass = "§12§12§12";
+  const conf = Object.assign({
+    authorization: {
+      username: "admin",
+      password: pass,
+    },
+  }, wsConfig());
+  const ns = await NatsServer.start(conf);
+
+  const nc = await connect({
+    servers: [`ws://127.0.0.1:${ns.websocket}`],
+    user: "admin",
+    pass: pass,
+  });
+  await nc.flush;
+  await nc.close();
+  await ns.stop();
+  t.pass();
+});
+
 test("auth - pub perm", async (t) => {
   t.plan(1);
   const ns = await NatsServer.start(conf);
