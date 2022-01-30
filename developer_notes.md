@@ -75,7 +75,7 @@ If you are using an older version of the typescript compiler (for example, if yo
         "node_modules/nkeys.js/lib/nkeys.d.ts"
       ],
       "nats.ws": [
-        "node_modules/nats.ws/nats.cjs",
+        "node_modules/nats.ws/nats.js",
         "node_modules/nats.ws/nats.d.ts"
       ]
     }

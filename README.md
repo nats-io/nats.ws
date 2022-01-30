@@ -18,16 +18,12 @@ The npm bundle provides both esm and cjs versions of the library. This will have
 implications on how you consume the library. Other areas of this guide focus on
 esm. The ES module (esm) library is consumable directly by the browser and Deno.
 
-The Common JS (cjs) library is consumable with traditional react setups etc. For
-information on how to consume it with react or angular, please refer to your
-tooling's documentation. Even better contribute a guide!
+Previous versions of the library were bundled at the root of the package as
+`nats.js` and `nats.cjs`. Starting with this release, each library has been
+rooted at in `./esm/nats.js` and `./cjs/nats.js` respectively. At the very least
+this seems to allow a node cjs or module to reference them directly, hopefully this
+also improves the consumption downstream.
 
-Previous versions of the library packaged the ES module library as `nats.mjs`.
-However, this creates downstream issues for React and Angular consumers. The
-library seems to be easier to onboard if the cjs library is named `nats.cjs` and
-the esm version `nats.js`. Note this is in complete opposition, as Node.js would
-like `nats.mjs`, and even webpack's documentation seems to imply that `.mjs` and
-`.cjs` are handled correctly...
 
 While nats.ws is intended for the browser, the only limitation is really to have
 W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
