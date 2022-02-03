@@ -29,6 +29,13 @@ While nats.ws is intended for the browser, the only limitation is really to have
 W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
 directly, so simply import the library and run:
 
+**nats.ws version >= 1.6.0**
+```javascript
+import { connect } from "nats.ws";
+
+// write some code that runs
+```
+**nats.ws version < 1.6.0**
 ```javascript
 import { connect } from "nats.ws/nats.js";
 
