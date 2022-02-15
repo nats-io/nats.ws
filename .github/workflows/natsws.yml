@@ -30,7 +30,7 @@ jobs:
         with:
           deno-version: 1.17.3
       - name: Set NATS Server Version
-        run: echo "NATS_VERSION=v2.7.0" >> $GITHUB_ENV
+        run: echo "NATS_VERSION=v2.7.2" >> $GITHUB_ENV
       - name: Set CA
         run: echo "NODE_EXTRA_CA_CERTS=/home/runner/work/nats.ws/nats.ws/test/certs/ca.crt" >> $GITHUB_ENV
       - name: Get nats-server
