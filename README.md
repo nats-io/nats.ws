@@ -573,6 +573,11 @@ const nc1 = await connect({
 const nc2 = await connect({ port: 4222, token: "t0pS3cret!" });
 ```
 
+### TLS and client certificates
+
+As mentioned in the [nats.deno repository](https://github.com/nats-io/nats.deno/blob/main/README.md#connection-options), the W3C websocket API does not provide support for TLS options.
+For this reason `nats.ws` doesn't support client certificate authentication.
+
 #### Authenticators
 
 NKEYs and JWT authentication are more complex, as they cryptographically respond
