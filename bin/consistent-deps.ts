@@ -16,7 +16,7 @@ import {
   extname,
   join,
   resolve,
-} from "https://deno.land/std@0.74.0/path/mod.ts";
+} from "https://deno.land/std@0.136.0/path/mod.ts";
 
 const importers = new Map<string, string[]>();
 
