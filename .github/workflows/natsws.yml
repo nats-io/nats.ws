@@ -13,7 +13,7 @@ jobs:
   test:
     strategy:
       matrix:
-        node-version: [17.x]
+        node-version: [16.x]
     environment: CI
     runs-on: ubuntu-latest
     steps:
