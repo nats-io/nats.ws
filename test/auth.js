@@ -88,7 +88,7 @@ test("auth - un/pw", async (t) => {
 
 test("auth - sub permissions", async (t) => {
   t.plan(4);
-  const ns = await NatsServer.start(conf, t);
+  const ns = await NatsServer.start(conf);
   const nc = await connect(
     {
       servers: `ws://127.0.0.1:${ns.websocket}`,
