@@ -25,8 +25,16 @@ const {
 } = require(
   "./index",
 );
-const { nkeys } = require("../lib/nats-base-client/internal_mod");
+const { nkeys, Events } = require("../lib/nats-base-client/internal_mod");
 const { NatsServer, wsConfig } = require("./helpers/launcher");
+const {
+  createOperator,
+  createAccount,
+  encodeAccount,
+  encodeOperator,
+  encodeUser,
+  createUser,
+} = require("nats-jwt");
 
 const conf = Object.assign({
   authorization: {
@@ -372,4 +380,52 @@ test("auth - ngs", async (t) => {
   t.is(sc.decode(m.data), "hi!");
   await nc1.close();
   await nc2.close();
+});
+
+test("auth - expiration notified", async (t) => {
+  const O = createOperator();
+  const A = createAccount();
+
+  const resolver = {};
+  resolver[A.getPublicKey()] = await encodeAccount("A", A, {
+    limits: {
+      conn: -1,
+      subs: -1,
+    },
+  }, { signer: O });
+  const conf = Object.assign({
+    operator: await encodeOperator("O", O),
+    resolver: "MEMORY",
+    "resolver_preload": resolver,
+  }, wsConfig());
+
+  const ns = await NatsServer.start(conf);
+
+  const U = createUser();
+  const ujwt = await encodeUser("U", U, A, { bearer_token: true }, {
+    exp: Math.round(Date.now() / 1000) + 5,
+  });
+
+  const nc = await connect({
+    servers: `ws://localhost:${ns.websocket}`,
+    maxReconnectAttempts: -1,
+    authenticator: jwtAuthenticator(ujwt),
+  });
+
+
+  let authErrors = 0;
+  (async () => {
+    for await (const s of nc.status()) {
+      if (
+        s.type === Events.Error && s.data === ErrorCode.AuthenticationExpired
+      ) {
+        authErrors++;
+      }
+    }
+  })().then();
+
+  const err = await nc.closed();
+  t.true(authErrors >= 1);
+  t.is(err.code, ErrorCode.AuthenticationExpired);
+  await ns.stop();
 });

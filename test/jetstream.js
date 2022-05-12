@@ -126,7 +126,7 @@ test("jetstream - pull", async (t) => {
   const js = nc.jetstream();
   await t.throwsAsync(async () => {
     await js.pull("stream", "me");
-  }, { message: "no messages" });
+  }, { message: /no messages$/ });
 
   let pa = await js.publish("hello.world", Empty, {
     expect: { lastSequence: 0 },
@@ -143,7 +143,7 @@ test("jetstream - pull", async (t) => {
   m.ack();
   await t.throwsAsync(async () => {
     await js.pull("stream", "me");
-  }, { message: "no messages" });
+  }, { message: /no messages$/ });
 
   await nc.flush();
   await nc.close();

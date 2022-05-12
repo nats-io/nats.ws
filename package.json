@@ -15,7 +15,7 @@
     "cjs/",
     "esm/",
     "lib/",
-    "OWNERS.md",
+    "MAINTAINERS.md",
     "CODE-OF-CONDUCT.md",
     "LICENSE"
   ],
@@ -52,6 +52,7 @@
     "ava": "^3.15.0",
     "browser-env": "^3.3.0",
     "minimist": "^1.2.5",
+    "nats-jwt": "^0.0.1",
     "nyc": "^15.1.0",
     "shx": "^0.3.3",
     "tslint": "^6.1.3",
