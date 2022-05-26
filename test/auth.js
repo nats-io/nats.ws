@@ -412,7 +412,6 @@ test("auth - expiration notified", async (t) => {
     authenticator: jwtAuthenticator(ujwt),
   });
 
-
   let authErrors = 0;
   (async () => {
     for await (const s of nc.status()) {
