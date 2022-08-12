@@ -14,11 +14,13 @@
  */
 const test = require("ava");
 const { delay } = require("../lib/nats-base-client/internal_mod");
-const { connect, Empty, consumerOpts, AckPolicy, headers } = require(
-  "./index",
-);
+const { connect, Empty, consumerOpts, AckPolicy, headers, StringCodec } =
+  require(
+    "./index",
+  );
 const { NatsServer, wsConfig } = require("./helpers/launcher");
 const { jetstreamServerConf } = require("./helpers/jsutil");
+const { DataBuffer } = require("../lib/nats-base-client/databuffer");
 
 test("jetstream - jsm", async (t) => {
   const ns = await NatsServer.start(jetstreamServerConf(wsConfig()));
@@ -285,6 +287,87 @@ test("jetstream - jetstream pullsub", async (t) => {
   t.is(sub.getProcessed(), 3);
 
   await delay(1000);
+  await nc.close();
+  await ns.stop();
+});
+
+test("jetstream - kv basics", async (t) => {
+  const ns = await NatsServer.start(jetstreamServerConf(wsConfig()));
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
+  const js = nc.jetstream();
+
+  const kv = await js.views.kv("test");
+  const sc = StringCodec();
+  await kv.put("a", sc.encode("hello"));
+  const v = await kv.get("a");
+  t.truthy(v);
+  t.is(v.bucket, "test");
+  t.is(v.key, "a");
+  t.is(sc.decode(v.value), "hello");
+
+  await nc.close();
+  await ns.stop();
+});
+
+function readableStreamFrom(data) {
+  return new ReadableStream({
+    pull(controller) {
+      controller.enqueue(data);
+      controller.close();
+    },
+  });
+}
+
+async function fromReadableStream(
+  rs,
+) {
+  const buf = new DataBuffer();
+  const reader = rs.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      return buf.drain();
+    }
+    if (value && value.length) {
+      buf.fill(value);
+    }
+  }
+}
+
+test("jetstream - os basics", async (t) => {
+  if (process.version.startsWith("v14.")) {
+    t.log(
+      `node ${process.version} cannot run objectstore as webcrypto is not available`,
+    );
+    t.pass();
+    return;
+  }
+
+  if (typeof globalThis.crypto === "undefined") {
+    const c = require("crypto");
+    global.crypto = c.webcrypto;
+  }
+
+  if (typeof globalThis.ReadableStream === "undefined") {
+    const streams = require("web-streams-polyfill/ponyfill");
+    global.ReadableStream = streams.ReadableStream;
+  }
+
+  const ns = await NatsServer.start(jetstreamServerConf(wsConfig()));
+  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
+  const js = nc.jetstream();
+
+  const os = await js.views.os("test");
+  const sc = StringCodec();
+
+  await os.put({ name: "a" }, readableStreamFrom(sc.encode("hello")));
+  const v = await os.get("a");
+  t.truthy(v);
+  t.is(v.info.bucket, "test");
+  t.is(v.info.name, "a");
+  t.is(v.info.chunks, 1);
+  t.is(sc.decode(await fromReadableStream(v.data)), "hello");
+
   await nc.close();
   await ns.stop();
 });
