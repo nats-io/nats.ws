@@ -7,7 +7,8 @@
   "exports": {
     ".": {
       "require": "./cjs/nats.js",
-      "import": "./esm/nats.js"
+      "import": "./esm/nats.js",
+      "types": "./lib/src/mod.d.ts"
     }
   },
   "types": "lib/src/mod.d.ts",
