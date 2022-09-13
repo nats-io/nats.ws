@@ -5,10 +5,9 @@
   "main": "./cjs/nats.js",
   "module": "./esm/nats.js",
   "exports": {
-    ".": {
-      "require": "./cjs/nats.js",
-      "import": "./esm/nats.js"
-    }
+    "types": "./lib/src/mod.d.ts",
+    "require": "./cjs/nats.js",
+    "import": "./esm/nats.js"
   },
   "types": "lib/src/mod.d.ts",
   "files": [
