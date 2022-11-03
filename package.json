@@ -47,7 +47,7 @@
     "nkeys.js": "1.0.3"
   },
   "devDependencies": {
-    "@types/node": "^18.0.4",
+    "@types/node": "^16.18.3",
     "ava": "^4.3.3",
     "browser-env": "^3.3.0",
     "minimist": "^1.2.5",
