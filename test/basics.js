@@ -21,7 +21,8 @@ const { deferred, delay } = require(
   "../lib/nats-base-client/internal_mod",
 );
 const { Lock } = require("./helpers/lock");
-const { NatsServer, wsConfig, tlsConfig } = require("./helpers/launcher");
+const { NatsServer, wsConfig } = require("./helpers/launcher");
+const { parseOptions } = require("../lib/nats-base-client/options");
 
 test("basics - connect", async (t) => {
   const ns = await NatsServer.start(wsConfig());
@@ -33,19 +34,16 @@ test("basics - connect", async (t) => {
 });
 
 test("basics - wss connection", async (t) => {
-  const conf = {
-    websocket: {
-      port: -1,
-      tls: tlsConfig(),
-    },
-  };
-
-  const ns = await NatsServer.start(conf);
-  const nc = await connect({ servers: `wss://localhost:${ns.websocket}` });
-  await nc.flush();
-  await nc.close();
-  await ns.stop();
-  t.pass();
+  const servers = "wss://demo.nats.io:8443";
+  try {
+    const nc = await connect({ servers });
+    await nc.flush();
+    await nc.close();
+    t.is(nc.protocol.transport?.isEncrypted(), true);
+    t.pass();
+  } catch (err) {
+    t.fail(err.message);
+  }
 });
 
 test("basics - publish", async (t) => {
@@ -659,20 +657,12 @@ test("basics - disconnect reconnects", async (t) => {
 });
 
 test("basics - wsnats doesn't support tls options", async (t) => {
-  const conf = {
-    websocket: {
-      port: -1,
-      tls: tlsConfig(),
-    },
-  };
-  const ns = await NatsServer.start(conf);
   try {
-    await connect({ servers: `wss://localhost:${ns.websocket}`, tls: {} });
+    await connect({ servers: "wss://demo.nats.io:8443", tls: {} });
     t.fail(`should have failed with ${ErrorCode.InvalidOption}`);
   } catch (err) {
     t.is(err.code, ErrorCode.InvalidOption);
   }
-  await ns.stop();
   t.pass();
 });
 
@@ -702,29 +692,7 @@ test("basics - drain connection publisher", async (t) => {
 });
 
 test("basics - default connection", async (t) => {
-  t.plan(1);
-  if (process.env.GITHUB_ACTIONS) {
-    t.log("skipping on github actions");
-    t.pass();
-    return;
-  }
-
-  const ns = await NatsServer.start(
-    {
-      websocket: {
-        port: 443,
-        tls: tlsConfig(),
-      },
-    },
-  );
-  const nc = await connect();
-  try {
-    const subj = createInbox();
-    await nc.request(subj);
-    t.fail("expected request to fail");
-  } catch (err) {
-    t.is(err.code, ErrorCode.NoResponders);
-  }
-  await nc.close();
-  await ns.stop();
+  const opts = parseOptions({});
+  t.is(opts.servers.length, 1);
+  t.is(opts.servers[0], `127.0.0.1:443`);
 });
