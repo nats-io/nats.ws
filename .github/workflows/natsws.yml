@@ -28,9 +28,9 @@ jobs:
       - name: Use Deno Version ${{ matrix.deno-version }}
         uses: denolib/setup-deno@master
         with:
-          deno-version: 1.27.0
+          deno-version: 1.29.1
       - name: Set NATS Server Version
-        run: echo "NATS_VERSION=v2.9.5" >> $GITHUB_ENV
+        run: echo "NATS_VERSION=v2.9.10" >> $GITHUB_ENV
       - name: Set CA
         run: echo "NODE_EXTRA_CA_CERTS=/home/runner/work/nats.ws/nats.ws/test/certs/ca.crt" >> $GITHUB_ENV
       - name: Get nats-server
