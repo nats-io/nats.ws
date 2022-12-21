@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "WebSocket NATS client",
   "main": "./cjs/nats.js",
   "module": "./esm/nats.js",
@@ -44,7 +44,7 @@
     "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
   },
   "optionalDependencies": {
-    "nkeys.js": "1.0.3"
+    "nkeys.js": "1.0.4"
   },
   "devDependencies": {
     "@types/node": "^16.18.3",
