@@ -55,7 +55,7 @@ The transpilation process seems to not pick up on the right library for nats.ws.
 To work around the issue, simple insure you import from the cjs file directly:
 
 ```javascript
-import {connect} from "../node_modules/nats.ws/lib/src/mod.js"
+import {connect} from "../node_modules/nats.ws/cjs/nats.js"
 ```
 
 A simple screencast introduction to nats.ws viewed React can be found here:
@@ -75,8 +75,8 @@ If you are using an older version of the typescript compiler (for example, if yo
         "node_modules/nkeys.js/lib/nkeys.d.ts"
       ],
       "nats.ws": [
-        "node_modules/nats.ws/nats.js",
-        "node_modules/nats.ws/nats.d.ts"
+        "node_modules/nats.ws/cjs/nats.js",
+        "node_modules/nats.ws/lib/src/mod.d.ts"
       ]
     }
   }
