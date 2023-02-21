@@ -21,21 +21,23 @@ esm. The ES module (esm) library is consumable directly by the browser and Deno.
 Previous versions of the library were bundled at the root of the package as
 `nats.js` and `nats.cjs`. Starting with this release, each library has been
 rooted at in `./esm/nats.js` and `./cjs/nats.js` respectively. At the very least
-this seems to allow a node cjs or module to reference them directly, hopefully this
-also improves the consumption downstream.
-
+this seems to allow a node cjs or module to reference them directly, hopefully
+this also improves the consumption downstream.
 
 While nats.ws is intended for the browser, the only limitation is really to have
 W3C Websocket support. [Deno](https://deno.land) has standard websocket support,
 directly, so simply import the library and run:
 
 **nats.ws version >= 1.6.0**
+
 ```javascript
 import { connect } from "nats.ws";
 
 // write some code that runs
 ```
+
 **nats.ws version < 1.6.0**
+
 ```javascript
 import { connect } from "nats.ws/nats.js";
 
@@ -252,7 +254,7 @@ const s3 = nc.subscribe("help.>");
 async function printMsgs(s) {
   let subj = s.getSubject();
   console.log(`listening for ${subj}`);
-  const c = (13 - subj.length);
+  const c = 13 - subj.length;
   const pad = "".padEnd(c);
   for await (const m of s) {
     console.log(
@@ -575,8 +577,10 @@ const nc2 = await connect({ port: 4222, token: "t0pS3cret!" });
 
 ### TLS and client certificates
 
-As mentioned in the [nats.deno repository](https://github.com/nats-io/nats.deno/blob/main/README.md#connection-options), the W3C websocket API does not provide support for TLS options.
-For this reason `nats.ws` doesn't support client certificate authentication.
+As mentioned in the
+[nats.deno repository](https://github.com/nats-io/nats.deno/blob/main/README.md#connection-options),
+the W3C websocket API does not provide support for TLS options. For this reason
+`nats.ws` doesn't support client certificate authentication.
 
 #### Authenticators
 
@@ -873,9 +877,9 @@ For various browser examples checkout [examples](examples).
 
 ## JetStream
 
-JetStream is the NATS persistence engine providing streaming, message, and worker queues with At-Least-Once semantics.
+JetStream is the NATS persistence engine providing streaming, message, and
+worker queues with At-Least-Once semantics.
 [Support for JetStream is built-in](https://github.com/nats-io/nats.deno/blob/main/jetstream.md).
-
 
 ## Contributing
 
