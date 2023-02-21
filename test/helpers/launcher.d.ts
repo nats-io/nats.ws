@@ -32,6 +32,6 @@ export interface NatsServer extends PortInfo {
   restart(): Promise<NatsServer>;
   getLog(): string;
   stop(): Promise<void>;
-  signal(s: ("KILL" | "QUIT" | "STOP" | "REOPEN" | "RELOAD" | "LDM")): void;
+  signal(s: "KILL" | "QUIT" | "STOP" | "REOPEN" | "RELOAD" | "LDM"): void;
   varz(): Promise<any>;
 }
