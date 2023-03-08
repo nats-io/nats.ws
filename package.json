@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.13.1",
+  "version": "1.14.0",
   "description": "WebSocket NATS client",
   "main": "./cjs/nats.js",
   "module": "./esm/nats.js",
@@ -47,10 +47,10 @@
     "nkeys.js": "1.0.5"
   },
   "devDependencies": {
-    "@types/node": "^18.13.0",
+    "@types/node": "^18.14.x",
     "ava": "^5.2.0",
     "browser-env": "^3.3.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.8",
     "nats-jwt": "^0.0.5",
     "nyc": "^15.1.0",
     "shx": "^0.3.3",
