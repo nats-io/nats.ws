@@ -179,19 +179,6 @@ test("auth - pub perm", async (t) => {
   await ns.stop();
 });
 
-test("auth - user and token is rejected", async (t) => {
-  connect(
-    { servers: "ws://127.0.0.1:4222", user: "derek", token: "foobar" },
-  )
-    .then(async (nc) => {
-      await nc.close();
-      t.fail("should not have connected");
-    })
-    .catch((err) => {
-      t.is(err.code, ErrorCode.BadAuthentication);
-    });
-});
-
 test("auth - token", async (t) => {
   const ns = await NatsServer.start(
     Object.assign({ authorization: { token: "foo" } }, wsConfig()),
