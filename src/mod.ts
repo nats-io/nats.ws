@@ -13,4 +13,5 @@
  * limitations under the License.
  */
 export * from "https://raw.githubusercontent.com/nats-io/nats.deno/dev/nats-base-client/mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/dev/jetstream/mod.ts";
 export { connect } from "./connect.ts";
