@@ -12,6 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/js-module/nats-base-client/mod.ts";
-export * from "https://raw.githubusercontent.com/nats-io/nats.deno/js-module/jetstream/mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/dev/nats-base-client/mod.ts";
+export * from "https://raw.githubusercontent.com/nats-io/nats.deno/dev/jetstream/mod.ts";
 export { connect } from "./connect.ts";
