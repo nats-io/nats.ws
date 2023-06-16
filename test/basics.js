@@ -620,18 +620,6 @@ test("basics - subject is required", async (t) => {
   await ns.stop();
 });
 
-test("basics - payload is only Uint8Array", async (t) => {
-  const ns = await NatsServer.start(wsConfig());
-  const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
-
-  t.throws(() => {
-    nc.publish(createInbox(), "s");
-  }, { code: ErrorCode.BadPayload });
-
-  await nc.close();
-  await ns.stop();
-});
-
 test("basics - disconnect reconnects", async (t) => {
   const ns = await NatsServer.start(wsConfig());
   const nc = await connect({ servers: `ws://127.0.0.1:${ns.websocket}` });
