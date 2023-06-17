@@ -98,6 +98,11 @@ for (const fn of files) {
     "../nats-base-client",
   );
 
+  mod = mod.replace(
+    /(https:\/\/raw.githubusercontent.com\/nats-io\/nats.deno\/\S+\/jetstream)/gim,
+    "../jetstream",
+  );
+
   // some of the imports are references to external projects
   // that in node we resolve with requires - if we encounter one that
   // the script is not configured for, the build fails
