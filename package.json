@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.16.0",
+  "version": "1.16.1",
   "description": "WebSocket NATS client",
   "main": "./cjs/nats.js",
   "module": "./esm/nats.js",
