@@ -30,8 +30,8 @@ function getTestChoice() {
     return "pub";
   } else if (isChecked("sub")) {
     return "sub";
-  } else if (isChecked("req")) {
-    return "req";
+  } else if (isChecked("reqrep")) {
+    return "reqrep";
   }
 }
 
@@ -73,7 +73,8 @@ async function run() {
   t.subject = getString("subject");
   t.pub = kind === "pub" || kind === "pubsub";
   t.sub = kind === "sub" || kind === "pubsub";
-  t.req = kind === "req";
+  t.req = kind === "reqrep";
+  t.rep = kind === "reqrep";
 
   const bench = new Bench(nc, t);
   const m = await bench.run();
@@ -84,6 +85,10 @@ async function run() {
   const pubsub = metrics.filter((m) => m.name === "pubsub").reduce(
     reducer,
     new Metric("pubsub", 0),
+  );
+  const reqrep = metrics.filter((m) => m.name === "reqrep").reduce(
+    reducer,
+    new Metric("reqrep", 0),
   );
   const pub = metrics.filter((m) => m.name === "pub").reduce(
     reducer,
@@ -97,11 +102,18 @@ async function run() {
     reducer,
     new Metric("req", 0),
   );
+  const rep = metrics.filter((m) => m.name === "rep").reduce(
+    reducer,
+    new Metric("rep", 0),
+  );
 
   const report = [];
 
   if (pubsub && pubsub.msgs) {
     report.push(pubsub.toString());
+  }
+  if (reqrep && reqrep.msgs) {
+    report.push(reqrep.toString());
   }
   if (pub && pub.msgs) {
     report.push(pub.toString());
@@ -111,6 +123,9 @@ async function run() {
   }
   if (req && req.msgs) {
     report.push(req.toString());
+  }
+  if (rep && rep.msgs) {
+    report.push(rep.toString());
   }
   updateResults(report.join("\n"));
 }
