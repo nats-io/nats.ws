@@ -8,7 +8,6 @@ This file lists the dependencies used in this repository.
 | https://github.com/nats-io/nkeys.js@1.0.0-5 | Apache-2.0 |
 | Dev Dependencies                            |            |
 | @types/node                                 | MIT        |
-| browser-env                                 | MIT        |
 | nats-jwt                                    | MIT        |
 | ava                                         | MIT        |
 | minimist                                    | MIT        |
