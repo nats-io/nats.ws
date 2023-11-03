@@ -42,7 +42,11 @@
     "test": "npm run build && npm run check-imports && npm run check-package && npm run ava",
     "check-imports": "deno run --allow-all bin/consistent-deps.ts",
     "check-package": "deno run --allow-all bin/check-bundle-version.ts",
-    "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match"
+    "debug-test": "node node_modules/.bin/ava --verbose -T 6500000 --match",
+    "version": "deno run -A bin/update-transport-version.ts && git add src/ws_transport.ts",
+    "postversion": "git push && git push --tags",
+    "bump-qualifier": "npm version prerelease --no-commit-hooks --no-git-tag-version",
+    "bump-release": "npm version patch --no-commit-hooks --no-git-tag-version"
   },
   "optionalDependencies": {
     "nkeys.js": "1.0.5"
