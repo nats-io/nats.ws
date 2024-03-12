@@ -1,6 +1,6 @@
 {
   "name": "nats.ws",
-  "version": "1.20.0",
+  "version": "1.22.0",
   "description": "WebSocket NATS client",
   "main": "./cjs/nats.js",
   "module": "./esm/nats.js",
@@ -49,17 +49,17 @@
     "bump-release": "npm version patch --no-commit-hooks --no-git-tag-version"
   },
   "optionalDependencies": {
-    "nkeys.js": "1.0.5"
+    "nkeys.js": "1.1.0"
   },
   "devDependencies": {
-    "@types/node": "^20.10.x",
+    "@types/node": "^20.11.26",
     "ava": "^5.3.x",
     "minimist": "^1.2.8",
     "nats-jwt": "^0.0.7",
     "shx": "^0.3.3",
     "tslint": "^6.1.3",
-    "typescript": "^5.3.x",
-    "web-streams-polyfill": "^3.2.1",
+    "typescript": "^5.4.2",
+    "web-streams-polyfill": "^4.0.0",
     "websocket": "^1.0.34",
     "nyc": "^15.1.0"
   },
