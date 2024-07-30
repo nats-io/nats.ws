@@ -9,7 +9,7 @@
     "allowJs": true
   },
   "include": [
-    "wst",
+    "wst"
   ],
   "exclude": [
     "src/**/*",
