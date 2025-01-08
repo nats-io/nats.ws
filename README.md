@@ -2,8 +2,9 @@
 
 > [!IMPORTANT]
 >
-> Nats.ws is now part of [nats.js](https://github.com/nats-io/nats.js). Please
-> visit the above link for more information.
+> Nats.ws is now part of [nats.js](https://github.com/nats-io/nats.js).  
+> Changes are well documented and should be easy to locate and implement, and
+> are all described in [migration.md](https://github.com/nats-io/nats.js/blob/main/migration.md) 
 
 A websocket client for the [NATS messaging system](https://nats.io).
 
