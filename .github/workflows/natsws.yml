@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22.x]
-        deno-version: [1.44.4]
+        deno-version: [1.46.3]
     environment: CI
     runs-on: ubuntu-latest
     steps:
@@ -31,7 +31,7 @@ jobs:
         with:
           deno-version: ${{ matrix.deno-version }}
       - name: Set NATS Server Version
-        run: echo "NATS_VERSION=v2.10.17" >> $GITHUB_ENV
+        run: echo "NATS_VERSION=v2.10.24" >> $GITHUB_ENV
       - name: Set CA
         run: echo "NODE_EXTRA_CA_CERTS=/home/runner/work/nats.ws/nats.ws/test/certs/ca.crt" >> $GITHUB_ENV
       - name: Get nats-server
