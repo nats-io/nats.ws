@@ -13,7 +13,7 @@ jobs:
   test:
     strategy:
       matrix:
-        node-version: [22.x]
+        node-version: [24.x]
         deno-version: [1.46.3]
     environment: CI
     runs-on: ubuntu-latest
@@ -30,15 +30,14 @@ jobs:
         uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno-version }}
-      - name: Set NATS Server Version
-        run: echo "NATS_VERSION=v2.10.24" >> $GITHUB_ENV
+      - name: Install nats-server
+        uses: aricart/install-binary@v1.0.0
+        with:
+          repo: nats-io/nats-server
+          name: nats-server
+          cache: true
       - name: Set CA
         run: echo "NODE_EXTRA_CA_CERTS=/home/runner/work/nats.ws/nats.ws/test/certs/ca.crt" >> $GITHUB_ENV
-      - name: Get nats-server
-        run: |
-          wget "https://github.com/nats-io/nats-server/releases/download/$NATS_VERSION/nats-server-$NATS_VERSION-linux-amd64.zip" -O tmp.zip
-          unzip tmp.zip
-          mv nats-server-$NATS_VERSION-linux-amd64 nats-server
       - name: Setup NPM
         run: npm ci
       - name: Build Library
